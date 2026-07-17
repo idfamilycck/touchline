@@ -48,8 +48,8 @@ export interface Intervention {
   special?: SideSetup["special"];
 }
 
-// MatchState: 브리프 명세의 12개 필드(minute…probTimeline)는 그대로 유지한다.
-// 아래 3개(lambdaMe/lambdaOpp/lines/injuryTime)는 이 엔진 구현에 필요한 내부 캐시
+// MatchState: 브리프 명세의 14개 필드(minute…probTimeline)는 그대로 유지한다.
+// 아래 4개(lambdaMe/lambdaOpp/lines/injuryTime)는 이 엔진 구현에 필요한 내부 캐시
 // 확장 필드다. simulateMinute는 모듈 전역 캐시나 클로저를 쓸 수 없는 순수 함수여야
 // 하므로(카운터팩추얼 재생 시 임의의 상태에서 재현 가능해야 함), "5분마다 & 개입
 // 직후에만 λ/lineStrengths 재계산"이라는 캐시 정책을 지키려면 그 결과를 state 자체에
@@ -418,6 +418,9 @@ export function simulateMinute(state: MatchState): MatchState {
       const contribution = slot
         ? playerContribution(player, slot.position, slot.role, state.stamina[player.id] ?? 1)
         : 0;
+      // 라인평균 기준선은 슈터의 실제 소속 라인(mid 풀에서 뽑힌 슈터라도)과 무관하게
+      // 항상 ATT 라인 평균을 사용한다 — mid 풀 슈터는 구조적으로 더 낮은 골 확률을
+      // 갖게 되는 의도적인 설계 선택이다. 밸런스 튜닝(Task 10)에서 재검토 대상.
       const attAvg = side === "me" ? lines.me.att : lines.opp.att;
       const goalProb = clamp(0.3 + (contribution - attAvg) / 300, 0.03, 0.95);
 
@@ -546,7 +549,8 @@ export function applyIntervention(state: MatchState, iv: Intervention): MatchSta
     for (const { out, in: inId } of iv.subs) {
       if (subsUsedMe >= MAX_SUBS) continue; // 5명 초과 교체는 무시
       const slotId = Object.keys(me.lineup).find((k) => me.lineup[k] === out);
-      if (!slotId) continue; // 라인업에 없는 선수는 무시
+      if (!slotId) continue; // out 선수가 현재 라인업에 없으면 무시
+      if (Object.values(me.lineup).includes(inId)) continue; // in 선수가 이미 라인업에 있으면 무시(중복 배치 방지)
       me.lineup[slotId] = inId;
       subsUsedMe += 1;
       additions.push({
