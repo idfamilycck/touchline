@@ -32,7 +32,13 @@ export const H2H: HeadToHead[] = [
 ];
 
 export function h2hOf(a: string, b: string): HeadToHead | undefined {
-  return H2H.find(
+  const stored = H2H.find(
     (h) => (h.teamA === a && h.teamB === b) || (h.teamA === b && h.teamB === a)
   );
+  if (!stored) return undefined;
+  // Always orient the result to the caller's (a, b) order so winA/winB
+  // unambiguously correspond to the requested teams regardless of how the
+  // record happens to be stored.
+  if (stored.teamA === a) return stored;
+  return { teamA: a, teamB: b, winA: stored.winB, draw: stored.draw, winB: stored.winA };
 }

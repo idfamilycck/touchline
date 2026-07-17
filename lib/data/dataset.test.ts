@@ -36,9 +36,13 @@ describe("dataset integrity", () => {
     expect(VENUES.filter((v) => v.dome).length).toBeGreaterThanOrEqual(2);
     expect(VENUES.filter((v) => v.avgTempC >= 30 && !v.dome).length).toBeGreaterThanOrEqual(2);
   });
-  it("h2h 20쌍 이상, 조회는 순서 무관 동일 결과", () => {
+  it("h2h 20쌍 이상, 조회는 순서 무관(방향은 인자 순서로 정렬) 동일 결과", () => {
     expect(H2H.length).toBeGreaterThanOrEqual(20);
     const r1 = h2hOf("kor", "jpn"); const r2 = h2hOf("jpn", "kor");
-    expect(r1).toBeDefined(); expect(r1).toEqual(r2);
+    expect(r1).toBeDefined(); expect(r2).toBeDefined();
+    // r1 is oriented kor->jpn, r2 is oriented jpn->kor: same match, opposite orientation.
+    expect(r1!.winA).toBe(r2!.winB);
+    expect(r1!.winB).toBe(r2!.winA);
+    expect(r1!.draw).toBe(r2!.draw);
   });
 });
