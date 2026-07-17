@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { playerDots, VB_W, VB_H } from "./livepitch-geometry";
+import { playerDots, followBall, VB_W, VB_H } from "./livepitch-geometry";
 import { makeSetup } from "@/lib/engine/__testutils__";
 import { FORMATIONS } from "@/lib/data/formations";
 
@@ -41,6 +41,39 @@ describe("playerDots (라이브 피치 선수 좌표)", () => {
     const oppSt = oppSlots.find((s) => s.position === "ST")!.id;
     const theirs = Object.fromEntries(playerDots(opp, "opp").map((d) => [d.slotId, d]));
     expect(theirs[oppGk].cx).toBeGreaterThan(theirs[oppSt].cx);
+  });
+
+  it("followBall: 모든 선수가 공 방향으로 끌려가되 라인별 강도가 다르다", () => {
+    const dots = playerDots(me, "me");
+    const byId = Object.fromEntries(dots.map((d) => [d.slotId, d]));
+    const ball = { cx: 250, cy: 40 }; // 오른쪽 위 (상대 진영)
+    const gk = followBall(byId["gk"], ball);
+    const mid = followBall(byId["cm_l"], ball);
+    // 방향: 둘 다 공 쪽(+x, -y 방향)으로 이동
+    expect(gk.tx).toBeGreaterThanOrEqual(byId["gk"].cx);
+    expect(mid.tx).toBeGreaterThan(byId["cm_l"].cx);
+    expect(mid.ty).toBeLessThan(byId["cm_l"].cy);
+    // 강도: 미드필더가 GK보다 훨씬 많이 따라간다
+    expect(mid.tx - byId["cm_l"].cx).toBeGreaterThan(gk.tx - byId["gk"].cx);
+  });
+
+  it("followBall: 이동량이 캡을 넘지 않고 피치 경계 안에 머문다", () => {
+    for (const d of playerDots(me, "me")) {
+      const far = followBall(d, { cx: VB_W - 8, cy: 10 });
+      expect(Math.abs(far.tx - d.cx)).toBeLessThanOrEqual(18);
+      expect(Math.abs(far.ty - d.cy)).toBeLessThanOrEqual(18);
+      expect(far.tx).toBeGreaterThan(6);
+      expect(far.tx).toBeLessThan(VB_W - 6);
+      expect(far.ty).toBeGreaterThan(6);
+      expect(far.ty).toBeLessThan(VB_H - 6);
+    }
+  });
+
+  it("followBall: 공이 선수 위치와 같으면 제자리", () => {
+    const d = playerDots(me, "me")[3];
+    const same = followBall(d, { cx: d.cx, cy: d.cy });
+    expect(same.tx).toBeCloseTo(d.cx, 5);
+    expect(same.ty).toBeCloseTo(d.cy, 5);
   });
 
   it("같은 포메이션이면 opp 좌표는 me 좌표의 점대칭 미러다", () => {

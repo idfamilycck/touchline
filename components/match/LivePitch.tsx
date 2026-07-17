@@ -14,7 +14,18 @@ import type { SideSetup } from "@/lib/types";
 import { teamById } from "@/lib/data/teams";
 import { PLAYERS } from "@/lib/data/players";
 import { jerseyOf } from "@/components/tactics/tactics-labels";
-import { playerDots, VB_W, VB_H, type PlayerDot } from "./livepitch-geometry";
+import { playerDots, followBall, VB_W, VB_H, type PlayerDot } from "./livepitch-geometry";
+
+// 슬롯별 결정적 미세 움직임(제자리 흔들림) 파라미터 — 정지 순간에도 살아있는 느낌.
+function jitterOf(side: string, slotId: string): { ax: number; ay: number; dur: number } {
+  let h = 0;
+  for (const ch of `${side}-${slotId}`) h = (h * 31 + ch.charCodeAt(0)) % 997;
+  return {
+    ax: 0.8 + (h % 5) * 0.25, // 0.8~1.8px
+    ay: 0.8 + ((h >> 2) % 5) * 0.25,
+    dur: 2.2 + (h % 7) * 0.25, // 2.2~3.7s
+  };
+}
 
 const NAME_BY_ID = new Map(PLAYERS.map((p) => [p.id, p.name]));
 
@@ -122,6 +133,12 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
 
   const dir = attackRight ? 1 : -1;
 
+  // 전원이 따라갈 공의 현재 관심 지점: 장면 중엔 결과 지점, 평상시엔 볼홀더.
+  const ballPoint =
+    ballScene && outcome
+      ? outcome
+      : { cx: (holder?.cx ?? CX) + (possession === "me" ? 5 : -5), cy: holder?.cy ?? CY };
+
   return (
     <motion.div
       className="panel relative overflow-hidden rounded-3xl"
@@ -172,10 +189,13 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
               const isShooter = shooter !== undefined && scene?.side === side && d.slotId === shooter.slotId;
               const isMate = scene?.side === side && mates.has(d.slotId);
               const isHolder = !ballScene && holder !== undefined && possession === side && d.slotId === holder.slotId;
-              // 장면 중 전진 오버라이드: 주인공은 전진 위치로, 동료는 부분 전진
-              const tx = isShooter && advanced ? advanced.cx : isMate ? d.cx + dir * 14 : d.cx;
-              const ty = isShooter && advanced ? advanced.cy : isMate ? d.cy + (CY - d.cy) * 0.2 : d.cy;
+              // 위치: 주인공은 전진 위치, 동료는 부분 전진, 나머지 전원은 공을 따라
+              // 라인별 강도만큼 이동(실제 팀 전형처럼 공 방향으로 흐른다).
+              const follow = followBall(d, ballPoint);
+              const tx = isShooter && advanced ? advanced.cx : isMate ? follow.tx + dir * 10 : follow.tx;
+              const ty = isShooter && advanced ? advanced.cy : isMate ? follow.ty + (CY - follow.ty) * 0.15 : follow.ty;
               const emphasized = isShooter || isHolder;
+              const jit = jitterOf(side, d.slotId);
               return (
                 <motion.g
                   key={`${side}-${d.slotId}`}
@@ -183,6 +203,14 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
                   animate={{ x: tx, y: ty }}
                   transition={{ type: "spring", stiffness: 120, damping: 18 }}
                 >
+                  {/* 슬롯별 미세 흔들림 — 정지 순간에도 제자리에서 살아 움직인다 */}
+                  <motion.g
+                    animate={{
+                      x: [0, jit.ax, -jit.ax * 0.6, 0],
+                      y: [0, -jit.ay * 0.7, jit.ay, 0],
+                    }}
+                    transition={{ duration: jit.dur, repeat: Infinity, ease: "easeInOut" }}
+                  >
                   {/* 확대는 r 애니메이션 대신 transform scale — SVG 속성 r은 framer가
                       마운트 시점에 undefined로 읽어 콘솔 에러를 내는 문제가 있다. */}
                   <motion.g
@@ -225,6 +253,7 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
                   >
                     {NAME_BY_ID.get(d.playerId) ?? ""}
                   </text>
+                  </motion.g>
                 </motion.g>
               );
             })}
