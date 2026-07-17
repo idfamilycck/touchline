@@ -187,9 +187,16 @@ export const useAppStore = create<AppState>()(
       },
 
       runShootout: (kickers) => {
-        const { me, opp, setup } = get();
-        if (!me || !opp) return;
-        set({ shootout: simulateShootout(kickers, me, opp, setup.seed) });
+        const { me, opp, match, setup } = get();
+        // 경기가 진행된 경우 match.me/opp(교체 등 개입이 반영된 라이브 로스터)를
+        // 써야 한다 — top-level me/opp는 킥오프 시점 스냅샷이라 60분에 GK를
+        // 교체해도 갱신되지 않는다(intervene은 match.me만 갱신하고 top-level
+        // me/opp는 건드리지 않음). 매치가 아직 시작되지 않은 경우에만 top-level
+        // me/opp로 폴백한다.
+        const shootoutMe = match?.me ?? me;
+        const shootoutOpp = match?.opp ?? opp;
+        if (!shootoutMe || !shootoutOpp) return;
+        set({ shootout: simulateShootout(kickers, shootoutMe, shootoutOpp, setup.seed) });
       },
 
       completeOnboarding: () => set({ onboardingDone: true }),
