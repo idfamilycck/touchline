@@ -568,7 +568,7 @@ describe("match simulation", () => {
 **Interfaces:**
 - Consumes: Task 8 전체
 - Produces:
-  - `simulateShootout(meKickers: string[], oppSetup: SideSetup, meSetup: SideSetup, seed: number): ShootoutResult` — `{ rounds: Array<{ side; playerId; scored: boolean }>; winner: "me" | "opp" }`. 성공률 = `clamp(0.62 + (pk-70)*0.004 + (mental-70)*0.002 - (상대GK gk기여-70)*0.004, 0.50, 0.90)`. 5라운드 후 동률이면 서든데스. 상대 키커는 pk 내림차순 자동 5명
+  - `simulateShootout(meKickers: string[], meSetup: SideSetup, oppSetup: SideSetup, seed: number): ShootoutResult` — `{ rounds: Array<{ side; playerId; scored: boolean }>; winner: "me" | "opp" }`. 성공률 = `clamp(0.62 + (pk-70)*0.004 + (mental-70)*0.002 - (상대GK gk기여-70)*0.004, 0.50, 0.90)`. 5라운드 후 동률이면 서든데스. 상대 키커는 pk 내림차순 자동 5명
   - `counterfactual(original: MatchState): CfResult` — `{ baseline: MatchState; deltas: Array<{ intervention: Intervention; probDelta: number }>; scoreDiffText: string }`. baseline = `runFullMatch(초기 setup, seed, [])`. probDelta = 개입 직전 분의 원경기 win − baseline 동일 분 win 의 이후 구간 평균 차
 
 - [ ] **Step 1: 실패 테스트 작성 (스펙 §5.3 불변식 3종 그대로)**
