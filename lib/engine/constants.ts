@@ -13,7 +13,7 @@ export const ENGINE_CONSTANTS = {
 
   // eloMult(myElo, oppElo) = 1 + clamp(myElo-oppElo, -ELO_DIFF_CAP, ELO_DIFF_CAP) / ELO_DIFF_CAP × ELO_MULT_COEF
   ELO_DIFF_CAP: 400,
-  ELO_MULT_COEF: 0.1,
+  ELO_MULT_COEF: 0.15,
 
   // 슈팅 후 골 확률 = clamp(GOAL_PROB_BASE + (contribution - attAvg) / GOAL_PROB_DIVISOR, GOAL_PROB_MIN, GOAL_PROB_MAX)
   // (lib/engine/match.ts의 processChance)
@@ -21,4 +21,16 @@ export const ENGINE_CONSTANTS = {
   GOAL_PROB_DIVISOR: 300,
   GOAL_PROB_MIN: 0.03,
   GOAL_PROB_MAX: 0.95,
+
+  // 분당 "찬스" 발생 확률 = (λ/90) × tempoFactor × CHANCE_RATE_SCALE (lib/engine/match.ts의
+  // processChance). winProbability(승/무/패 사전 확률)는 outcomeProbs(poisson.ts)를 통해
+  // λ 자체를 "경기당 기대 득점"으로 직접 소비하는 반면, runFullMatch의 분당 시뮬레이션은
+  // 찬스→슈팅→골로 이어지는 다단 확률 체인(이 3개 상수의 곱)을 거치므로 λ가 그대로
+  // 실현 득점 기대값이 되지 않는다(체인을 거치며 크게 감쇠). CHANCE_RATE_SCALE은 이
+  // 감쇠를 보정해 "분당 시뮬레이션으로 실현되는 경기당 평균 득점"을 밸런스 목표
+  // (1.8~3.6골)에 맞추기 위한 튜닝 전용 배수다 — winProbability의 사전 확률 계산에는
+  // 전혀 관여하지 않는다.
+  CHANCE_RATE_SCALE: 10.0,
+  // 찬스가 슈팅으로 이어질 확률 (lib/engine/match.ts의 processChance)
+  SHOT_CONVERSION_PROB: 0.55,
 } as const;

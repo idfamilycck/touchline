@@ -401,7 +401,11 @@ export function simulateMinute(state: MatchState): MatchState {
   function processChance(side: "me" | "opp"): void {
     const setup = side === "me" ? state.me : state.opp;
     const lambda = side === "me" ? lambdaMe : lambdaOpp;
-    const p = (lambda / 90) * tempoFactor(setup.instructions.tempo);
+    const p = clamp(
+      (lambda / 90) * tempoFactor(setup.instructions.tempo) * ENGINE_CONSTANTS.CHANCE_RATE_SCALE,
+      0,
+      1
+    );
     if (rng.next() >= p) return;
 
     const formation = FORMATIONS[setup.instructions.formation];
@@ -417,7 +421,7 @@ export function simulateMinute(state: MatchState): MatchState {
       textKo: eventText("chance", rng, player.name),
     });
 
-    if (rng.next() < 0.55) {
+    if (rng.next() < ENGINE_CONSTANTS.SHOT_CONVERSION_PROB) {
       additions.push({
         minute: newMinute,
         type: "shot",
