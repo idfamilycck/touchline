@@ -7,6 +7,8 @@
 // 문제가 없다) — "./store"만 동적 import로 지연시켜 스텁 설치 이후에 평가되게 한다.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { playersOf } from "@/lib/data/players";
+import { teamById } from "@/lib/data/teams";
+import { venueById } from "@/lib/data/venues";
 import { recommend } from "@/lib/engine/recommend";
 import { winProbability } from "@/lib/engine/winprob";
 import { registerWc2026 } from "@/lib/wc2026/register";
@@ -73,6 +75,24 @@ describe("store", () => {
     sessionStorageStub.clear();
     useAppStore.getState().reset();
     simulateShootoutMock.mockClear();
+  });
+
+  // 회귀 테스트(C1: 콜드 리로드 크래시): 이 파일의 다른 테스트들과 달리
+  // registerWc2026()을 이 테스트 안에서 직접 호출하지 않는다 — 검증 대상은 "store.ts를
+  // import하기만 해도" WC2026 데이터(teamById/playersOf/venueById)가 등록되는지다.
+  // sessionStorage에 persist된 rewrite 상태(mode:"rewrite", match.venueId:"wc_default",
+  // me.teamId:"wc_kor")는 새로고침 후에도 살아남지만, registerWc2026()이 채우는
+  // 인메모리 맵은 모듈 top-level `done` 플래그와 함께 페이지 풀로드마다 리셋된다.
+  // lib/store.ts 모듈 스코프에 있는 registerWc2026() 호출이 이 상황을 막아준다.
+  // 주의: 이 테스트는 반드시 describe 블록의 "첫 번째" it이어야 한다 — 아래의
+  // "startRewrite" 등 다른 테스트가 먼저 실행되며 registerWc2026()을 명시적으로
+  // 호출해버리면 idempotent guard(done 플래그)가 이미 true가 되어, store.ts의
+  // 모듈 스코프 호출을 지워도(회귀가 일어나도) 이 테스트가 우연히 그린으로 남는다.
+  it("cold reload 회귀: store 모듈을 import하는 것만으로 WC2026 데이터가 등록돼 있다", () => {
+    expect(venueById("wc_default")).toBeDefined();
+    expect(venueById("wc_default")?.id).toBe("wc_default");
+    expect(teamById("wc_kor")).toBeDefined();
+    expect(playersOf("wc_kor").length).toBeGreaterThan(0);
   });
 
   it("startQuick 후 me/opp 라인업 11개 채워짐", () => {

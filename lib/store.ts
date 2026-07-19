@@ -20,6 +20,19 @@ import { wc2026MatchById } from "@/lib/wc2026/data";
 import { extractMoments } from "@/lib/wc2026/moments";
 import { fromRealState } from "@/lib/engine/rewrite";
 
+// 콜드 리로드(F5) 대응: rewrite 상태(mode:"rewrite", rewriteContext, wc_kor/wc_default를
+// 참조하는 match)는 sessionStorage에 persist되어 새로고침 후에도 살아남지만,
+// registerWc2026()이 채우는 인메모리 맵(teamById/playersOf/venueById)은 모듈 top-level
+// `done` 플래그와 함께 페이지 풀로드마다 초기화된다. 지금까지는 app/rewrite/page.tsx와
+// startRewrite()에서만 호출돼서, /tactics·/match·/result를 새로고침하면 이 store 모듈은
+// import되지만 그 두 호출부는 거치지 않아 WC 데이터가 비어 있는 채로 venueById("wc_default")
+// 등이 undefined를 반환 → 렌더 중 throw로 이어졌다(백서 C1). rewrite 상태를 가질 수 있는
+// 모든 라우트가 이 store 모듈을 import하므로, 여기 모듈 스코프에서 한 번 호출해두면 어떤
+// 진입점/새로고침이든 WC 데이터가 항상 등록돼 있음을 보장한다. registerWc2026()은
+// idempotent(done 플래그)이고 JSON import + Map 쓰기만 하므로 window/document/sessionStorage에
+// 의존하지 않아 정적 빌드/SSR 중 모듈 평가 시점에 호출해도 안전하다.
+registerWc2026();
+
 const DEFAULT_INSTRUCTIONS: TeamInstructions = {
   formation: "4-3-3",
   pressing: 2,
