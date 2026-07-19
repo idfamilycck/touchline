@@ -9,8 +9,15 @@ import { useAppStore } from "@/lib/store";
 import { FORMATIONS } from "@/lib/data/formations";
 import { ROLES, ROLES_BY_POSITION, DEFAULT_ROLE } from "@/lib/data/roles";
 import { playersOf } from "@/lib/data/players";
-import { POSITION_KO, ROLE_SHORT } from "./tactics-labels";
-import type { Position } from "@/lib/types";
+import { POSITION_KO, ROLE_SHORT, STAT_LABELS, statValue } from "./tactics-labels";
+import type { Position, RoleDef } from "@/lib/types";
+
+// 역할의 weights를 비중 내림차순으로 정렬해 [스탯키, 라벨, 비중] 튜플로 반환.
+function sortedRoleStats(role: RoleDef) {
+  return Object.entries(role.weights)
+    .filter((entry): entry is [keyof typeof STAT_LABELS, number] => entry[1] !== undefined)
+    .sort((a, b) => b[1] - a[1]);
+}
 
 export function RolePicker() {
   const me = useAppStore((s) => s.me);
@@ -71,6 +78,7 @@ export function RolePicker() {
             {roleOptions.map((roleId) => {
               const role = ROLES[roleId];
               const active = roleId === currentRole;
+              const roleStats = sortedRoleStats(role);
               return (
                 <button
                   key={roleId}
@@ -88,6 +96,20 @@ export function RolePicker() {
                     {active && <span className="text-[10px] font-bold text-accent">● 현재</span>}
                   </div>
                   <p className="mt-1 text-[11px] leading-snug text-dim">{role.descKo}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {roleStats.map(([key, weight]) => (
+                      <span
+                        key={key}
+                        className="flex items-center gap-1 rounded-full border border-line bg-surface/60 px-2 py-0.5 text-[10px] text-dim"
+                      >
+                        <span>{STAT_LABELS[key]}</span>
+                        <span className="text-dim/60">{Math.round(weight * 100)}%</span>
+                        {player && (
+                          <span className="stat-num font-bold text-ink">{statValue(player, key)}</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 </button>
               );
             })}

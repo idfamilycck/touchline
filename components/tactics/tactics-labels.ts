@@ -74,6 +74,22 @@ export const POSITION_STATS: Record<Position, [[StatKey, string], [StatKey, stri
   ST: [["shooting", "슈팅"], ["pace", "속도"]],
 };
 
+// 모든 스탯의 친절한 한국어 라벨(역할 상세 등 전체 스탯 노출용).
+export const STAT_LABELS: Record<StatKey, string> = {
+  shooting: "슈팅",
+  passing: "패스",
+  dribbling: "드리블",
+  defending: "수비",
+  pace: "속도",
+  physical: "피지컬",
+  goalkeeping: "선방",
+  stamina: "체력",
+  aerial: "공중볼",
+  setPiece: "세트피스",
+  mental: "멘탈",
+  penalty: "페널티",
+};
+
 // 최상위(top-level) 스탯과 attrs 안의 스탯을 모두 안전하게 읽는다.
 export function statValue(player: Player, key: StatKey): number {
   if (key === "aerial" || key === "setPiece" || key === "mental" || key === "penalty") {
