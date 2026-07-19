@@ -194,6 +194,34 @@ describe("store", () => {
     expect(useAppStore.getState().rewriteContext).toBeUndefined();
   });
 
+  it("rewrite 모드에서 beginMatch는 takeoverMinute을 보존하고 편집된 me를 match에 반영한다", () => {
+    registerWc2026();
+    const id = firstConcedeMatchId();
+    const side = wc2026MatchById(id)!.away;
+    const moment = extractMoments(wc2026MatchById(id)!, side)[0];
+    useAppStore.getState().startRewrite(id, side, moment.id);
+
+    const takeoverMinute = useAppStore.getState().rewriteContext!.takeoverMinute;
+    const takeoverScoreMe = useAppStore.getState().match!.scoreMe;
+    const takeoverScoreOpp = useAppStore.getState().match!.scoreOpp;
+    expect(useAppStore.getState().match!.minute).toBe(takeoverMinute);
+
+    // 작전실에서 지시사항을 편집(예: 프레싱 강도 변경)한다.
+    const editedPressing = useAppStore.getState().me!.instructions.pressing === 3 ? 1 : 3;
+    useAppStore.getState().setInstructions({ pressing: editedPressing });
+    expect(useAppStore.getState().me!.instructions.pressing).toBe(editedPressing);
+
+    useAppStore.getState().beginMatch();
+
+    const s = useAppStore.getState();
+    // beginMatch가 initMatch(0분 재시작)를 호출하지 않았다면 minute/score가 그대로다.
+    expect(s.match!.minute).toBe(takeoverMinute);
+    expect(s.match!.scoreMe).toBe(takeoverScoreMe);
+    expect(s.match!.scoreOpp).toBe(takeoverScoreOpp);
+    // 편집한 지시사항이 match.me에 반영됐다.
+    expect(s.match!.me.instructions.pressing).toBe(editedPressing);
+  });
+
   it("beginMatch가 경기를 초기화하고 tickMinute이 분/probTimeline을 진행시킨다", () => {
     useAppStore.getState().startQuick();
     useAppStore.getState().beginMatch();

@@ -239,8 +239,18 @@ export const useAppStore = create<AppState>()(
       },
 
       beginMatch: () => {
-        const { me, opp, setup } = get();
+        const { me, opp, setup, mode, match } = get();
         if (!me || !opp || !setup.venueId) return;
+        if (mode === "rewrite") {
+          // rewrite 모드: startRewrite가 이미 fromRealState로 takeoverMinute 시점의
+          // match를 만들어뒀다. initMatch로 재초기화(0분부터)하면 그 상태가 사라지므로,
+          // 대신 유저가 방금 작전실에서 편집한 me(전술/라인업)만 기존 match에 얹는다.
+          // minute/score/이벤트 이력은 그대로 유지된다 — λ는 다음 5분 경계/개입에서
+          // 재계산되므로 즉시 반영되지 않아도 무방하다.
+          if (!match) return;
+          set({ match: { ...match, me }, shootout: undefined });
+          return;
+        }
         set({ match: initMatch(me, opp, setup.venueId, setup.seed), shootout: undefined });
       },
 

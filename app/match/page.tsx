@@ -43,6 +43,8 @@ export default function MatchPage() {
   const match = useAppStore((s) => s.match);
   const tickMinute = useAppStore((s) => s.tickMinute);
   const intervene = useAppStore((s) => s.intervene);
+  const mode = useAppStore((s) => s.mode);
+  const rewriteContext = useAppStore((s) => s.rewriteContext);
 
   const hasMatch = useAppStore((s) => Boolean(s.match));
   const finished = useAppStore((s) => s.match?.finished ?? false);
@@ -178,6 +180,12 @@ export default function MatchPage() {
       <CrisisBanner events={match.events} onIntervene={openSheet} />
 
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pt-5 sm:px-5">
+        {mode === "rewrite" && rewriteContext && (
+          <p className="inline-flex w-fit max-w-full items-center gap-1.5 truncate self-start rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[11px] font-bold text-accent">
+            실제 경기 · {teamById(match.me.teamId)?.nameKo ?? "우리 팀"} vs{" "}
+            {teamById(match.opp.teamId)?.nameKo ?? "상대 팀"} · {rewriteContext.takeoverMinute}′부터 지휘
+          </p>
+        )}
         {/* 스코어보드 */}
         <Scoreboard
           meTeamId={match.me.teamId}

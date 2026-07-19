@@ -151,8 +151,11 @@ function AnalysisPanel() {
 export default function TacticsPage() {
   const router = useRouter();
   const me = useAppStore((s) => s.me);
+  const opp = useAppStore((s) => s.opp);
   const movePlayer = useAppStore((s) => s.movePlayer);
   const beginMatch = useAppStore((s) => s.beginMatch);
+  const mode = useAppStore((s) => s.mode);
+  const rewriteContext = useAppStore((s) => s.rewriteContext);
 
   const [tab, setTab] = useState<Tab>("pitch");
   const [selected, setSelected] = useState<Selection | null>(null);
@@ -241,13 +244,18 @@ export default function TacticsPage() {
   const squad = playersOf(me.teamId);
   const activePlayer = activeId ? squad.find((p) => p.id === activeId) : undefined;
 
-  // "경기 시작" 게이팅: 현재 포메이션의 11슬롯이 모두 채워졌는지.
+  // "경기 시작" 게이팅: 현재 포메이션의 슬롯이 모두 채워졌는지.
+  // free 모드는 언제나 11명 필수. rewrite 모드는 실제 경기 상태(퇴장 등)로 인해
+  // 10명일 수 있으므로 10명 이상이면 시작을 허용한다(fromRealState가 남긴 빈 슬롯).
   const slots = FORMATIONS[me.instructions.formation].slots;
   const placedCount = slots.filter((s) => Boolean(me.lineup[s.id])).length;
-  const allPlaced = placedCount === 11;
+  const minRequired = mode === "rewrite" ? 10 : 11;
+  const canStart = placedCount >= minRequired;
+
+  const oppTeam = opp ? teamById(opp.teamId) : undefined;
 
   const onBeginMatch = () => {
-    if (!allPlaced) return;
+    if (!canStart) return;
     beginMatch();
     router.push("/match");
   };
@@ -268,6 +276,12 @@ export default function TacticsPage() {
             <h1 className="display mt-0.5 truncate text-2xl text-ink">
               {team?.nameKo ?? "우리 팀"} 라인업
             </h1>
+            {mode === "rewrite" && rewriteContext && (
+              <p className="mt-2 inline-flex max-w-full items-center gap-1.5 truncate rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[11px] font-bold text-accent">
+                실제 경기 · {team?.nameKo ?? "우리 팀"} vs {oppTeam?.nameKo ?? "상대 팀"} ·{" "}
+                {rewriteContext.takeoverMinute}′부터 지휘
+              </p>
+            )}
           </div>
           <Link
             href="/"
@@ -377,14 +391,18 @@ export default function TacticsPage() {
             <p className="stat-num text-[13px] text-ink">
               선발 {placedCount}/11 배치
             </p>
-            {!allPlaced && (
-              <p className="text-[11px] text-danger">11명을 모두 배치해야 경기를 시작할 수 있어요.</p>
+            {!canStart && (
+              <p className="text-[11px] text-danger">
+                {mode === "rewrite"
+                  ? "최소 10명을 배치해야 경기를 시작할 수 있어요."
+                  : "11명을 모두 배치해야 경기를 시작할 수 있어요."}
+              </p>
             )}
           </div>
           <button
             type="button"
             onClick={onBeginMatch}
-            disabled={!allPlaced}
+            disabled={!canStart}
             className="shrink-0 rounded-full bg-accent px-7 py-3 text-sm font-black text-accent-ink transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
             경기 시작 →
