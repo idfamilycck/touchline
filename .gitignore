@@ -50,3 +50,6 @@ next-env.d.ts
 .playwright-mcp
 
 .vercel
+
+# wc2026 raw ingestion cache (regenerate via scripts/ingest-wc2026.mjs)
+data/wc2026/raw/
