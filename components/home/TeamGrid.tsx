@@ -1,6 +1,6 @@
 "use client";
 
-import { TEAMS } from "@/lib/data/teams";
+import { wc2026TeamList } from "@/lib/wc2026/data";
 import { h2hOf } from "@/lib/data/h2h";
 import { FlagBadge } from "@/components/ui/FlagBadge";
 
@@ -25,6 +25,7 @@ function FormMeter({ form }: { form: number }) {
 }
 
 export function TeamGrid({ myTeamId, oppTeamId, onSelect }: TeamGridProps) {
+  const teams = wc2026TeamList();
   const step = !myTeamId ? 1 : !oppTeamId ? 2 : 3;
   const stepLabel =
     step === 1 ? "내 팀을 고르세요" : step === 2 ? "상대 팀을 고르세요" : "매치업 확정";
@@ -52,7 +53,7 @@ export function TeamGrid({ myTeamId, oppTeamId, onSelect }: TeamGridProps) {
       </div>
 
       <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-        {TEAMS.map((t) => {
+        {teams.map((t) => {
           const isMine = t.id === myTeamId;
           const isOpp = t.id === oppTeamId;
           const selected = isMine || isOpp;

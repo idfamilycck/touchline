@@ -133,12 +133,15 @@ export const useAppStore = create<AppState>()(
       mode: "free",
       rewriteContext: undefined,
 
+      // 실제 2026 월드컵 48개국(wc2026TeamList)이 홈 화면 매치업 대상이므로, 퀵스타트도
+      // 가상의 16개 고정 팀(kor/bra) 대신 실제 wc_kor/wc_bra를 쓴다. registerWc2026()이
+      // 모듈 로드 시 이미 호출돼 wc_kor/wc_bra의 팀/선수 데이터가 등록돼 있다.
       startQuick: () => {
         const seed = Date.now() % 1e9;
         set({
-          setup: { myTeamId: "kor", oppTeamId: "bra", venueId: "metlife", seed },
-          me: buildSideSetup("kor", "4-3-3"),
-          opp: buildSideSetup("bra", "4-3-3"),
+          setup: { myTeamId: "wc_kor", oppTeamId: "wc_bra", venueId: "metlife", seed },
+          me: buildSideSetup("wc_kor", "4-3-3"),
+          opp: buildSideSetup("wc_bra", "4-3-3"),
           match: undefined,
           shootout: undefined,
           mode: "free",
