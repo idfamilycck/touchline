@@ -22,6 +22,7 @@
 | **경기 개입** | 자유 일시정지·위기 알림 → 교체(최대 5명)·전술 변경 → 엔진 재계산 후 재개, 후반 체력 감쇠 반영 | 경기 |
 | **카운터팩추얼 복기** | 같은 시드로 무개입 경기를 재시뮬해 "개입이 없었다면?" 평행세계와 비교, 개입별 승률 델타 산출 | 복기 |
 | **승부차기** | 무승부 시 키커 5명·순서를 지정, PK·멘탈 vs GK 선방 확률 대결 | 승부차기 |
+| **2026 월드컵 다시 쓰기** | 실제 2026 월드컵 103경기 중 하나를 골라 리플레이 → "결정적 순간"(실점/리드 상실/퇴장/막판 동점) 5분 전으로 개입 시점 이동 → 실제 선발·스코어·교체·카드가 반영된 상태에서 남은 시간을 직접 지휘 → 종료 후 **실제 역사 vs 내 평행세계** 스코어를 나란히 비교 | 다시 쓰기 |
 
 ### 화면 갤러리
 
@@ -50,6 +51,7 @@
 | 모든 조작에 실시간 반응하는 승률 | 조작 → `winProbability` 동기 재평가(목표 100ms 이내) → 게이지·근거 카드 갱신 | `lib/engine/winprob.ts`, `lib/store.ts`, `components/tactics/` |
 | 실제 개최지 환경 변수(고도·더위·돔)가 전술 유불리를 바꿈 | `altitude`/`heat` 보정 규칙 + venue 데이터(고도·기온·돔) | `lib/engine/modifiers.ts`, `lib/data/venues.ts` |
 | "개입이 없었다면?" 카운터팩추얼 복기 | 동일 시드로 무개입 재시뮬 → 개입별 승률 델타·평행세계 스코어 비교 | `lib/engine/counterfactual.ts`, `app/result/page.tsx` |
+| 실제 2026 월드컵 경기 기반 "다시 쓰기" | 실제 103경기 데이터에서 결정적 순간을 자동 추출 → 그 시점의 실제 스코어·라인업·교체·퇴장을 엔진 상태로 복원 → 남은 시간을 시뮬레이션해 실제 역사와 비교 | `lib/wc2026/`, `lib/engine/rewrite.ts`, `app/rewrite/`, `components/rewrite/` |
 
 ### 감독 경험 설계 (25)
 
@@ -59,6 +61,7 @@
 | 드래그 배치 + 탭-투-배치(접근성) | dnd-kit 포인터/터치 센서 + 키보드 대체 배치 | `components/tactics/`, `app/tactics/page.tsx` |
 | 자유 일시정지 지시 · 위기 순간 알림 · 방송 중계형 연출 | 라이브 피치·중계 피드·승률 타임라인, 위기 배너, 개입 시트 | `components/match/`, `app/match/page.tsx`, `lib/engine/match.ts` |
 | 승부차기 키커 순서 지정 | PK·멘탈 vs GK 선방 확률 미니게임 | `lib/engine/shootout.ts`, `app/shootout/page.tsx` |
+| "그 순간, 감독이었다면" — 결정적 순간 5분 전 개입 | 경기 브라우저(라운드·팀 필터) → 실점/리드 상실/퇴장/막판 동점 카드 선택 → 사건 5분 전 시점부터 실제 선발·스코어·체력 감쇠가 반영된 상태로 `/tactics`·`/match`를 그대로 재사용해 지휘 | `app/rewrite/page.tsx`, `components/rewrite/MatchBrowser.tsx`, `components/rewrite/MomentCards.tsx`, `lib/wc2026/moments.ts`, `lib/engine/rewrite.ts` |
 
 ### 완성도 (25) + 기획/구현 완성도 (20)
 
@@ -66,8 +69,9 @@
 |---|---|---|
 | 100% 클라이언트 엔진 (외부 API·키 없음 → 심사 중 장애 원천 차단) | `output: 'export'` 완전 정적 빌드, 순수 TS 엔진 | `next.config.ts`, `lib/engine/` |
 | 시드 기반 재현 가능한 시뮬레이션 | seedable RNG로 분 단위 이벤트 체인 결정론적 생성 | `lib/engine/random.ts`, `lib/engine/match.ts` |
-| 엔진 단위 테스트 + 밸런싱 검증 | vitest 93개(12파일) + 몬테카를로 밸런스 게이트 | `lib/engine/*.test.ts`, `lib/engine/balance.test.ts` |
+| 엔진 단위 테스트 + 밸런싱 검증 | vitest 170개(24파일, wc2026 정합성·복기 테스트 포함) + 몬테카를로 밸런스 게이트 | `lib/engine/*.test.ts`, `lib/engine/balance.test.ts`, `lib/wc2026/*.test.ts` |
 | 기획서 인터랙션 = 실제 화면 1:1, README 매핑표 | 4+1 화면(홈/작전실/경기/승부차기/복기) 라우트 구현 | `app/page.tsx`, `app/tactics`, `app/match`, `app/shootout`, `app/result` |
+| 실제 데이터 정합성 검증 + 100% 클라이언트 유지 | ESPN 원본 → 정규화 스키마 변환 스크립트(1회 실행, 결과만 커밋), 골 수=스코어·선발 11명·레드카드 이후 이벤트 없음 등 정합성 테스트 | `scripts/ingest-wc2026.mjs`, `scripts/build-wc2026.mjs`, `lib/wc2026/integrity.test.ts` |
 
 > 스펙 원문: `docs/superpowers/specs/2026-07-17-touchline-tactics-simulator-design.md` (§2 우승 전략 매핑, §5 엔진 명세)
 
@@ -168,7 +172,7 @@ npm run build        # 정적 export 빌드 → out/
 ## 테스트
 
 ```bash
-npx vitest run       # 엔진 단위 + 밸런스 테스트 (93개 / 12파일)
+npx vitest run       # 엔진 단위 + 밸런스 + wc2026 테스트 (170개 / 24파일)
 npx playwright test  # 핵심 플로우 E2E 스모크 (홈→작전실→경기→복기)
 npx tsc --noEmit     # 타입 체크
 ```
@@ -193,3 +197,5 @@ npx tsc --noEmit     # 타입 체크
 ## 가상 데이터 고지
 
 **본 서비스의 모든 선수·팀 능력치는 가상으로 구성된 데이터입니다.** 선수 사진·초상은 사용하지 않고 이니셜 아바타로 대체하며, 팀 배지는 자체 제작한 텍스트 배지입니다.
+
+2026 월드컵 실제 경기 데이터(경기 결과·득점·교체·카드, 분 단위)는 ESPN 공개 데이터에서 빌드 타임에 1회 수집해 정적 커밋했으며, 서비스 런타임은 여전히 100% 클라이언트(외부 API·키 없음)입니다. 선수 능력치는 여전히 가상 생성이며, 실제 사용된 데이터는 이름·포지션·출전/득점/교체/카드 기록뿐입니다.
