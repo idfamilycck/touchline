@@ -101,8 +101,15 @@ export function statValue(player: Player, key: StatKey): number {
 // id 접미(kor_16 → 16)를 등번호로 사용한다. 데이터에 별도 번호 필드가 없어
 // 안정적이고 결정적인 유사 등번호로 활용.
 export function jerseyOf(id: string): number {
-  const n = Number(id.split("_").pop());
-  return Number.isFinite(n) ? n : 0;
+  // 가상팀 id는 "kor_01" 꼴이라 뒤 숫자가 그대로 등번호가 된다.
+  const tail = id.split("_").pop() ?? id;
+  const n = Number(tail);
+  if (Number.isInteger(n) && n >= 1 && n <= 99) return n;
+  // 실제 월드컵 선수 id(ESPN "238886" 등 불투명 값)는 등번호가 아니므로,
+  // id 해시로 안정적인 1~99 표시 번호를 만든다(선수마다 항상 동일).
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return (h % 99) + 1;
 }
 
 // 주장(C)/프리킥(FK)/코너킥(CK) 배지를 special 지시에서 도출한다.

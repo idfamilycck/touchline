@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { Wc2026Match, Wc2026Round } from "@/lib/wc2026/types";
 import { wc2026TeamId } from "@/lib/wc2026/data";
 import { teamById } from "@/lib/data/teams";
-import { sortForBrowser, roundLabelKo } from "@/components/rewrite/match-browser";
+import { sortForBrowser, roundLabelKo, availableGroups } from "@/components/rewrite/match-browser";
 import { FlagBadge } from "@/components/ui/FlagBadge";
 
 const ROUND_ORDER: Wc2026Round[] = ["group", "r32", "r16", "qf", "sf", "third", "final"];
@@ -36,6 +36,7 @@ export function MatchBrowser({
   onSelectSide,
 }: MatchBrowserProps) {
   const [roundFilter, setRoundFilter] = useState<Wc2026Round | undefined>(undefined);
+  const [groupFilter, setGroupFilter] = useState<string | undefined>(undefined);
 
   // 실제 데이터에 존재하는 라운드만 탭으로 노출한다(예: 결승이 아직 데이터에
   // 없으면 "결승" 탭은 숨김).
@@ -44,7 +45,19 @@ export function MatchBrowser({
     return ROUND_ORDER.filter((r) => present.has(r));
   }, [matches]);
 
-  const visible = useMemo(() => sortForBrowser(matches, roundFilter), [matches, roundFilter]);
+  // 조별리그 선택 시 노출할 조(A~L) 목록.
+  const groups = useMemo(() => availableGroups(matches), [matches]);
+
+  // 라운드를 조별리그가 아닌 곳으로 바꾸면 조 필터를 초기화한다.
+  function pickRound(r: Wc2026Round | undefined) {
+    setRoundFilter(r);
+    if (r !== "group") setGroupFilter(undefined);
+  }
+
+  const visible = useMemo(
+    () => sortForBrowser(matches, roundFilter, roundFilter === "group" ? groupFilter : undefined),
+    [matches, roundFilter, groupFilter],
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -52,7 +65,7 @@ export function MatchBrowser({
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => setRoundFilter(undefined)}
+          onClick={() => pickRound(undefined)}
           className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
             roundFilter === undefined ? "bg-accent text-accent-ink" : "bg-surface-2 text-dim"
           }`}
@@ -63,7 +76,7 @@ export function MatchBrowser({
           <button
             key={r}
             type="button"
-            onClick={() => setRoundFilter(r)}
+            onClick={() => pickRound(r)}
             className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
               roundFilter === r ? "bg-accent text-accent-ink" : "bg-surface-2 text-dim"
             }`}
@@ -72,6 +85,33 @@ export function MatchBrowser({
           </button>
         ))}
       </div>
+
+      {/* 조 필터(조별리그 선택 시에만) */}
+      {roundFilter === "group" && groups.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setGroupFilter(undefined)}
+            className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
+              groupFilter === undefined ? "bg-accent/80 text-accent-ink" : "bg-surface text-dim"
+            }`}
+          >
+            전체 조
+          </button>
+          {groups.map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGroupFilter(g)}
+              className={`rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
+                groupFilter === g ? "bg-accent/80 text-accent-ink" : "bg-surface text-dim"
+              }`}
+            >
+              {g}조
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* 경기 카드 그리드 */}
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

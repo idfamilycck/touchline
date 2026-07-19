@@ -24,13 +24,24 @@ function isKorMatch(m: Wc2026Match): boolean {
   return m.home === "KOR" || m.away === "KOR";
 }
 
-// 라운드 필터(선택) 적용 후, KOR 관련 경기를 최상단으로 올리고, 각 그룹
-// 내부는 kickoffISO 오름차순으로 정렬한다.
+// 조별리그에 존재하는 조 문자(A~L)를 정렬해 반환한다.
+export function availableGroups(matches: Wc2026Match[]): string[] {
+  const s = new Set<string>();
+  for (const m of matches) {
+    if (m.round === "group" && m.group) s.add(m.group);
+  }
+  return [...s].sort();
+}
+
+// 라운드 필터(선택) + 조 필터(선택) 적용 후, KOR 관련 경기를 최상단으로 올리고,
+// 각 그룹 내부는 kickoffISO 오름차순으로 정렬한다.
 export function sortForBrowser(
   matches: Wc2026Match[],
   roundFilter?: Wc2026Round,
+  groupFilter?: string,
 ): Wc2026Match[] {
-  const filtered = roundFilter ? matches.filter((m) => m.round === roundFilter) : matches;
+  let filtered = roundFilter ? matches.filter((m) => m.round === roundFilter) : matches;
+  if (groupFilter) filtered = filtered.filter((m) => m.group === groupFilter);
 
   return [...filtered].sort((a, b) => {
     const aKor = isKorMatch(a);

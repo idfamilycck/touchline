@@ -1,8 +1,8 @@
 // components/rewrite/match-browser.test.ts
 import { describe, it, expect } from "vitest";
-import { sortForBrowser, roundLabelKo } from "@/components/rewrite/match-browser";
+import { sortForBrowser, roundLabelKo, availableGroups } from "@/components/rewrite/match-browser";
 import type { Wc2026Match } from "@/lib/wc2026/types";
-// KOR 경기가 최상단으로 오는지, round 필터가 동작하는지 검증
+// KOR 경기가 최상단으로 오는지, round/조 필터가 동작하는지 검증
 
 function mk(
   id: string,
@@ -10,6 +10,7 @@ function mk(
   away: string,
   round: Wc2026Match["round"],
   kickoffISO: string,
+  group?: string,
 ): Wc2026Match {
   return {
     id,
@@ -22,6 +23,7 @@ function mk(
     kickoffISO,
     events: [],
     lineups: [] as unknown as Wc2026Match["lineups"],
+    ...(group ? { group } : {}),
   };
 }
 
@@ -58,6 +60,29 @@ describe("sortForBrowser", () => {
 
   it("round 필터 없으면 전체 반환", () => {
     expect(sortForBrowser(matches)).toHaveLength(4);
+  });
+});
+
+describe("조 필터", () => {
+  const groupMatches: Wc2026Match[] = [
+    mk("g1", "KOR", "GHA", "group", "2026-06-11T12:00Z", "A"),
+    mk("g2", "URU", "POR", "group", "2026-06-12T12:00Z", "A"),
+    mk("g3", "BRA", "SRB", "group", "2026-06-13T12:00Z", "B"),
+    mk("k1", "FRA", "ENG", "r16", "2026-06-20T12:00Z"),
+  ];
+
+  it("availableGroups는 조별리그의 조 문자를 정렬해 반환한다", () => {
+    expect(availableGroups(groupMatches)).toEqual(["A", "B"]);
+  });
+
+  it("조 필터가 주어지면 해당 조 경기만 반환", () => {
+    const sorted = sortForBrowser(groupMatches, "group", "A");
+    expect(sorted.map((m) => m.id).sort()).toEqual(["g1", "g2"]);
+  });
+
+  it("조 필터 없으면 라운드 내 전체 조 반환", () => {
+    const sorted = sortForBrowser(groupMatches, "group");
+    expect(sorted.map((m) => m.id).sort()).toEqual(["g1", "g2", "g3"]);
   });
 });
 

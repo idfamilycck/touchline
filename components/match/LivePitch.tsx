@@ -12,12 +12,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { MatchEventType } from "@/lib/engine/match";
 import type { SideSetup } from "@/lib/types";
 import { teamById } from "@/lib/data/teams";
-import { PLAYERS } from "@/lib/data/players";
+import { playersOf } from "@/lib/data/players";
 import { jerseyOf } from "@/components/tactics/tactics-labels";
 import { dynamicDots, followBall, VB_W, VB_H } from "./livepitch-geometry";
 import { buildSceneChoreo } from "./livepitch-choreo";
 
-const NAME_BY_ID = new Map(PLAYERS.map((p) => [p.id, p.name]));
+// 피치 라벨용 짧은 이름: 서양식 이름은 성(마지막 토큰)만, 한글 등 단일 토큰은 그대로.
+function shortName(full: string): string {
+  const parts = full.trim().split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1] : full;
+}
 
 const CX = VB_W / 2;
 const CY = VB_H / 2;
@@ -55,6 +59,15 @@ interface LivePitchProps {
 export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePitchProps) {
   const meColor = teamById(meSetup.teamId)?.color2 ?? "var(--color-accent)";
   const oppColor = teamById(oppSetup.teamId)?.color1 ?? "var(--color-danger)";
+
+  // 이름 라벨은 실제 온피치 두 팀의 선수 명단에서 조회한다 — 가상팀·월드컵팀 모두 대응.
+  // (기존엔 정적 PLAYERS(16개국)만 봐서 월드컵 선수 이름이 비어 있었다.)
+  const nameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of playersOf(meSetup.teamId)) m.set(p.id, shortName(p.name));
+    for (const p of playersOf(oppSetup.teamId)) m.set(p.id, shortName(p.name));
+    return m;
+  }, [meSetup.teamId, oppSetup.teamId]);
 
   const possession = lean >= 0 ? "me" : "opp";
 
@@ -198,7 +211,7 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
                       strokeWidth={0.45}
                       paintOrder="stroke"
                     >
-                      {NAME_BY_ID.get(d.playerId) ?? ""}
+                      {nameById.get(d.playerId) ?? ""}
                     </text>
                   </motion.g>
                 </motion.g>
