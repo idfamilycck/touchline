@@ -8,6 +8,7 @@
 // early. No I/O, no mutation, no Math.random.
 
 import type { Wc2026Match, Wc2026Event } from "@/lib/wc2026/types";
+import { koreanName } from "@/lib/wc2026/player-names";
 
 export interface EntryPoint {
   id: string;
@@ -61,33 +62,41 @@ interface EventDetail {
   detailKo: string;
 }
 
+// 한국 관객 기준: 로마자 표기(ESPN 원본)를 한글 이름으로 치환한다(매핑이 없으면
+// 로마자/원본 문자열 그대로 폴백) — register.ts의 Player.name 치환과 동일한 규칙을
+// 이 모듈이 직접 다루는 raw event/lineup 이름 문자열에도 적용한다.
+function kr(name: string): string {
+  return koreanName(name) ?? name;
+}
+
 // playerId -> name 맵을 이용해 이벤트 하나를 "누가 무엇을 했는지" 상세로 변환한다.
 // side/opponent 둘 중 하나만 있는 도메인이므로 "side가 아니면 opponent"로 충분하다.
 function detailForEvent(ev: Wc2026Event, side: string, nameById: Map<string, string>): EventDetail {
   const isSide = ev.teamCode === side;
+  const scorerName = kr(ev.playerName);
   switch (ev.type) {
     case "goal":
-      return { icon: "⚽", detailKo: ev.playerName, kindKo: isSide ? "득점" : "실점", emphasis: !isSide };
+      return { icon: "⚽", detailKo: scorerName, kindKo: isSide ? "득점" : "실점", emphasis: !isSide };
     case "pen_goal":
       return {
         icon: "⚽",
-        detailKo: `${ev.playerName} (PK)`,
+        detailKo: `${scorerName} (PK)`,
         kindKo: isSide ? "득점" : "실점",
         emphasis: !isSide,
       };
     case "own_goal":
       // own_goal.teamCode = 자책골을 자기 골문에 넣은(가해) 팀 -> 득점은 상대에 가산.
-      return { icon: "⚽", detailKo: ev.playerName, kindKo: "자책골", emphasis: isSide };
+      return { icon: "⚽", detailKo: scorerName, kindKo: "자책골", emphasis: isSide };
     case "sub": {
-      const inName = ev.playerName;
+      const inName = scorerName;
       const outName = ev.relatedPlayerId ? (nameById.get(ev.relatedPlayerId) ?? ev.relatedPlayerId) : undefined;
       const detailKo = outName ? `${outName} → ${inName}` : inName;
       return { icon: "🔄", detailKo, kindKo: "교체", emphasis: false };
     }
     case "yellow":
-      return { icon: "🟨", detailKo: ev.playerName, kindKo: "경고", emphasis: false };
+      return { icon: "🟨", detailKo: scorerName, kindKo: "경고", emphasis: false };
     case "red":
-      return { icon: "🟥", detailKo: ev.playerName, kindKo: "퇴장", emphasis: isSide };
+      return { icon: "🟥", detailKo: scorerName, kindKo: "퇴장", emphasis: isSide };
   }
 }
 
@@ -98,8 +107,8 @@ function detailForEvent(ev: Wc2026Event, side: string, nameById: Map<string, str
 export function buildEventEntries(match: Wc2026Match, side: string): EntryPoint[] {
   const nameById = new Map<string, string>();
   for (const lineup of match.lineups) {
-    for (const p of lineup.starters) nameById.set(p.playerId, p.name);
-    for (const p of lineup.bench) nameById.set(p.playerId, p.name);
+    for (const p of lineup.starters) nameById.set(p.playerId, kr(p.name));
+    for (const p of lineup.bench) nameById.set(p.playerId, kr(p.name));
   }
 
   const events = [...match.events]

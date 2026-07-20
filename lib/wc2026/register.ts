@@ -14,7 +14,9 @@ import { registerTeam } from "@/lib/data/teams";
 import { registerPlayers } from "@/lib/data/players";
 import { registerVenue, venueById } from "@/lib/data/venues";
 import { makeVirtualPlayer } from "@/lib/wc2026/players";
+import { koreanName } from "@/lib/wc2026/player-names";
 import { wc2026Matches, wc2026TeamId } from "@/lib/wc2026/data";
+import { WC_STADIUM_VENUES } from "@/lib/wc2026/venues";
 import teamsJson from "@/data/wc2026/teams.json";
 
 interface Wc2026TeamRow {
@@ -127,8 +129,10 @@ function formFromElo(elo: number): number {
   return Math.max(1, Math.min(10, Math.round((elo - 1400) / 80)));
 }
 
-// 기본 WC 경기장. 실제 경기장별 프로필(고도/기온 등)을 아직 매핑하지 않았으므로
-// metlife를 복제한 단일 기본값을 사용한다 (plan상 허용된 단순화).
+// 기본 WC 경기장. data/wc2026/matches.json의 venueKo가 lib/wc2026/venues.ts의
+// WC_STADIUM_VENUES 표에 없는 경우(정합성 실패 등 예외 상황)에만 쓰이는 안전망이다.
+// 정상 경로에서는 매치별로 registerWc2026()이 등록하는 실제 경기장별 프로필
+// (고도/기온/돔 여부)이 쓰인다.
 const WC_DEFAULT_VENUE: Venue = {
   id: "wc_default",
   nameKo: "2026 월드컵 경기장",
@@ -194,7 +198,9 @@ export function registerWc2026(): void {
       makeVirtualPlayer({
         id: playerId,
         teamId,
-        name: info.name,
+        // 한국 관객 기준: 로마자 표기(ESPN 원본)를 한글 이름으로 치환한다(매핑이 없으면
+        // 로마자 그대로 폴백). 이 name만 바뀌므로 이하 능력치는 항상 VIRTUAL 그대로다.
+        name: koreanName(info.name) ?? info.name,
         position: info.position,
         teamElo,
       }),
@@ -202,7 +208,14 @@ export function registerWc2026(): void {
     registerPlayers(teamId, players);
   }
 
-  // (c) 경기장 등록: 기존 venue와 이름이 겹치지 않는 한 기본 WC venue 하나로 충분.
+  // (c) 경기장 등록: 실제 16개 경기장별 프로필(고도/기온/돔 여부)을 각각 등록한다.
+  // fromRealState가 match.venueKo -> venue id 매핑(wc2026VenueId)으로 이 중 하나를
+  // 골라 쓴다. wc_default는 매핑 실패 시의 안전망으로 계속 등록해 둔다.
+  for (const venue of WC_STADIUM_VENUES) {
+    if (!venueById(venue.id)) {
+      registerVenue(venue);
+    }
+  }
   if (!venueById(WC_DEFAULT_VENUE.id)) {
     registerVenue(WC_DEFAULT_VENUE);
   }

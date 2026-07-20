@@ -12,6 +12,7 @@
 import type { Wc2026Match } from "@/lib/wc2026/types";
 import { wc2026TeamId } from "@/lib/wc2026/data";
 import { normalizePosition } from "@/lib/wc2026/players";
+import { wc2026VenueId } from "@/lib/wc2026/venues";
 import { FORMATIONS } from "@/lib/data/formations";
 import { DEFAULT_ROLE } from "@/lib/data/roles";
 import { initMatch, winProbGivenScore } from "@/lib/engine/match";
@@ -114,8 +115,8 @@ export function fromRealState(
     throw new Error(`fromRealState: lineup not found for ${side}/${opponent} in match ${match.id}`);
   }
 
-  const oppSetup = baseSideSetup(opponent, placeStartersInSlots(oppLineup.starters));
   const meLineup = placeStartersInSlots(sideLineup.starters);
+  const oppLineupSlots = placeStartersInSlots(oppLineup.starters);
 
   const takeoverMinute = moment.takeoverMinute;
   const events = [...match.events]
@@ -126,6 +127,12 @@ export function fromRealState(
   let scoreOpp = 0;
   let subsUsedMe = 0;
 
+  // side/opponent 양쪽 모두 takeoverMinute 이전 교체·퇴장을 반영한다. 과거엔 우리(me)
+  // 쪽만 반영해 상대는 항상 원래 선발 11명으로 시작했다 — 상대가 인수 시점 이전에
+  // 퇴장당했다면 유저가 부당하게 11 대 11로 시작하게 되는 버그였다. subsUsedMe만
+  // 추적하는 이유는 엔진이 유저(me) 쪽 교체만 소진 횟수를 세기 때문(상대는 유저가
+  // 교체를 실행하지 않으므로 잔여 교체 카운트가 필요 없다) — MatchState에
+  // subsUsedOpp가 없는 것도 같은 이유.
   for (const ev of events) {
     if (ev.type === "goal" || ev.type === "pen_goal") {
       if (ev.teamCode === side) scoreMe += 1;
@@ -134,7 +141,7 @@ export function fromRealState(
       // own_goal.teamCode = 자책골을 자기 골문에 넣은(가해) 팀 -> 득점은 상대에 가산.
       if (ev.teamCode === side) scoreOpp += 1;
       else if (ev.teamCode === opponent) scoreMe += 1;
-    } else if (ev.type === "sub" && ev.teamCode === side) {
+    } else if (ev.type === "sub") {
       // playerId = 투입(in) 선수, relatedPlayerId = 교체되어 나가는(out) 선수.
       // data/wc2026/matches.json의 실제 sub 이벤트(예: 매치 760415, RSA, 56분 —
       // playerId "301321"은 RSA bench에, relatedPlayerId "264751"은 RSA starters에
@@ -142,25 +149,32 @@ export function fromRealState(
       // 선수")과도 일치한다.
       const outId = ev.relatedPlayerId;
       const inId = ev.playerId;
-      if (outId) {
-        const slotId = Object.keys(meLineup).find((k) => meLineup[k] === outId);
-        if (slotId) meLineup[slotId] = inId;
+      const lineup = ev.teamCode === side ? meLineup : ev.teamCode === opponent ? oppLineupSlots : undefined;
+      if (lineup && outId) {
+        const slotId = Object.keys(lineup).find((k) => lineup[k] === outId);
+        if (slotId) lineup[slotId] = inId;
         // out 선수가 현재 라인업에 없어도(데이터 이상 등) 교체 횟수는 그대로 센다.
       }
-      subsUsedMe += 1;
-    } else if (ev.type === "red" && ev.teamCode === side) {
-      const slotId = Object.keys(meLineup).find((k) => meLineup[k] === ev.playerId);
-      if (slotId) delete meLineup[slotId]; // 10인 체제 허용(엔진이 <11 라인업을 지원)
+      if (ev.teamCode === side) subsUsedMe += 1;
+    } else if (ev.type === "red") {
+      const lineup = ev.teamCode === side ? meLineup : ev.teamCode === opponent ? oppLineupSlots : undefined;
+      if (lineup) {
+        const slotId = Object.keys(lineup).find((k) => lineup[k] === ev.playerId);
+        if (slotId) delete lineup[slotId]; // 10인 체제 허용(엔진이 <11 라인업을 지원)
+      }
     }
   }
 
   const meSetup = baseSideSetup(side, meLineup);
+  const oppSetup = baseSideSetup(opponent, oppLineupSlots);
 
   // initMatch로 기본 MatchState(캐시 필드 lambdaMe/lambdaOpp/lines/injuryTime/
-  // initialMe/initialOpp 포함)를 얻는다 — meSetup은 이미 takeoverMinute까지의 실제
-  // 교체/레드카드가 반영된 라인업이므로, initMatch가 계산하는 λ/lineStrengths도
+  // initialMe/initialOpp 포함)를 얻는다 — meSetup/oppSetup은 이미 takeoverMinute까지의
+  // 실제 교체/레드카드가 반영된 라인업이므로, initMatch가 계산하는 λ/lineStrengths도
   // 그 시점의 실제 라인업 기준으로 정확하다. 이후 시점 관련 필드만 덮어쓴다.
-  const base = initMatch(meSetup, oppSetup, "wc_default", seed);
+  // 경기장은 match.venueKo(ESPN 영문 경기장명)를 실제 16개 경기장 프로필 중 하나로
+  // 매핑한다(wc2026VenueId) — 매핑 실패 시 wc_default로 안전 폴백.
+  const base = initMatch(meSetup, oppSetup, wc2026VenueId(match.venueKo), seed);
 
   // 스태미나: 전원 1로 초기화된 base.stamina에서, 온피치 22명만 경과분 기반 감쇠로
   // 덮어쓴다(브리프 근사식: 1 - minute/110, 0.3 하한).
