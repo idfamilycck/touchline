@@ -21,7 +21,7 @@ export function VenuePicker({ venueId, onSelect }: VenuePickerProps) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-dim">
-        경기장은 전술에 영향을 줍니다 — 고도는 체력을, 기온은 압박 지속을, 돔은 날씨 변수를 바꿉니다.
+        경기장은 전술에 영향을 줍니다. 고도는 체력을, 기온은 압박 지속을, 돔은 날씨 변수를 바꿉니다.
       </p>
       <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
         {VENUES.map((v) => {

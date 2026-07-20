@@ -125,7 +125,7 @@ export function RecommendPanel({ currentWin }: RecommendPanelProps) {
           </button>
           {deltaPct !== undefined && deltaPct === 0 && (
             <p className="text-center text-[11px] text-dim">
-              지금 세팅이 이미 최적에 가까워요 — 그대로 두어도 좋아요.
+              지금 세팅이 이미 최적에 가까워요. 그대로 두어도 좋아요.
             </p>
           )}
         </div>

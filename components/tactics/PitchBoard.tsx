@@ -132,7 +132,7 @@ function Slot({
           )}
           <span className="flex flex-col items-center leading-tight">
             <span className="max-w-[64px] truncate text-[10px] font-bold text-ink">
-              {player ? player.name : "—"}
+              {player ? player.name : "-"}
             </span>
             <span className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-wide text-dim">
               <span className="text-accent/90">{posShort}</span>

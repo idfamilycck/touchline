@@ -24,13 +24,13 @@ const KIND_PRIORITY: Record<DecisiveMoment["kind"], number> = {
 function labelFor(kind: DecisiveMoment["kind"], eventMinute: number, takeoverMinute: number): string {
   switch (kind) {
     case "lead_lost":
-      return `${eventMinute}' 리드 상실 — ${takeoverMinute}'로 돌아가기`;
+      return `${eventMinute}' 리드 상실, ${takeoverMinute}'로 돌아가기`;
     case "concede":
-      return `${eventMinute}' 실점 — ${takeoverMinute}'로 돌아가기`;
+      return `${eventMinute}' 실점, ${takeoverMinute}'로 돌아가기`;
     case "red":
-      return `${eventMinute}' 퇴장 — ${takeoverMinute}'로 돌아가기`;
+      return `${eventMinute}' 퇴장, ${takeoverMinute}'로 돌아가기`;
     case "late_tie":
-      return `${eventMinute}' 동점 승부처 — ${takeoverMinute}'로 돌아가기`;
+      return `${eventMinute}' 동점 승부처, ${takeoverMinute}'로 돌아가기`;
   }
 }
 

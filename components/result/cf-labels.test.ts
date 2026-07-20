@@ -63,7 +63,7 @@ describe("heroLine", () => {
   it("개입이 없으면 무개입 완주 문구와 neutral 톤", () => {
     const result = heroLine([]);
     expect(result.tone).toBe("neutral");
-    expect(result.text).toBe("무개입 완주 — 데이터를 믿으셨군요");
+    expect(result.text).toBe("무개입 완주, 데이터를 믿으셨군요");
   });
 
   it("양수 델타(최대 절대값)가 있으면 gain 톤과 + 문구", () => {

@@ -136,7 +136,7 @@ export function SpecialPanel() {
         </label>
         {special.manMark && (
           <p className="rounded-[10px] border border-danger/30 bg-danger/10 px-3 py-2 text-[11px] text-danger">
-            맨마킹 활성 — 피치에 마킹 라인이 표시되고 상대 타깃의 기여도가 낮아집니다.
+            맨마킹 활성: 피치에 마킹 라인이 표시되고 상대 타깃의 기여도가 낮아집니다.
           </p>
         )}
       </section>

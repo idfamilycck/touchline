@@ -92,8 +92,7 @@ export default function Home() {
       {/* ── 매치업 구성 ──────────────────────────────────── */}
       <section aria-label="매치업 구성" className="mx-auto w-full max-w-5xl px-5 pt-10">
         <header className="accent-tab mb-6 pl-4">
-          <p className="eyebrow text-dim">STEP 01 · 매치업</p>
-          <h2 className="display mt-1 text-balance text-3xl text-ink">누구를 이끌고, 누구를 상대할까</h2>
+          <h2 className="display text-balance text-3xl text-ink">누구를 이끌고, 누구를 상대할까</h2>
         </header>
         <TeamGrid myTeamId={myTeamId} oppTeamId={oppTeamId} onSelect={handleTeamClick} />
       </section>
@@ -101,8 +100,7 @@ export default function Home() {
       {/* ── 경기장 선택 ──────────────────────────────────── */}
       <section aria-label="경기장 선택" className="mx-auto w-full max-w-5xl px-5 pt-10">
         <header className="accent-tab mb-6 pl-4">
-          <p className="eyebrow text-dim">STEP 02 · 경기장</p>
-          <h2 className="display mt-1 text-balance text-3xl text-ink">어디에서 맞붙을까</h2>
+          <h2 className="display text-balance text-3xl text-ink">어디에서 맞붙을까</h2>
         </header>
         <VenuePicker venueId={venueId} onSelect={setVenueId} />
       </section>

@@ -56,7 +56,7 @@ export function RolePicker() {
               >
                 <span className="flex w-full items-center gap-1.5">
                   <span className="stat-num text-[10px] text-accent">{s.position}</span>
-                  <span className="truncate text-[12px] font-bold text-ink">{p?.name ?? "—"}</span>
+                  <span className="truncate text-[12px] font-bold text-ink">{p?.name ?? "-"}</span>
                 </span>
                 <span className="truncate text-[10px] text-dim">{ROLE_SHORT[roleId]}</span>
               </button>

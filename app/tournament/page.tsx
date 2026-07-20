@@ -47,8 +47,7 @@ export default function TournamentPage() {
       {/* ── 조별리그 순위 ────────────────────────────────── */}
       <section aria-label="조별리그 순위" className="mx-auto w-full max-w-6xl px-5 pt-12">
         <header className="accent-tab mb-6 pl-4">
-          <p className="eyebrow text-dim">GROUP STAGE</p>
-          <h2 className="display mt-1 text-balance text-2xl text-ink sm:text-3xl">조별리그 순위</h2>
+          <h2 className="display text-balance text-2xl text-ink sm:text-3xl">조별리그 순위</h2>
         </header>
         <GroupStandings standings={standings} />
       </section>
@@ -56,8 +55,7 @@ export default function TournamentPage() {
       {/* ── 토너먼트 대진표 ──────────────────────────────── */}
       <section aria-label="토너먼트 대진표" className="mx-auto w-full max-w-6xl px-5 pt-14">
         <header className="accent-tab mb-6 pl-4">
-          <p className="eyebrow text-dim">KNOCKOUT</p>
-          <h2 className="display mt-1 text-balance text-2xl text-ink sm:text-3xl">토너먼트 대진표</h2>
+          <h2 className="display text-balance text-2xl text-ink sm:text-3xl">토너먼트 대진표</h2>
         </header>
         <KnockoutBracket bracket={bracket} />
       </section>

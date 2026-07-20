@@ -30,7 +30,7 @@ export interface HeroLine {
 // 헤드라인 결론 한 문장: 개입이 있으면 |델타| 최대 개입 기준, 없으면 무개입 문구.
 export function heroLine(deltas: CfDelta[]): HeroLine {
   if (deltas.length === 0) {
-    return { text: "무개입 완주 — 데이터를 믿으셨군요", tone: "neutral" };
+    return { text: "무개입 완주, 데이터를 믿으셨군요", tone: "neutral" };
   }
   const top = [...deltas].sort((a, b) => Math.abs(b.probDelta) - Math.abs(a.probDelta))[0];
   const pp = Math.round(top.probDelta * 100);

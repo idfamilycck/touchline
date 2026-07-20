@@ -77,8 +77,7 @@ function RewriteContent() {
       {/* ── 경기 브라우저 ────────────────────────────────── */}
       <section aria-label="경기 선택" className="mx-auto w-full max-w-5xl px-5 pt-12">
         <header className="accent-tab mb-6 pl-4">
-          <p className="eyebrow text-dim">STEP 01 · 경기 선택</p>
-          <h2 className="display mt-1 text-balance text-2xl text-ink sm:text-3xl">어느 경기를 다시 쓸까</h2>
+          <h2 className="display text-balance text-2xl text-ink sm:text-3xl">어느 경기를 다시 쓸까</h2>
         </header>
         <MatchBrowser
           matches={matches}
@@ -94,8 +93,7 @@ function RewriteContent() {
         <section aria-label="결정적 순간 선택" className="mx-auto w-full max-w-5xl px-5 pt-10">
           <header className="accent-tab mb-6 flex flex-wrap items-center justify-between gap-3 pl-4">
             <div>
-              <p className="eyebrow text-dim">STEP 02 · 결정적 순간</p>
-              <h2 className="display mt-1 text-balance text-2xl text-ink sm:text-3xl">
+              <h2 className="display text-balance text-2xl text-ink sm:text-3xl">
                 어디서부터 다시 쓸까
               </h2>
             </div>

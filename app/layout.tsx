@@ -13,10 +13,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   // 상대 경로 OG 이미지(/og.png)를 절대 URL로 해석하기 위한 기준값.
   metadataBase: new URL("https://touchline-fc.vercel.app"),
-  title: "터치라인 — 당신이 감독이라면",
+  title: "터치라인, 당신이 감독이라면",
   description: DESCRIPTION,
   openGraph: {
-    title: "터치라인 — 당신이 감독이라면",
+    title: "터치라인, 당신이 감독이라면",
     description: DESCRIPTION,
     images: ["/og.png"],
     locale: "ko_KR",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "터치라인 — 당신이 감독이라면",
+    title: "터치라인, 당신이 감독이라면",
     description: DESCRIPTION,
     images: ["/og.png"],
   },
