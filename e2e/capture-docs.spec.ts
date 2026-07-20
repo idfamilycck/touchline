@@ -63,8 +63,13 @@ test("09 대회 순위 + 10 대진표", async ({ page }) => {
   await page.waitForTimeout(700);
   await page.screenshot({ path: `${OUT}/09-tournament.png` });
 
-  await page.getByRole("region", { name: "토너먼트 대진표" }).scrollIntoViewIfNeeded();
-  await page.waitForTimeout(500);
+  // 섹션 상단(라운드 라벨 줄)이 화면에 들어오도록 맞춘다. scrollIntoViewIfNeeded는
+  // 대진표가 화면보다 훨씬 길어 중간 지점에 걸려 라벨이 잘려 나갔다.
+  await page.evaluate(() => {
+    const el = document.querySelector('[aria-label="토너먼트 대진표"]');
+    if (el) window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - 80 });
+  });
+  await page.waitForTimeout(800);
   await page.screenshot({ path: `${OUT}/10-bracket.png` });
 });
 
