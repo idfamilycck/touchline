@@ -22,7 +22,10 @@ test.describe.configure({ mode: "serial" });
 /** 홈에서 팀 2개 + 경기장을 골라 작전실까지 들어간다(스모크와 같은 경로). */
 async function enterTactics(page: Page) {
   await page.goto("/");
-  const teams = page.getByRole("region", { name: "매치업 구성" }).getByRole("button");
+  // 검색·필터 버튼과 섞이지 않도록 팀 목록으로 좁힌다.
+  const teams = page
+    .getByRole("region", { name: "매치업 구성" })
+    .locator('ul[aria-label="팀 목록"] button');
   await teams.nth(0).click();
   await teams.nth(1).click();
   await page.getByRole("region", { name: "경기장 선택" }).getByRole("button").first().click();
@@ -59,9 +62,14 @@ test("07 다시 쓰기 경기 브라우저 + 08 결정적 순간", async ({ page
 });
 
 test("09 대회 순위 + 10 대진표", async ({ page }) => {
-  await page.goto("/tournament");
+  // 대회 화면이 탭(?view=group|knockout)으로 갈렸다. 기본은 조별리그.
+  await page.goto("/tournament?view=group");
   await page.waitForTimeout(700);
   await page.screenshot({ path: `${OUT}/09-tournament.png` });
+
+  // 대진표는 다른 탭이므로 딥링크로 직접 연다.
+  await page.goto("/tournament?view=knockout");
+  await page.waitForTimeout(700);
 
   // 섹션 상단(라운드 라벨 줄)이 화면에 들어오도록 맞춘다. scrollIntoViewIfNeeded는
   // 대진표가 화면보다 훨씬 길어 중간 지점에 걸려 라벨이 잘려 나갔다.

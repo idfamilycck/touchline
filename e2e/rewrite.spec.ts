@@ -22,26 +22,29 @@ test("월드컵 다시 쓰기 → 결정적 순간 선택 → 경기 완주 → 
   await expect(page).toHaveURL(/\/rewrite/);
 
   // ── 경기 선택: 첫 몇 경기 × 양쪽 사이드를 순회해 순간이 있는 조합을 찾는다 ──
+  // 레이아웃은 마스터-디테일이다: 좌측 region "경기 선택"이 경기 행(ul > li) 목록,
+  // 우측 region "선택한 경기"가 사이드 선택 + 결정적 순간을 담는 상세 패널.
+  // 상세는 데스크톱(우측 sticky 컬럼)과 모바일(행 아래 인라인) 두 벌이 렌더되지만
+  // 한쪽은 항상 display:none이라 접근성 트리에는 하나만 올라온다 — 그래서
+  // getByRole로 잡으면 뷰포트와 무관하게 "지금 보이는 상세"가 잡힌다.
   const matchSection = page.getByRole("region", { name: "경기 선택" });
   await expect(matchSection).toBeVisible();
-  const matchCards = matchSection.locator("ul > li");
-  await expect(matchCards.first()).toBeVisible();
+  const matchRows = matchSection.locator("ul > li");
+  await expect(matchRows.first()).toBeVisible();
 
-  const momentSection = page.getByRole("region", { name: "결정적 순간 선택" });
-  const noMomentsFallback = momentSection.getByText("결정적 순간이 없습니다", {
-    exact: false,
-  });
+  const detailPanel = page.getByRole("region", { name: "선택한 경기" });
+  const momentSection = detailPanel.getByRole("region", { name: "결정적 순간 선택" });
 
   let picked = false;
-  const matchCount = Math.min(await matchCards.count(), 4);
+  const matchCount = Math.min(await matchRows.count(), 4);
   for (let i = 0; i < matchCount && !picked; i++) {
-    const card = matchCards.nth(i);
-    await card.locator("button").first().click();
+    const row = matchRows.nth(i);
+    await row.locator("button").first().click();
 
-    // 경기 선택은 이제 라우터 쿼리(?match=)로 반영되어 클릭과 렌더 사이에 비동기
-    // 틈이 생긴다. 사이드 버튼이 뜰 때까지 명시적으로 기다린 뒤 세어야 한다
+    // 경기 선택은 라우터 쿼리(?match=)로 반영되어 클릭과 렌더 사이에 비동기 틈이
+    // 생긴다. 사이드 버튼이 뜰 때까지 명시적으로 기다린 뒤 세어야 한다
     // (count()는 자동 재시도하지 않아, 기다리지 않으면 0으로 읽혀 루프가 헛돈다).
-    const sideButtons = card.getByRole("button", { name: /지휘하기/ });
+    const sideButtons = detailPanel.getByRole("button", { name: /지휘하기/ });
     if (!(await sideButtons.first().isVisible())) {
       await expect(sideButtons.first()).toBeVisible({ timeout: 5_000 }).catch(() => {});
     }
@@ -50,8 +53,8 @@ test("월드컵 다시 쓰기 → 결정적 순간 선택 → 경기 완주 → 
       await sideButtons.nth(s).click();
 
       const momentButtons = momentSection.locator("ul button");
-      // 순간 카드 목록 또는 폴백 메시지, 둘 중 먼저 오는 것을 기다린다.
-      await expect(momentButtons.first().or(noMomentsFallback)).toBeVisible();
+      // 순간 카드(진행 방식 프리셋 3개는 항상 존재)가 뜰 때까지 기다린다.
+      await expect(momentButtons.first()).toBeVisible();
 
       if ((await momentButtons.count()) > 0) {
         await momentButtons.first().click();

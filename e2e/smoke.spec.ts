@@ -10,7 +10,10 @@ import { test, expect } from "@playwright/test";
 test("매치업 구성 → 작전실 → 경기 완주 → 복기 도달", async ({ page }) => {
   // ── 홈: 팀 2개 + 경기장 선택 후 작전실 입장 ────────────────
   await page.goto("/");
-  const teamCards = page.getByRole("region", { name: "매치업 구성" }).getByRole("button");
+  // 매치업 구성 섹션에는 검색·단계 필터 버튼도 있으므로 팀 목록(ul[aria-label])으로 좁힌다.
+  const teamCards = page
+    .getByRole("region", { name: "매치업 구성" })
+    .locator('ul[aria-label="팀 목록"] button');
   await teamCards.nth(0).click(); // 내 팀
   await teamCards.nth(1).click(); // 상대 팀
   await page.getByRole("region", { name: "경기장 선택" }).getByRole("button").first().click();
