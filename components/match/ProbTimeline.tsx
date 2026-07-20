@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // 승률 타임라인: 자체 SVG 라인차트. x=경기 시각(0~95분), y=우리 승률(0~100%).
 // 단일 라인 1개(§4.6). 골 SoccerBall · 개입 Brain 마커 + 현재 분 커서. 유리(초록)/불리(빨강)
@@ -58,9 +58,14 @@ export function ProbTimeline({ timeline, events, interventions }: ProbTimelinePr
   const y50 = yOf(0.5);
 
   return (
-    <div className="panel flex flex-col rounded-[10px] p-4">
-      <div className="flex items-center justify-between">
-        <p className="eyebrow text-accent">승률 타임라인</p>
+    <div className="panel flex flex-col rounded-panel p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="eyebrow text-accent">승률 타임라인</p>
+          <p className="mt-0.5 text-[10px] text-dim">
+            세로축 우리 승리 확률(%) · 가로축 경기 시간(분)
+          </p>
+        </div>
         <span
           className="stat-num rounded-full px-2.5 py-0.5 text-xs font-bold"
           style={{
@@ -90,8 +95,9 @@ export function ProbTimeline({ timeline, events, interventions }: ProbTimelinePr
               strokeWidth={v === 0.5 ? 0.8 : 0.5}
               strokeDasharray={v === 0.5 ? "3 3" : undefined}
             />
+            {/* 단위(%)를 붙인다. 숫자만 있으면 "이게 뭘 재는 축인지" 알 수 없다는 지적이 있었다. */}
             <text x={PAD_L - 5} y={yOf(v) + 3} textAnchor="end" fontSize="9" fill="var(--color-dim)">
-              {v * 100}
+              {v * 100}%
             </text>
           </g>
         ))}

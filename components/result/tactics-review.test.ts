@@ -8,7 +8,7 @@ const rule = (id: string, da: number, dd = 0): AppliedRule => ({
   textKo: `rule-${id}`,
   deltaAttack: da,
   deltaDefense: dd,
-  icon: "⚡",
+  iconKey: "bolt",
 });
 
 const mod = (rules: AppliedRule[], flags: Partial<ModifierResult["staminaFlags"]> = {}): ModifierResult => ({
@@ -37,6 +37,48 @@ describe("buildTacticsReview", () => {
     );
     expect(review.worked.map((r) => r.id)).toEqual(["plus_big", "plus_small"]);
     expect(review.hurt.map((r) => r.id)).toEqual(["minus"]);
+  });
+
+  // 회귀: 졌는데 "전술 감점 요인은 없었어요"만 뜨던 문제.
+  // 내 감점이 없어도 상대 우위를 꺼내 왜 졌는지 설명해야 한다.
+  describe("oppEdge — 내 감점이 없는데 이기지 못한 경우", () => {
+    it("패배 시 상대의 우위 규칙을 효과 크기순으로 최대 3개 노출한다", () => {
+      const review = buildTacticsReview(
+        matchOf({ scoreMe: 0, scoreOpp: 2 }),
+        mod([rule("my_plus", 0.03)]),
+        mod([rule("o1", 0.02), rule("o2", 0.09), rule("o3", 0.05), rule("o4", 0.01), rule("o_neg", -0.04)])
+      );
+      expect(review.hurt).toEqual([]);
+      expect(review.oppEdge.map((r) => r.id)).toEqual(["o2", "o3", "o1"]);
+    });
+
+    it("무승부도 '이기지 못한' 것으로 보고 상대 우위를 낸다", () => {
+      const review = buildTacticsReview(
+        matchOf({ scoreMe: 1, scoreOpp: 1 }),
+        mod([]),
+        mod([rule("o1", 0.05)])
+      );
+      expect(review.oppEdge.map((r) => r.id)).toEqual(["o1"]);
+    });
+
+    it("이겼으면 상대 우위를 꺼내지 않는다", () => {
+      const review = buildTacticsReview(
+        matchOf({ scoreMe: 3, scoreOpp: 1 }),
+        mod([]),
+        mod([rule("o1", 0.05)])
+      );
+      expect(review.oppEdge).toEqual([]);
+    });
+
+    it("내 감점이 있으면 그쪽이 우선이라 상대 우위는 비운다", () => {
+      const review = buildTacticsReview(
+        matchOf({ scoreMe: 0, scoreOpp: 1 }),
+        mod([rule("my_minus", -0.06)]),
+        mod([rule("o1", 0.05)])
+      );
+      expect(review.hurt.map((r) => r.id)).toEqual(["my_minus"]);
+      expect(review.oppEdge).toEqual([]);
+    });
   });
 
   it("위기 2회 이상이면 라인/역할 조정 팁이 나온다", () => {

@@ -8,6 +8,14 @@ import type { AppliedRule, ModifierResult } from "@/lib/engine/modifiers";
 export interface TacticsReview {
   worked: AppliedRule[]; // 종합효과(공격+수비) 양수 — 통한 전술
   hurt: AppliedRule[]; // 음수 — 발목 잡은 부분
+  /**
+   * 내 감점 규칙이 하나도 없는데 이기지도 못한 경우, 상대 쪽에서 우위였던 규칙.
+   *
+   * 이게 없으면 "졌는데 전술 감점 요인은 없었어요"라는 모순된 화면이 나온다. 진 이유가
+   * 내 전술의 실수가 아니라 (a) 상대 전술의 우위이거나 (b) 순수 결정력 차이일 수 있는데,
+   * 이전 구현은 내 발동 규칙만 봐서 두 경우를 구분하지 못하고 똑같이 침묵했다.
+   */
+  oppEdge: AppliedRule[];
   tips: string[]; // 다음 경기 보완 제안 (최대 4, 최소 1)
 }
 
@@ -20,6 +28,16 @@ export function buildTacticsReview(
 ): TacticsReview {
   const worked = meMod.rules.filter((r) => impact(r) > 0).sort((a, b) => impact(b) - impact(a));
   const hurt = meMod.rules.filter((r) => impact(r) < 0).sort((a, b) => impact(a) - impact(b));
+
+  // 이기지 못했고 내 감점도 없을 때만 상대 우위를 꺼낸다(이겼으면 굳이 변명하지 않는다).
+  const won = match.scoreMe > match.scoreOpp;
+  const oppEdge =
+    !won && hurt.length === 0
+      ? oppMod.rules
+          .filter((r) => impact(r) > 0)
+          .sort((a, b) => impact(b) - impact(a))
+          .slice(0, 3)
+      : [];
 
   const tips: string[] = [];
 
@@ -63,12 +81,18 @@ export function buildTacticsReview(
   }
 
   if (tips.length === 0) {
-    tips.push(
-      match.scoreMe > match.scoreOpp
-        ? "감점 요인 없이 깔끔한 운영이었어요. 이 전술 틀을 유지하며 상대별 미세 조정만 하면 됩니다."
-        : "전술 감점 요인은 없었어요. 결정력 싸움이었습니다. 슈팅·중요국면 능력이 좋은 선수에게 공격 역할을 몰아줘 보세요."
-    );
+    if (won) {
+      tips.push("감점 요인 없이 깔끔한 운영이었어요. 이 전술 틀을 유지하며 상대별 미세 조정만 하면 됩니다.");
+    } else if (oppEdge.length > 0) {
+      tips.push(
+        `내 전술에는 감점이 없었어요. 대신 상대의 "${oppEdge[0].textKo}"가 살아 있었습니다. 이걸 지우는 쪽으로 지시를 맞춰보세요.`
+      );
+    } else {
+      tips.push(
+        "양 팀 모두 전술 보정이 걸리지 않은 순수 결정력 싸움이었어요. 슈팅·중요국면 능력이 좋은 선수에게 공격 역할을 몰아줘 보세요."
+      );
+    }
   }
 
-  return { worked, hurt, tips: tips.slice(0, 4) };
+  return { worked, hurt, oppEdge, tips: tips.slice(0, 4) };
 }
