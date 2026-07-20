@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // 라이브 미니 피치: 실제 축구처럼 팀 전체가 국면 따라 하프라인을 넘나든다.
 // - 동적 전형(tilt): 공세면 수비수까지 상대 진영 근처로 전진, 수세면 전원 수축.
@@ -14,8 +14,9 @@ import type { SideSetup } from "@/lib/types";
 import { teamById } from "@/lib/data/teams";
 import { playersOf } from "@/lib/data/players";
 import { jerseyOf } from "@/components/tactics/tactics-labels";
-import { dynamicDots, followBall, VB_W, VB_H } from "./livepitch-geometry";
+import { dynamicDots, followBall, VB_W, VB_H, type PlayerDot } from "./livepitch-geometry";
 import { buildSceneChoreo } from "./livepitch-choreo";
+import { layoutLabels, LABEL_FONT_SIZE, LABEL_PRIORITY, type LabelCandidate } from "./livepitch-labels";
 
 // 피치 라벨용 짧은 이름: 서양식 이름은 성(마지막 토큰)만, 한글 등 단일 토큰은 그대로.
 function shortName(full: string): string {
@@ -48,15 +49,37 @@ function jitterOf(side: string, slotId: string): { ax: number; ay: number; dur: 
   };
 }
 
+/** 렌더용 선수 목표 좌표 — 점 배치와 라벨 충돌 검사가 같은 값을 쓰도록 한 번만 계산한다. */
+interface Target {
+  key: string;
+  side: "me" | "opp";
+  dot: PlayerDot;
+  tx: number;
+  ty: number;
+  /** 장면 안무에 가담 중인 선수 */
+  involved: boolean;
+}
+
 interface LivePitchProps {
   meSetup: SideSetup;
   oppSetup: SideSetup;
   scene?: ScenePlay | null;
   /** 진형 쏠림 -1(상대 공세)~+1(우리 공세) — 국면(tilt) 산출에 쓴다 */
   lean?: number;
+  /**
+   * 킥오프 이후인가. false면 제자리 흔들림·볼홀더 확대를 모두 멈춘다.
+   * 경기 시작 전인데 선수들이 계속 꿈틀대면 "이미 진행 중"으로 오독된다.
+   */
+  live?: boolean;
 }
 
-export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePitchProps) {
+export function LivePitch({
+  meSetup,
+  oppSetup,
+  scene = null,
+  lean = 0,
+  live = true,
+}: LivePitchProps) {
   const meColor = teamById(meSetup.teamId)?.color2 ?? "var(--color-accent)";
   const oppColor = teamById(oppSetup.teamId)?.color1 ?? "var(--color-danger)";
 
@@ -100,15 +123,68 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
   const holder = chain.length > 0 ? chain[passStep % chain.length] : undefined;
 
   // 전원이 따라갈 공의 관심 지점: 안무 중엔 마지막 키프레임(결과 지점), 평상시엔 볼홀더.
-  const ballPoint = choreo
-    ? { cx: choreo.ball.xs[choreo.ball.xs.length - 1], cy: choreo.ball.ys[choreo.ball.ys.length - 1] }
-    : { cx: (holder?.cx ?? CX) + (possession === "me" ? 5 : -5), cy: holder?.cy ?? CY };
+  const ballCx = choreo
+    ? choreo.ball.xs[choreo.ball.xs.length - 1]
+    : (holder?.cx ?? CX) + (possession === "me" ? 5 : -5);
+  const ballCy = choreo ? choreo.ball.ys[choreo.ball.ys.length - 1] : (holder?.cy ?? CY);
 
   const pulseSlot = choreo?.shooterSlot ?? choreo?.headerSlot;
+  const holderSlot = holder?.slotId;
+
+  // ── 렌더 목표 좌표(점) ──
+  // 라벨 충돌 검사를 위해 각 선수의 최종 목표 좌표를 한 번만 계산해 둔다.
+  // 점 좌표 자체는 기존과 동일 — 라벨 배치에만 쓰인다.
+  const targets = useMemo<Target[]>(() => {
+    const out: Target[] = [];
+    for (const { dots, side } of [
+      { dots: dotsMe, side: "me" as const },
+      { dots: dotsOpp, side: "opp" as const },
+    ]) {
+      for (const d of dots) {
+        const override = scene?.side === side ? choreo?.overrides[d.slotId] : undefined;
+        const follow = followBall(d, { cx: ballCx, cy: ballCy });
+        out.push({
+          key: `${side}-${d.slotId}`,
+          side,
+          dot: d,
+          tx: override ? override.cx : follow.tx,
+          ty: override ? override.cy : follow.ty,
+          involved: !!override,
+        });
+      }
+    }
+    return out;
+  }, [dotsMe, dotsOpp, scene?.side, choreo, ballCx, ballCy]);
+
+  // ── 이름 라벨 배치 ──
+  // 좌표가 바뀔 때만 O(n²) 충돌 검사를 돌린다(매 프레임 아님 — 애니메이션은 transform으로만 진행).
+  const labels = useMemo(() => {
+    const candidates: LabelCandidate[] = targets.map((t) => {
+      const onSceneSide = scene?.side === t.side;
+      const priority =
+        onSceneSide && pulseSlot === t.dot.slotId
+          ? LABEL_PRIORITY.star
+          : t.involved || (!choreo && possession === t.side && t.dot.slotId === holderSlot)
+            ? LABEL_PRIORITY.involved
+            : t.dot.slotId === "gk"
+              ? LABEL_PRIORITY.keeper
+              : LABEL_PRIORITY.normal;
+      return {
+        key: t.key,
+        text: nameById.get(t.dot.playerId) ?? "",
+        cx: t.tx,
+        cy: t.ty,
+        priority,
+      };
+    });
+    // 다른 선수의 점(마커)도 라벨이 덮으면 안 되는 장애물이다 — 뒤에 그려진 점이 앞 라벨을 가린다.
+    const obstacles = targets.map((t) => ({ key: t.key, cx: t.tx, cy: t.ty }));
+    return layoutLabels(candidates, { minY: 0, maxY: VB_H, obstacles });
+  }, [targets, nameById, scene?.side, pulseSlot, choreo, possession, holderSlot]);
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-[10px] border border-line"
+      className="relative overflow-hidden rounded-panel border border-line"
       style={{ background: "linear-gradient(180deg, var(--color-turf), var(--color-turf-2))" }}
       animate={scene?.type === "goal" ? { x: [0, -5, 5, -4, 4, 0] } : { x: 0 }}
       transition={{ duration: 0.5 }}
@@ -143,83 +219,87 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
         </text>
 
         {/* 양 팀 선수 22명 */}
-        {([
-          { dots: dotsMe, side: "me" as const, color: meColor },
-          { dots: dotsOpp, side: "opp" as const, color: oppColor },
-        ]).map(({ dots, side, color }) => (
-          <g key={side}>
-            {dots.map((d) => {
-              const override = scene?.side === side ? choreo?.overrides[d.slotId] : undefined;
-              const isPulse = scene?.side === side && pulseSlot === d.slotId;
-              const isHolder = !choreo && holder !== undefined && possession === side && d.slotId === holder.slotId;
-              // 위치: 안무 오버라이드 > 공 따라가기(라인별 강도)
-              const follow = followBall(d, ballPoint);
-              const tx = override ? override.cx : follow.tx;
-              const ty = override ? override.cy : follow.ty;
-              const jit = jitterOf(side, d.slotId);
-              return (
-                <motion.g
-                  key={`${side}-${d.slotId}`}
-                  initial={false}
-                  animate={{ x: tx, y: ty }}
-                  transition={{ type: "spring", stiffness: override ? 70 : 120, damping: 18 }}
-                >
-                  {/* 슬롯별 미세 흔들림 — 정지 순간에도 제자리에서 살아 움직인다 */}
-                  <motion.g
-                    animate={{
-                      x: [0, jit.ax, -jit.ax * 0.6, 0],
-                      y: [0, -jit.ay * 0.7, jit.ay, 0],
-                    }}
-                    transition={{ duration: jit.dur, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    {/* 확대는 r 애니메이션 대신 transform scale — SVG 속성 r은 framer가
-                        마운트 시점에 undefined로 읽어 콘솔 에러를 내는 문제가 있다. */}
-                    <motion.g
-                      initial={false}
-                      animate={isPulse ? { scale: [1, 1.35, 1] } : { scale: isHolder ? 1.15 : 1 }}
-                      transition={
-                        isPulse
-                          ? { duration: 0.9, repeat: Infinity, ease: "easeInOut" }
-                          : { duration: 0.25 }
+        {targets.map((t) => {
+          const { side, dot: d } = t;
+          const color = side === "me" ? meColor : oppColor;
+          const isPulse = scene?.side === side && pulseSlot === d.slotId;
+          const isHolder = live && !choreo && possession === side && d.slotId === holderSlot;
+          const jit = jitterOf(side, d.slotId);
+          // 이름 라벨은 배치가 결정된 선수만 그린다(겹치면 숨기고 등번호로 식별).
+          const label = labels.get(t.key);
+          return (
+            <motion.g
+              key={t.key}
+              initial={false}
+              animate={{ x: t.tx, y: t.ty }}
+              transition={{ type: "spring", stiffness: t.involved ? 70 : 120, damping: 18 }}
+            >
+              {/* 슬롯별 미세 흔들림 — 경기 중 정지 순간에도 제자리에서 살아 움직인다.
+                  킥오프 전(live=false)에는 완전히 멈춰 "아직 시작 안 함"을 분명히 한다. */}
+              <motion.g
+                animate={
+                  live
+                    ? {
+                        x: [0, jit.ax, -jit.ax * 0.6, 0],
+                        y: [0, -jit.ay * 0.7, jit.ay, 0],
                       }
-                    >
-                      <circle
-                        r={5.5}
-                        fill={color}
-                        stroke={isPulse ? "var(--color-accent)" : "rgba(11,16,14,0.55)"}
-                        strokeWidth={isPulse ? 1.4 : 1}
-                      />
-                    </motion.g>
-                    <text
-                      textAnchor="middle"
-                      dy={1.8}
-                      fontSize="5"
-                      fontWeight={700}
-                      fill="#f2fff6"
-                      stroke="rgba(0,0,0,0.45)"
-                      strokeWidth={0.5}
-                      paintOrder="stroke"
-                    >
-                      {jerseyOf(d.playerId)}
-                    </text>
-                    <text
-                      textAnchor="middle"
-                      dy={11.5}
-                      fontSize="3.6"
-                      fontWeight={isPulse ? 800 : 600}
-                      fill={isPulse ? "var(--color-accent)" : "rgba(230,255,240,0.82)"}
-                      stroke="rgba(0,0,0,0.55)"
-                      strokeWidth={0.45}
-                      paintOrder="stroke"
-                    >
-                      {nameById.get(d.playerId) ?? ""}
-                    </text>
-                  </motion.g>
+                    : { x: 0, y: 0 }
+                }
+                transition={
+                  live
+                    ? { duration: jit.dur, repeat: Infinity, ease: "easeInOut" }
+                    : { duration: 0.3 }
+                }
+              >
+                {/* 확대는 r 애니메이션 대신 transform scale — SVG 속성 r은 framer가
+                    마운트 시점에 undefined로 읽어 콘솔 에러를 내는 문제가 있다. */}
+                <motion.g
+                  initial={false}
+                  animate={isPulse ? { scale: [1, 1.35, 1] } : { scale: isHolder ? 1.15 : 1 }}
+                  transition={
+                    isPulse
+                      ? { duration: 0.9, repeat: Infinity, ease: "easeInOut" }
+                      : { duration: 0.25 }
+                  }
+                >
+                  <circle
+                    r={5.5}
+                    fill={color}
+                    stroke={isPulse ? "var(--color-accent)" : "rgba(11,16,14,0.55)"}
+                    strokeWidth={isPulse ? 1.4 : 1}
+                  />
                 </motion.g>
-              );
-            })}
-          </g>
-        ))}
+                <text
+                  textAnchor="middle"
+                  dy={1.8}
+                  fontSize="5"
+                  fontWeight={700}
+                  fill="#f2fff6"
+                  stroke="rgba(0,0,0,0.45)"
+                  strokeWidth={0.5}
+                  paintOrder="stroke"
+                >
+                  {jerseyOf(d.playerId)}
+                </text>
+              </motion.g>
+              {/* 이름은 흔들림 그룹 밖에 둔다 — 충돌 계산과 실제 위치를 일치시키고 가독성을 지킨다. */}
+              {label && (
+                <text
+                  textAnchor="middle"
+                  dy={label.dy}
+                  fontSize={LABEL_FONT_SIZE}
+                  fontWeight={isPulse ? 800 : 600}
+                  fill={isPulse ? "var(--color-accent)" : "rgba(230,255,240,0.82)"}
+                  stroke="rgba(0,0,0,0.55)"
+                  strokeWidth={0.45}
+                  paintOrder="stroke"
+                >
+                  {nameById.get(d.playerId) ?? ""}
+                </text>
+              )}
+            </motion.g>
+          );
+        })}
 
         {/* 공: 평상시엔 점유 팀 패스 순환, 장면엔 안무 키프레임(월패스/코너 크로스) */}
         {choreo ? (

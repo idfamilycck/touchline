@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 // 경기 화면 — 하이라이트 점프 재생 + 개입.
 // 장면 없는 분은 초고속 스킵, 장면성 이벤트가 나온 분은 자동 정지 후 SceneOverlay 연출.
@@ -216,7 +216,7 @@ export default function MatchPage() {
         />
 
         {/* 컨트롤 */}
-        <div className="panel flex flex-wrap items-center justify-between gap-3 rounded-[10px] px-4 py-3">
+        <div className="panel flex flex-wrap items-center justify-between gap-3 rounded-panel px-4 py-3">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -248,7 +248,7 @@ export default function MatchPage() {
               type="button"
               onClick={openSheet}
               disabled={match.finished}
-              className="flex items-center gap-1.5 rounded-full border border-accent/50 bg-accent/10 px-4 py-2 text-sm font-bold text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-control border border-accent/50 bg-accent/10 px-4 py-2 text-sm font-bold text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Brain weight="bold" className="size-4" aria-hidden />
               작전 변경
@@ -273,6 +273,8 @@ export default function MatchPage() {
               };
             })()}
             lean={attackLean(match.events)}
+            // 킥오프 전(0분)에는 피치를 완전히 정지시킨다.
+            live={match.minute > 0}
           />
           <SceneOverlay
             sceneEvents={scene ?? []}
@@ -313,7 +315,7 @@ export default function MatchPage() {
             <motion.div
               initial={{ scale: 0.92, y: 12 }}
               animate={{ scale: 1, y: 0 }}
-              className="panel relative w-full max-w-sm overscroll-contain rounded-[10px] p-6 text-center"
+              className="panel relative w-full max-w-sm overscroll-contain rounded-panel p-6 text-center"
             >
               <p className="eyebrow text-accent">하프타임</p>
               <h2 className="display mt-2 text-balance text-2xl text-ink">전반 종료</h2>
@@ -325,14 +327,14 @@ export default function MatchPage() {
                     setHalftime(false);
                     setPlaying(true);
                   }}
-                  className="flex-1 rounded-full border border-line py-3 text-sm font-bold text-ink hover:border-white/25"
+                  className="flex-1 rounded-control border border-line py-3 text-sm font-bold text-ink hover:border-white/25"
                 >
                   이어서 재개
                 </button>
                 <button
                   type="button"
                   onClick={openSheet}
-                  className="flex-1 rounded-full bg-accent py-3 text-sm font-black text-accent-ink hover:-translate-y-0.5"
+                  className="flex-1 rounded-control bg-accent py-3 text-sm font-black text-accent-ink hover:-translate-y-0.5"
                 >
                   작전 변경
                 </button>
@@ -354,7 +356,7 @@ export default function MatchPage() {
             <motion.div
               initial={{ scale: 0.92, y: 14 }}
               animate={{ scale: 1, y: 0 }}
-              className="panel relative w-full max-w-sm rounded-[10px] p-6 text-center"
+              className="panel relative w-full max-w-sm rounded-panel p-6 text-center"
             >
               <p className="eyebrow text-accent">경기 종료</p>
               <div className="stat-num display mt-3 text-5xl text-ink">
@@ -368,14 +370,14 @@ export default function MatchPage() {
                     <button
                       type="button"
                       onClick={() => router.push("/shootout")}
-                      className="w-full rounded-full bg-accent py-3 text-sm font-black text-accent-ink hover:-translate-y-0.5"
+                      className="w-full rounded-control bg-accent py-3 text-sm font-black text-accent-ink hover:-translate-y-0.5"
                     >
                       승부차기 →
                     </button>
                     <button
                       type="button"
                       onClick={() => router.push("/result")}
-                      className="w-full rounded-full border border-line py-3 text-sm font-bold text-dim hover:text-ink"
+                      className="w-full rounded-control border border-line py-3 text-sm font-bold text-dim hover:text-ink"
                     >
                       결과 보기
                     </button>
@@ -392,7 +394,7 @@ export default function MatchPage() {
                   <button
                     type="button"
                     onClick={() => router.push("/result")}
-                    className="mt-6 w-full rounded-full bg-accent py-3 text-sm font-black text-accent-ink hover:-translate-y-0.5"
+                    className="mt-6 w-full rounded-control bg-accent py-3 text-sm font-black text-accent-ink hover:-translate-y-0.5"
                   >
                     결과 보기 →
                   </button>
