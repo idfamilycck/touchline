@@ -40,12 +40,12 @@ export default function RewritePage() {
         aria-label="히어로"
         className="pitch-stripes relative overflow-hidden border-b border-line"
       >
-        <div className="mx-auto w-full max-w-5xl px-5 pb-10 pt-10 sm:pt-20">
+        <div className="mx-auto w-full max-w-5xl px-5 pb-8 pt-8 sm:pt-12">
           <Link href="/" className="text-xs text-dim transition-colors hover:text-ink">
             ← 처음으로
           </Link>
-          <p className="eyebrow mt-5 text-accent">2026 월드컵 다시 쓰기</p>
-          <h1 className="display mt-3 text-4xl text-ink sm:text-6xl">
+          <p className="eyebrow mt-4 text-accent">2026 월드컵 다시 쓰기</p>
+          <h1 className="display mt-3 text-4xl text-ink sm:text-5xl">
             그 순간,<br />감독이었다면.
           </h1>
           <p className="mt-5 max-w-xl text-sm leading-relaxed text-dim sm:text-base">

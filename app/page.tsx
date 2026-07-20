@@ -64,32 +64,27 @@ export default function Home() {
         aria-label="히어로"
         className="pitch-stripes relative overflow-hidden border-b border-line"
       >
-        <div className="mx-auto w-full max-w-5xl px-5 pb-10 pt-12 sm:pt-24">
+        <div className="mx-auto w-full max-w-5xl px-5 pb-8 pt-10 sm:pt-14">
           <p className="eyebrow text-accent">국가대표 전술 시뮬레이터</p>
-          <h1 className="display mt-5 text-6xl text-ink sm:text-8xl">
+          <h1 className="display mt-4 text-5xl text-ink sm:text-7xl">
             당신이<br />감독이라면.
           </h1>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-dim sm:text-lg">
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-dim">
             포메이션과 지시 하나로 승부가 뒤집힙니다. 대표팀을 골라 벤치에 앉고,
-            90분을 직접 지휘해 보세요. 축구를 잘 몰라도 괜찮습니다.
+            90분을 직접 지휘해 보세요.
           </p>
-          <div className="mt-9">
+          {/* CTA는 한 줄에 두 개(퀵스타트 + 다시 쓰기)까지만. 히어로에 잔 설명을 덧붙이지 않는다. */}
+          <div className="mt-7 flex flex-wrap items-center gap-3">
             <QuickStart />
-          </div>
-          <div className="mt-4">
             <Link
               href="/rewrite"
               className="group inline-flex items-center gap-2.5 rounded-full border border-line bg-surface px-6 py-3.5 text-sm font-bold text-ink transition-colors duration-150 hover:border-white/30"
             >
-              <span aria-hidden>⏪</span>
               <span>2026 월드컵 다시 쓰기</span>
               <span aria-hidden className="text-accent transition-transform duration-150 group-hover:translate-x-1">
                 →
               </span>
             </Link>
-            <p className="mt-2 pl-1 text-xs text-dim">
-              실제 경기의 결정적 순간을 골라 그 시점부터 직접 지휘해 보세요.
-            </p>
           </div>
         </div>
       </section>

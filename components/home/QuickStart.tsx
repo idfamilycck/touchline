@@ -28,9 +28,6 @@ export function QuickStart() {
           →
         </span>
       </button>
-      <span className="pl-2 text-xs text-dim">
-        설정은 건너뛰고 3초 만에 감독석으로. 세부 매치업은 아래에서 직접 고를 수 있어요.
-      </span>
     </div>
   );
 }
