@@ -38,7 +38,7 @@ export function Scoreboard({
   const venue = venueById(venueId);
 
   return (
-    <div className="panel rounded-3xl px-4 py-3 sm:px-6 sm:py-4">
+    <div className="panel rounded-[10px] px-4 py-3 sm:px-6 sm:py-4">
       <div className="flex items-center justify-center gap-4 sm:gap-8">
         {/* 우리 팀 */}
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">

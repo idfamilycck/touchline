@@ -52,7 +52,7 @@ function Row({ player, starter, teamColor, badges, isSelected, onSelectPlayer }:
       aria-pressed={isSelected}
       aria-label={`${player.name} · ${POSITION_KO[primary]} · ${player.age}세`}
       onClick={() => onSelectPlayer({ playerId: player.id })}
-      className={`flex w-full cursor-grab items-center gap-3 rounded-xl border px-2.5 py-2 text-left transition-colors active:cursor-grabbing ${
+      className={`flex w-full cursor-grab items-center gap-3 rounded-[10px] border px-2.5 py-2 text-left transition-colors active:cursor-grabbing ${
         isSelected
           ? "border-accent bg-accent/10"
           : starter

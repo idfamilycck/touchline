@@ -69,7 +69,7 @@ export function CrisisBanner({ events, onIntervene }: CrisisBannerProps) {
           className="fixed inset-x-0 top-0 z-40 px-3 pt-3"
           role="alert"
         >
-          <div className="mx-auto flex w-full max-w-3xl items-center gap-3 rounded-2xl border border-danger/50 bg-danger/15 px-4 py-3 backdrop-blur-md">
+          <div className="mx-auto flex w-full max-w-3xl items-center gap-3 rounded-[10px] border border-danger/50 bg-danger/15 px-4 py-3 backdrop-blur-md">
             <span className="text-xl" aria-hidden>
               🚨
             </span>

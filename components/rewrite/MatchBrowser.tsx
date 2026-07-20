@@ -128,7 +128,7 @@ export function MatchBrowser({
                 type="button"
                 onClick={() => onSelectMatch(m)}
                 aria-pressed={isSelected}
-                className="panel flex w-full flex-col gap-2.5 rounded-2xl p-4 text-left transition-colors duration-150 hover:border-white/25"
+                className="panel flex w-full flex-col gap-2.5 rounded-[10px] p-4 text-left transition-colors duration-150 hover:border-white/25"
                 style={{ borderColor: isSelected ? "var(--color-accent)" : undefined }}
               >
                 <div className="flex items-center justify-between text-[10px] text-dim">
@@ -165,7 +165,7 @@ export function MatchBrowser({
                   <button
                     type="button"
                     onClick={() => onSelectSide(m.home)}
-                    className={`flex-1 rounded-xl px-3 py-2.5 text-xs font-bold transition-colors ${
+                    className={`flex-1 rounded-[8px] px-3 py-2.5 text-xs font-bold transition-colors ${
                       selectedSide === m.home
                         ? "bg-accent text-accent-ink"
                         : "bg-surface-2 text-ink hover:bg-surface"
@@ -176,7 +176,7 @@ export function MatchBrowser({
                   <button
                     type="button"
                     onClick={() => onSelectSide(m.away)}
-                    className={`flex-1 rounded-xl px-3 py-2.5 text-xs font-bold transition-colors ${
+                    className={`flex-1 rounded-[8px] px-3 py-2.5 text-xs font-bold transition-colors ${
                       selectedSide === m.away
                         ? "bg-accent text-accent-ink"
                         : "bg-surface-2 text-ink hover:bg-surface"

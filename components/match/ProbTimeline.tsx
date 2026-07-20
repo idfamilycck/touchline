@@ -52,7 +52,7 @@ export function ProbTimeline({ timeline, events, interventions }: ProbTimelinePr
   const y50 = yOf(0.5);
 
   return (
-    <div className="panel flex flex-col rounded-3xl p-4">
+    <div className="panel flex flex-col rounded-[10px] p-4">
       <div className="flex items-center justify-between">
         <p className="eyebrow text-accent">승률 타임라인</p>
         <span

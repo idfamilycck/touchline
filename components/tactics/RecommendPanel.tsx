@@ -47,7 +47,7 @@ export function RecommendPanel({ currentWin }: RecommendPanelProps) {
     rec && currentWin !== undefined ? Math.round(rec.winProb * 100) - Math.round(currentWin * 100) : undefined;
 
   return (
-    <div className="panel flex flex-col gap-4 rounded-3xl p-5">
+    <div className="panel flex flex-col gap-4 rounded-[10px] p-5">
       <div className="flex items-center justify-between">
         <div>
           <p className="eyebrow text-dim">AI 추천 전술</p>
@@ -73,7 +73,7 @@ export function RecommendPanel({ currentWin }: RecommendPanelProps) {
 
       {rec && !loading && (
         <div className="flex flex-col gap-3">
-          <div className="flex items-end justify-between rounded-2xl border border-line bg-surface/50 p-3">
+          <div className="flex items-end justify-between rounded-[10px] border border-line bg-surface/50 p-3">
             <div>
               <p className="text-[11px] text-dim">추천 세팅 예상 승률</p>
               <p className="stat-num text-3xl text-gain">{recWinPct}%</p>
@@ -100,7 +100,7 @@ export function RecommendPanel({ currentWin }: RecommendPanelProps) {
               {rec.topFactors.map((f) => (
                 <li
                   key={f.id}
-                  className="flex items-start gap-2 rounded-xl border border-line bg-surface/40 px-3 py-2"
+                  className="flex items-start gap-2 rounded-[10px] border border-line bg-surface/40 px-3 py-2"
                 >
                   <span className="text-base leading-none" aria-hidden>
                     {f.icon}

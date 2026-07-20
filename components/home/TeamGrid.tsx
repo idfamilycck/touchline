@@ -71,7 +71,7 @@ export function TeamGrid({ myTeamId, oppTeamId, onSelect }: TeamGridProps) {
                 type="button"
                 onClick={() => onSelect(t.id)}
                 aria-pressed={selected}
-                className="panel group relative flex h-full w-full flex-col gap-3 rounded-2xl p-3 text-left transition-colors duration-150 hover:border-white/25"
+                className="panel group relative flex h-full w-full flex-col gap-3 rounded-[10px] p-3 text-left transition-colors duration-150 hover:border-white/25"
                 style={{ borderColor: selected ? ring : undefined }}
               >
                 {/* 선택 상태는 스크린리더에 텍스트로도 전달(색/리본은 시각 전용) */}

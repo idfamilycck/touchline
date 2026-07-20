@@ -58,11 +58,11 @@ export function FinalTimeline({ match }: FinalTimelineProps) {
 
       {/* 주요 장면 */}
       {moments.length > 0 && (
-        <ul className="flex flex-col gap-1.5">
+        <ul className="flex flex-col">
           {moments.map((m, i) => (
             <li
               key={`${m.minute}-${i}-${m.icon}`}
-              className="flex items-center gap-2.5 rounded-xl bg-surface-2/40 px-3 py-2"
+              className="data-row flex items-center gap-2.5 px-2 py-2"
             >
               <span className="stat-num w-9 shrink-0 text-right text-[11px] text-dim">{m.minute}′</span>
               <span aria-hidden>{m.icon}</span>

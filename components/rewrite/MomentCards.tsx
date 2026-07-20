@@ -51,7 +51,7 @@ export function MomentCards({ match, side }: MomentCardsProps) {
               <button
                 type="button"
                 onClick={() => handlePick(entry)}
-                className="panel flex w-full flex-col gap-1.5 rounded-2xl border border-accent/40 bg-accent/5 p-4 text-left transition-colors duration-150 hover:border-accent/70 hover:bg-accent/10"
+                className="panel flex w-full flex-col gap-1.5 rounded-[10px] border border-accent/40 bg-accent/5 p-4 text-left transition-colors duration-150 hover:border-accent/70 hover:bg-accent/10"
               >
                 <p className="text-sm font-black text-ink">{entry.labelKo}</p>
                 {entry.subKo && <p className="text-[11px] leading-snug text-dim">{entry.subKo}</p>}
@@ -75,7 +75,7 @@ export function MomentCards({ match, side }: MomentCardsProps) {
                   <button
                     type="button"
                     onClick={() => handlePick(entry)}
-                    className={`panel flex w-full min-w-0 flex-col gap-2 rounded-2xl border-l-4 p-4 text-left transition-colors duration-150 hover:border-white/25 ${
+                    className={`panel flex w-full min-w-0 flex-col gap-2 rounded-[10px] border-l-4 p-4 text-left transition-colors duration-150 hover:border-white/25 ${
                       entry.isOurs ? "bg-accent/5" : "bg-white/[0.03]"
                     }`}
                     style={{

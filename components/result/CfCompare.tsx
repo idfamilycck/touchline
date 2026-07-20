@@ -38,7 +38,7 @@ function ScoreCard({
   const wordColor = me > opp ? "var(--color-gain)" : me === opp ? "var(--color-dim)" : "var(--color-danger)";
   return (
     <div
-      className={`flex flex-1 flex-col items-center rounded-2xl border px-3 py-4 ${
+      className={`flex flex-1 flex-col items-center rounded-[10px] border px-3 py-4 ${
         highlight ? "border-accent/60 bg-accent/10" : "border-line bg-surface-2/40"
       }`}
     >
@@ -64,7 +64,7 @@ export function CfCompare({ cf, match }: CfCompareProps) {
   const oppCode = opp?.code ?? "OPP";
 
   return (
-    <section className="panel rounded-3xl p-4">
+    <section className="panel rounded-[10px] p-4">
       <div className="flex items-center justify-between">
         <p className="eyebrow text-accent">평행세계 비교</p>
         <span className="text-[11px] text-dim">개입이 없었다면?</span>
@@ -94,8 +94,8 @@ export function CfCompare({ cf, match }: CfCompareProps) {
 
       {/* 개입별 승률 델타 */}
       {cf.deltas.length > 0 ? (
-        <ul className="mt-4 flex flex-col gap-1.5">
-          <li className="eyebrow text-dim">개입별 승률 변화</li>
+        <ul className="mt-4 flex flex-col">
+          <li className="eyebrow px-1 pb-1.5 text-dim">개입별 승률 변화</li>
           {cf.deltas.map((d, i) => {
             const roundedPp = Math.round(d.probDelta * 100);
             const color =
@@ -108,7 +108,7 @@ export function CfCompare({ cf, match }: CfCompareProps) {
             return (
               <li
                 key={`${d.intervention.minute}-${i}`}
-                className="flex items-center justify-between rounded-xl bg-surface-2/50 px-3 py-2"
+                className="data-row flex items-center justify-between px-2 py-2"
               >
                 <div className="flex items-center gap-2">
                   <span className="stat-num rounded-md bg-pitch px-2 py-0.5 text-xs font-bold text-ink">
@@ -124,7 +124,7 @@ export function CfCompare({ cf, match }: CfCompareProps) {
           })}
         </ul>
       ) : (
-        <p className="mt-4 rounded-xl bg-surface-2/50 px-3 py-3 text-center text-[13px] text-dim">
+        <p className="mt-4 rounded-[10px] bg-surface-2/50 px-3 py-3 text-center text-[13px] text-dim">
           이 경기에서는 작전 개입이 없었습니다. 실제 결과가 곧 데이터가 예측한 결과입니다.
         </p>
       )}

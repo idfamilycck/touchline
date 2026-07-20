@@ -166,7 +166,7 @@ export default function ResultPage() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-4 py-6 sm:px-5">
       {/* 헤드라인 */}
-      <header className="panel rounded-3xl px-4 py-5 text-center">
+      <header className="panel rounded-[10px] px-4 py-5 text-center">
         <h1 className="eyebrow text-accent">경기 복기</h1>
         <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-dim">
           <span>{me?.code ?? "ME"}</span>
@@ -190,7 +190,7 @@ export default function ResultPage() {
 
       {/* 카운터팩추얼 히어로 결론 */}
       <section
-        className="rounded-3xl border p-5"
+        className="rounded-[10px] border p-5"
         style={{ borderColor: tone.color, background: tone.bg }}
       >
         <p className="eyebrow" style={{ color: tone.color }}>
@@ -222,7 +222,7 @@ export default function ResultPage() {
       {review && <TacticsReviewPanel review={review} />}
 
       {/* 상세 스탯 아코디언 */}
-      <section className="panel overflow-hidden rounded-3xl">
+      <section className="panel overflow-hidden rounded-[10px]">
         <button
           type="button"
           aria-expanded={statsOpen}

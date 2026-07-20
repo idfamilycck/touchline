@@ -57,7 +57,7 @@ export function Coachmarks() {
       aria-modal="true"
       aria-labelledby="coach-title"
     >
-      <div className="panel w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+      <div className="panel w-full max-w-sm rounded-[10px] p-6 shadow-2xl">
         <div className="flex items-center justify-between">
           <span className="eyebrow text-accent">작전실 안내 {step + 1}/{STEPS.length}</span>
           <button

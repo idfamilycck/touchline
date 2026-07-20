@@ -68,8 +68,8 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
 
     // 배경 그라디언트(다크 피치)
     const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, "#0e2417");
-    bg.addColorStop(1, "#06170d");
+    bg.addColorStop(0, "#141b18");
+    bg.addColorStop(1, "#0b100e");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
@@ -81,7 +81,7 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
     ctx.fillRect(0, 0, W, 360);
 
     // 테두리
-    ctx.strokeStyle = "rgba(224,255,233,0.12)";
+    ctx.strokeStyle = "rgba(228,255,240,0.1)";
     ctx.lineWidth = 2;
     ctx.strokeRect(24, 24, W - 48, H - 48);
 
@@ -90,12 +90,12 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
     ctx.fillStyle = "#c8ff3c";
     ctx.font = `800 30px ${font}`;
     ctx.fillText("T O U C H L I N E", W / 2, 108);
-    ctx.fillStyle = "#83998d";
+    ctx.fillStyle = "#8c9a94";
     ctx.font = `600 18px ${font}`;
     ctx.fillText("당신이 감독이라면", W / 2, 140);
 
     // 팀 코드
-    ctx.fillStyle = "#eaf4ec";
+    ctx.fillStyle = "#eef4f0";
     ctx.font = `900 44px ${font}`;
     ctx.textAlign = "left";
     ctx.fillText(meCode, 96, 320);
@@ -105,10 +105,10 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
     // 스코어
     ctx.textAlign = "center";
     ctx.font = `900 150px ${font}`;
-    ctx.fillStyle = "#eaf4ec";
+    ctx.fillStyle = "#eef4f0";
     ctx.fillText(`${match.scoreMe}`, W / 2 - 96, 360);
     ctx.fillText(`${match.scoreOpp}`, W / 2 + 96, 360);
-    ctx.fillStyle = "#83998d";
+    ctx.fillStyle = "#8c9a94";
     ctx.font = `700 80px ${font}`;
     ctx.fillText(":", W / 2, 348);
 
@@ -116,13 +116,13 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
     if (shootout) {
       const meK = shootout.rounds.filter((r) => r.side === "me" && r.scored).length;
       const oppK = shootout.rounds.filter((r) => r.side === "opp" && r.scored).length;
-      ctx.fillStyle = "#83998d";
+      ctx.fillStyle = "#8c9a94";
       ctx.font = `700 26px ${font}`;
       ctx.fillText(`승부차기 ${meK} : ${oppK}`, W / 2, 420);
     }
 
     // 결과 워드
-    const wordColor = word.includes("승리") ? "#3be38a" : word.includes("무승부") ? "#83998d" : "#ff5c7a";
+    const wordColor = word.includes("승리") ? "#34e08a" : word.includes("무승부") ? "#8c9a94" : "#ff5470";
     ctx.fillStyle = wordColor;
     ctx.font = `900 56px ${font}`;
     ctx.fillText(word, W / 2, shootout ? 500 : 480);
@@ -134,7 +134,7 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
     ctx.beginPath();
     ctx.roundRect(64, boxY, W - 128, boxH, 24);
     ctx.fill();
-    ctx.strokeStyle = "rgba(224,255,233,0.1)";
+    ctx.strokeStyle = "rgba(228,255,240,0.1)";
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -143,7 +143,7 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
     ctx.font = `700 16px ${font}`;
     ctx.fillText("이 경기의 결정적 순간", W / 2, boxY + 44);
 
-    const heroColor = hero.tone === "gain" ? "#3be38a" : hero.tone === "danger" ? "#ff5c7a" : "#eaf4ec";
+    const heroColor = hero.tone === "gain" ? "#34e08a" : hero.tone === "danger" ? "#ff5470" : "#eef4f0";
     ctx.fillStyle = heroColor;
     ctx.font = `800 32px ${font}`;
     const lines = wrapText(ctx, hero.text, W - 200);
@@ -152,7 +152,7 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
     });
 
     // 푸터 디스클레이머
-    ctx.fillStyle = "#83998d";
+    ctx.fillStyle = "#8c9a94";
     ctx.font = `500 15px ${font}`;
     ctx.fillText("모든 능력치·결과는 가상 데이터입니다", W / 2, H - 56);
   }, [match, cf, shootout, meCode, oppCode, word, hero.text, hero.tone]);
@@ -196,9 +196,9 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
   };
 
   return (
-    <section className="panel rounded-3xl p-4">
+    <section className="panel rounded-[10px] p-4">
       <p className="eyebrow text-accent">공유 카드</p>
-      <div className="mt-3 overflow-hidden rounded-2xl border border-line">
+      <div className="mt-3 overflow-hidden rounded-[10px] border border-line">
         <canvas
           ref={canvasRef}
           className="block w-full"

@@ -61,9 +61,9 @@ export function FactorCards({ rules }: FactorCardsProps) {
 
   if (rules.length === 0) {
     return (
-      <div className="panel rounded-3xl p-5">
+      <div className="panel rounded-[10px] p-5">
         <p className="eyebrow text-dim">전술 근거</p>
-        <p className="mt-3 rounded-xl border border-line bg-surface/50 p-3 text-[12px] leading-relaxed text-dim">
+        <p className="mt-3 rounded-[10px] border border-line bg-surface/50 p-3 text-[12px] leading-relaxed text-dim">
           지금은 승률을 크게 흔드는 요인이 없어요. 포메이션·지시·특수 전술을 바꾸면
           그 근거가 여기에 카드로 나타납니다.
         </p>
@@ -72,7 +72,7 @@ export function FactorCards({ rules }: FactorCardsProps) {
   }
 
   return (
-    <div className="panel rounded-3xl p-5">
+    <div className="panel rounded-[10px] p-5">
       <div className="flex items-center justify-between">
         <p className="eyebrow text-dim">전술 근거</p>
         <span className="stat-num text-[11px] text-dim">{rules.length}개</span>
@@ -83,7 +83,7 @@ export function FactorCards({ rules }: FactorCardsProps) {
           return (
             <li
               key={isPulsed ? `${r.id}-${nonce}` : r.id}
-              className={`flex items-start gap-3 rounded-2xl border border-line bg-surface/50 p-3 ${
+              className={`flex items-start gap-3 rounded-[10px] border border-line bg-surface/50 p-3 ${
                 isPulsed ? "touchline-pulse" : ""
               }`}
             >

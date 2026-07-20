@@ -7,17 +7,26 @@
    ──────────────────────────────────────────────────────────── */
 
 @theme {
-  --color-pitch: #06170d;
-  --color-pitch-2: #0a1f13;
-  --color-surface: #0e2417;
-  --color-surface-2: #163020;
-  --color-line: rgba(224, 255, 233, 0.1);
-  --color-ink: #eaf4ec;
-  --color-dim: #83998d;
+  /* UI 크롬(패널·배경)은 그래파이트(FM 코치석 톤), 실제 잔디는 --color-turf* 로 분리한다. */
+  --color-pitch: #0b100e;
+  --color-pitch-2: #101613;
+  --color-surface: #141b18;
+  --color-surface-2: #1c2521;
+  --color-line: rgba(228, 255, 240, 0.1);
+  --color-ink: #eef4f0;
+  --color-dim: #8c9a94;
   --color-accent: #c8ff3c;
-  --color-accent-ink: #08160a;
-  --color-danger: #ff5c7a;
-  --color-gain: #3be38a;
+  --color-accent-ink: #0a1204;
+  --color-danger: #ff5470;
+  --color-gain: #34e08a;
+
+  /* 실제 축구장(라이브 피치·작전 보드)만 이 초록을 쓴다 — UI 크롬과 분리. */
+  --color-turf: #123a22;
+  --color-turf-2: #0d2b19;
+
+  /* 반경 락: 패널/카드 10px · 인풋/버튼 8px · 필(탭·칩·아바타)만 rounded-full 예외. */
+  --radius-panel: 10px;
+  --radius-control: 8px;
 
   --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Apple SD Gothic Neo",
     "Noto Sans KR", "Malgun Gothic", sans-serif;
@@ -102,6 +111,30 @@ body {
 .panel {
   background: linear-gradient(180deg, var(--color-surface), var(--color-pitch-2));
   border: 1px solid var(--color-line);
+}
+
+/* 데이터 숫자 기본값: 표 형태 스탯/분/스코어가 자릿수마다 흔들리지 않게 고정폭으로. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* FM 스타일 데이터 로우: 카드 대신 헤어라인으로 구분되는 리스트(스쿼드·중계·이벤트). */
+.data-row {
+  border-bottom: 1px solid var(--color-line);
+}
+.data-row:last-child {
+  border-bottom: 0;
+}
+
+/* 패널 헤더 공통 레이아웃: 제목 + 보조 액션을 한 줄에. */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-line);
 }
 
 /* 조작→반응 1:1: 마지막 조작으로 바뀐 근거 카드가 딱 한 번 라임으로 번쩍인다.

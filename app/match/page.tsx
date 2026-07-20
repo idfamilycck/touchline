@@ -198,7 +198,7 @@ export default function MatchPage() {
         />
 
         {/* 컨트롤 */}
-        <div className="panel flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3">
+        <div className="panel flex flex-wrap items-center justify-between gap-3 rounded-[10px] px-4 py-3">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -285,7 +285,7 @@ export default function MatchPage() {
             <motion.div
               initial={{ scale: 0.92, y: 12 }}
               animate={{ scale: 1, y: 0 }}
-              className="panel relative w-full max-w-sm rounded-3xl p-6 text-center"
+              className="panel relative w-full max-w-sm rounded-[10px] p-6 text-center"
             >
               <p className="eyebrow text-accent">하프타임</p>
               <h2 className="display mt-2 text-2xl text-ink">전반 종료</h2>
@@ -326,7 +326,7 @@ export default function MatchPage() {
             <motion.div
               initial={{ scale: 0.92, y: 14 }}
               animate={{ scale: 1, y: 0 }}
-              className="panel relative w-full max-w-sm rounded-3xl p-6 text-center"
+              className="panel relative w-full max-w-sm rounded-[10px] p-6 text-center"
             >
               <p className="eyebrow text-accent">경기 종료</p>
               <div className="stat-num display mt-3 text-5xl text-ink">

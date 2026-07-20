@@ -107,7 +107,7 @@ export function WinGauge({ wp, lines }: WinGaugeProps) {
   const fillLen = ((win ?? 0) / 100) * ARC_LEN;
 
   return (
-    <div className="panel flex flex-col gap-5 rounded-3xl p-5">
+    <div className="panel flex flex-col gap-5 rounded-[10px] p-5">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="eyebrow text-dim">라이브 승률 예측</p>
@@ -187,7 +187,7 @@ export function WinGauge({ wp, lines }: WinGaugeProps) {
 
       {/* 라인별 전력 대결 막대 */}
       {lines && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface/40 p-3">
+        <div className="flex flex-col gap-3 rounded-[10px] border border-line bg-surface/40 p-3">
           <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
             <span className="text-accent">우리</span>
             <span className="text-dim">라인별 전력</span>

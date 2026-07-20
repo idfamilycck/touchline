@@ -25,8 +25,8 @@ function initialsOf(name: string): string {
 
 const BADGE_STYLE: Record<PlayerBadge, { bg: string; fg: string; label: string }> = {
   C: { bg: "var(--color-accent)", fg: "var(--color-accent-ink)", label: "C" },
-  FK: { bg: "#163020", fg: "#eaf4ec", label: "FK" },
-  CK: { bg: "#163020", fg: "#eaf4ec", label: "CK" },
+  FK: { bg: "#1c2521", fg: "#eef4f0", label: "FK" },
+  CK: { bg: "#1c2521", fg: "#eef4f0", label: "CK" },
 };
 
 export function PlayerAvatar({

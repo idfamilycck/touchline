@@ -202,10 +202,10 @@ export function InterventionSheet({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", stiffness: 260, damping: 30 }}
-        className="panel relative flex max-h-[88vh] w-full max-w-lg flex-col rounded-t-3xl sm:rounded-3xl"
+        className="panel relative flex max-h-[88vh] w-full max-w-lg flex-col rounded-t-[10px] sm:rounded-[10px]"
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+        <div className="panel-head">
           <div>
             <p className="eyebrow text-accent">작전 변경</p>
             <p className="mt-0.5 text-[11px] text-dim">
@@ -236,7 +236,7 @@ export function InterventionSheet({
                 {subs.map((s, i) => (
                   <li
                     key={i}
-                    className="flex items-center justify-between rounded-xl border border-accent/30 bg-accent/10 px-3 py-2 text-[12px]"
+                    className="flex items-center justify-between rounded-[10px] border border-accent/30 bg-accent/10 px-3 py-2 text-[12px]"
                   >
                     <span className="text-ink">
                       🔄 {nameOf(s.out)} <span className="text-dim">→</span>{" "}
@@ -262,7 +262,7 @@ export function InterventionSheet({
                   value={outId}
                   onChange={(e) => setOutId(e.target.value)}
                   disabled={remainingSubs <= 0}
-                  className="rounded-xl border border-line bg-surface-2 px-2 py-2 text-[12px] text-ink disabled:opacity-50"
+                  className="rounded-[8px] border border-line bg-surface-2 px-2 py-2 text-[12px] text-ink disabled:opacity-50"
                 >
                   <option value="">선택</option>
                   {onPitch.map((p) => (
@@ -278,7 +278,7 @@ export function InterventionSheet({
                   value={inId}
                   onChange={(e) => setInId(e.target.value)}
                   disabled={remainingSubs <= 0}
-                  className="rounded-xl border border-line bg-surface-2 px-2 py-2 text-[12px] text-ink disabled:opacity-50"
+                  className="rounded-[8px] border border-line bg-surface-2 px-2 py-2 text-[12px] text-ink disabled:opacity-50"
                 >
                   <option value="">선택</option>
                   {bench.map((p) => (
@@ -293,7 +293,7 @@ export function InterventionSheet({
               type="button"
               onClick={addSub}
               disabled={!outId || !inId || remainingSubs <= 0}
-              className="mt-2 w-full rounded-xl border border-line bg-surface-2/60 py-2 text-[12px] font-bold text-ink transition-colors hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-40"
+              className="mt-2 w-full rounded-[8px] border border-line bg-surface-2/60 py-2 text-[12px] font-bold text-ink transition-colors hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-40"
             >
               + 교체 추가
             </button>
@@ -385,7 +385,7 @@ export function InterventionSheet({
                 <select
                   value={special.manMark?.markerId ?? ""}
                   onChange={(e) => setManMarker(e.target.value)}
-                  className="rounded-xl border border-line bg-surface-2 px-2 py-2 text-[12px] text-ink"
+                  className="rounded-[8px] border border-line bg-surface-2 px-2 py-2 text-[12px] text-ink"
                 >
                   <option value="">선택 안 함</option>
                   {startersOf(meSetup, squad).map((p) => (
@@ -401,7 +401,7 @@ export function InterventionSheet({
                   value={special.manMark?.targetId ?? ""}
                   onChange={(e) => setManTarget(e.target.value)}
                   disabled={!special.manMark?.markerId}
-                  className="rounded-xl border border-line bg-surface-2 px-2 py-2 text-[12px] text-ink disabled:opacity-50"
+                  className="rounded-[8px] border border-line bg-surface-2 px-2 py-2 text-[12px] text-ink disabled:opacity-50"
                 >
                   <option value="">선택 안 함</option>
                   {oppStarters.map((p, i) => (

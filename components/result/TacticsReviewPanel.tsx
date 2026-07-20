@@ -19,12 +19,12 @@ function RuleRow({ rule, tone }: { rule: AppliedRule; tone: "good" | "bad" }) {
 
 export function TacticsReviewPanel({ review }: { review: TacticsReview }) {
   return (
-    <section className="panel rounded-3xl p-5 sm:p-6" aria-label="전술 평가 및 보완">
+    <section className="panel rounded-[10px] p-5 sm:p-6" aria-label="전술 평가 및 보완">
       <p className="eyebrow text-accent">감독 리포트</p>
       <h2 className="mt-1 text-lg font-bold text-ink">전술 평가 &amp; 보완</h2>
 
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-gain/30 bg-gain/5 p-4">
+        <div className="rounded-[10px] border border-gain/30 bg-gain/5 p-4">
           <h3 className="text-sm font-bold text-gain">✅ 통한 전술</h3>
           {review.worked.length > 0 ? (
             <ul className="mt-2 flex flex-col gap-1.5">
@@ -37,7 +37,7 @@ export function TacticsReviewPanel({ review }: { review: TacticsReview }) {
           )}
         </div>
 
-        <div className="rounded-2xl border border-danger/30 bg-danger/5 p-4">
+        <div className="rounded-[10px] border border-danger/30 bg-danger/5 p-4">
           <h3 className="text-sm font-bold text-danger">⚠️ 발목 잡은 부분</h3>
           {review.hurt.length > 0 ? (
             <ul className="mt-2 flex flex-col gap-1.5">
@@ -51,7 +51,7 @@ export function TacticsReviewPanel({ review }: { review: TacticsReview }) {
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-line bg-surface-2/60 p-4">
+      <div className="mt-4 rounded-[10px] border border-line bg-surface-2/60 p-4">
         <h3 className="text-sm font-bold text-ink">📋 다음 경기 보완</h3>
         <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5">
           {review.tips.map((tip) => (

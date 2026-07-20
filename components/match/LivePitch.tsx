@@ -108,7 +108,8 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
 
   return (
     <motion.div
-      className="panel relative overflow-hidden rounded-3xl"
+      className="relative overflow-hidden rounded-[10px] border border-line"
+      style={{ background: "linear-gradient(180deg, var(--color-turf), var(--color-turf-2))" }}
       animate={scene?.type === "goal" ? { x: [0, -5, 5, -4, 4, 0] } : { x: 0 }}
       transition={{ duration: 0.5 }}
     >
@@ -185,7 +186,7 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
                       <circle
                         r={5.5}
                         fill={color}
-                        stroke={isPulse ? "var(--color-accent)" : "rgba(6,20,12,0.55)"}
+                        stroke={isPulse ? "var(--color-accent)" : "rgba(11,16,14,0.55)"}
                         strokeWidth={isPulse ? 1.4 : 1}
                       />
                     </motion.g>
@@ -226,7 +227,7 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
             key={scene!.key}
             r={4}
             fill="#f6fff0"
-            stroke="#0a1f13"
+            stroke="#101613"
             strokeWidth={1}
             initial={{ cx: choreo.ball.xs[0], cy: choreo.ball.ys[0] }}
             animate={{ cx: choreo.ball.xs, cy: choreo.ball.ys }}
@@ -237,7 +238,7 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
             key="ball-idle"
             r={4}
             fill="#f6fff0"
-            stroke="#0a1f13"
+            stroke="#101613"
             strokeWidth={1}
             initial={false}
             animate={{

@@ -33,15 +33,15 @@ export function CommentaryFeed({ events, meTeamId }: CommentaryFeedProps) {
   const rows = events.slice(-MAX_ROWS).reverse();
 
   return (
-    <div className="panel flex h-full flex-col rounded-3xl">
-      <div className="flex items-center justify-between border-b border-line px-4 py-3">
+    <div className="panel flex h-full flex-col rounded-[10px]">
+      <div className="panel-head">
         <p className="eyebrow text-accent">실시간 중계</p>
         <span className="text-[11px] text-dim">최신순</span>
       </div>
       <ul
         aria-live="polite"
         aria-label="경기 실시간 중계"
-        className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-3 py-3"
+        className="flex flex-1 flex-col overflow-y-auto px-3 py-1"
         style={{ maxHeight: "clamp(240px, 42vh, 460px)" }}
       >
         {rows.map((e, i) => {
@@ -51,12 +51,12 @@ export function CommentaryFeed({ events, meTeamId }: CommentaryFeedProps) {
           return (
             <li
               key={`${e.minute}-${events.length - i}-${e.type}`}
-              className={`flex items-start gap-2.5 rounded-2xl px-3 py-2 ${
+              className={`data-row flex items-start gap-2.5 px-2 py-2 ${
                 isGoal
-                  ? "border border-accent/40 bg-accent/15"
+                  ? "border-l-2 border-accent bg-accent/10"
                   : isCrisis
-                    ? "border border-danger/40 bg-danger/10"
-                    : "bg-surface-2/40"
+                    ? "border-l-2 border-danger bg-danger/10"
+                    : ""
               }`}
             >
               <span

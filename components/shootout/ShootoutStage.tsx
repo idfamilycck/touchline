@@ -99,7 +99,7 @@ export function ShootoutStage({ result, meSetup, oppSetup, onFinish }: ShootoutS
   return (
     <div className="flex flex-col gap-4">
       {/* 스코어 헤더 */}
-      <div className="panel rounded-3xl px-4 py-4">
+      <div className="panel rounded-[10px] px-4 py-4">
         <p className="eyebrow text-center text-accent">승부차기</p>
         <div className="mt-2 flex items-center justify-center gap-5">
           <div className="flex flex-1 flex-col items-end gap-1.5">
@@ -122,7 +122,7 @@ export function ShootoutStage({ result, meSetup, oppSetup, onFinish }: ShootoutS
       </div>
 
       {/* 골대 + 볼 연출 */}
-      <div className="panel relative flex flex-col items-center overflow-hidden rounded-3xl px-4 pb-5 pt-6">
+      <div className="panel relative flex flex-col items-center overflow-hidden rounded-[10px] px-4 pb-5 pt-6">
         <div className="pitch-stripes pointer-events-none absolute inset-0 opacity-40" aria-hidden />
 
         {/* 골대 프레임 */}
@@ -211,7 +211,7 @@ export function ShootoutStage({ result, meSetup, oppSetup, onFinish }: ShootoutS
 
       {/* 컨트롤 / 결과 */}
       {done ? (
-        <div className="panel rounded-3xl p-5 text-center">
+        <div className="panel rounded-[10px] p-5 text-center">
           <p className="eyebrow text-accent">승부차기 종료</p>
           <h2
             className="display mt-2 text-3xl"

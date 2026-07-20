@@ -89,7 +89,7 @@ function Slot({
     >
       <div
         ref={setDropRef}
-        className={`rounded-2xl p-1 transition-all ${
+        className={`rounded-[10px] p-1 transition-all ${
           isOver
             ? "bg-accent/25 ring-2 ring-accent"
             : isEligibleTarget
@@ -160,10 +160,10 @@ export function PitchBoard({
   return (
     <div className="flex flex-col items-center">
       <div
-        className="relative mx-auto w-full max-w-[430px] overflow-hidden rounded-3xl border border-line shadow-2xl"
+        className="relative mx-auto w-full max-w-[430px] overflow-hidden rounded-[10px] border border-line shadow-2xl"
         style={{
           aspectRatio: "68 / 105",
-          background: "linear-gradient(180deg, #0a2414, #061a0e)",
+          background: "linear-gradient(180deg, var(--color-turf), var(--color-turf-2))",
         }}
       >
         {/* 피치 라인/서클/박스 + 잔디 이랑 */}

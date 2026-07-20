@@ -64,7 +64,7 @@ export default function Home() {
         aria-label="히어로"
         className="pitch-stripes relative overflow-hidden border-b border-line"
       >
-        <div className="mx-auto w-full max-w-5xl px-5 pb-14 pt-16 sm:pt-24">
+        <div className="mx-auto w-full max-w-5xl px-5 pb-10 pt-12 sm:pt-24">
           <p className="eyebrow text-accent">국가대표 전술 시뮬레이터</p>
           <h1 className="display mt-5 text-6xl text-ink sm:text-8xl">
             당신이<br />감독이라면.
@@ -95,7 +95,7 @@ export default function Home() {
       </section>
 
       {/* ── 매치업 구성 ──────────────────────────────────── */}
-      <section aria-label="매치업 구성" className="mx-auto w-full max-w-5xl px-5 pt-14">
+      <section aria-label="매치업 구성" className="mx-auto w-full max-w-5xl px-5 pt-10">
         <header className="lime-tab mb-6 pl-4">
           <p className="eyebrow text-dim">STEP 01 · 매치업</p>
           <h2 className="display mt-1 text-3xl text-ink">누구를 이끌고, 누구를 상대할까</h2>
@@ -104,7 +104,7 @@ export default function Home() {
       </section>
 
       {/* ── 경기장 선택 ──────────────────────────────────── */}
-      <section aria-label="경기장 선택" className="mx-auto w-full max-w-5xl px-5 pt-14">
+      <section aria-label="경기장 선택" className="mx-auto w-full max-w-5xl px-5 pt-10">
         <header className="lime-tab mb-6 pl-4">
           <p className="eyebrow text-dim">STEP 02 · 경기장</p>
           <h2 className="display mt-1 text-3xl text-ink">어디에서 맞붙을까</h2>

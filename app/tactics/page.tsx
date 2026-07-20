@@ -61,7 +61,7 @@ function AnalysisPanel() {
       <WinGauge wp={wp} lines={lines} />
 
       {/* 전술 패널 탭 */}
-      <div className="panel rounded-3xl p-4">
+      <div className="panel rounded-[10px] p-4">
         <div role="tablist" aria-label="전술 지시 종류" className="mb-4 flex gap-1.5">
           {TACTIC_TABS.map((t) => (
             <button
@@ -92,7 +92,7 @@ function AnalysisPanel() {
 
       {/* 3층 상세 보기 */}
       {wp && lines && (
-        <details className="panel rounded-3xl p-5">
+        <details className="panel rounded-[10px] p-5">
           <summary className="cursor-pointer list-none">
             <span className="flex items-center justify-between">
               <span className="eyebrow text-dim">상세 보기 (계산 근거)</span>
@@ -101,11 +101,11 @@ function AnalysisPanel() {
           </summary>
           <div className="mt-4 flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-line bg-surface/40 p-3">
+              <div className="rounded-[10px] border border-line bg-surface/40 p-3">
                 <p className="text-[10px] text-dim">우리 기대 득점 (λ)</p>
                 <p className="stat-num text-2xl text-gain">{wp.lambdaMe.toFixed(2)}</p>
               </div>
-              <div className="rounded-xl border border-line bg-surface/40 p-3">
+              <div className="rounded-[10px] border border-line bg-surface/40 p-3">
                 <p className="text-[10px] text-dim">상대 기대 득점 (λ)</p>
                 <p className="stat-num text-2xl text-danger">{wp.lambdaOpp.toFixed(2)}</p>
               </div>
@@ -137,7 +137,7 @@ function AnalysisPanel() {
               </tbody>
             </table>
 
-            <p className="rounded-xl border border-line bg-surface/50 p-3 text-[11px] leading-relaxed text-dim">
+            <p className="rounded-[10px] border border-line bg-surface/50 p-3 text-[11px] leading-relaxed text-dim">
               라인별 전력으로 양 팀의 기대 득점(λ)을 구하고, 전술 근거가 이를 보정합니다.
               두 팀의 λ를 포아송 분포에 넣어 승·무·패 확률을 계산해요.
             </p>
@@ -293,7 +293,7 @@ export default function TacticsPage() {
       </header>
 
       {/* ── 모바일 탭 스위처 ─────────────────────────────── */}
-      <div className="sticky top-0 z-10 border-b border-line bg-pitch/85 px-5 py-2 backdrop-blur-md lg:hidden">
+      <div className="sticky top-14 z-10 border-b border-line bg-pitch/85 px-5 py-2 backdrop-blur-md lg:hidden">
         <div
           role="tablist"
           aria-label="작전실 보기 전환"
@@ -323,7 +323,7 @@ export default function TacticsPage() {
       </div>
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-5 px-5 pt-5 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(0,320px)]">
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-5 pt-5 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(0,320px)]">
           {/* 스쿼드 열 */}
           <div
             id="panel-squad"

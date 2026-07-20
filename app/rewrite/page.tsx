@@ -34,13 +34,13 @@ export default function RewritePage() {
   };
 
   return (
-    <main className="flex flex-1 flex-col pb-16">
+    <main className="flex flex-1 flex-col pb-12">
       {/* ── 히어로 ───────────────────────────────────────── */}
       <section
         aria-label="히어로"
         className="pitch-stripes relative overflow-hidden border-b border-line"
       >
-        <div className="mx-auto w-full max-w-5xl px-5 pb-10 pt-14 sm:pt-20">
+        <div className="mx-auto w-full max-w-5xl px-5 pb-10 pt-10 sm:pt-20">
           <Link href="/" className="text-xs text-dim transition-colors hover:text-ink">
             ← 처음으로
           </Link>
@@ -72,7 +72,7 @@ export default function RewritePage() {
 
       {/* ── 결정적 순간 카드 ─────────────────────────────── */}
       {selectedMatch && selectedSide && (
-        <section aria-label="결정적 순간 선택" className="mx-auto w-full max-w-5xl px-5 pt-14">
+        <section aria-label="결정적 순간 선택" className="mx-auto w-full max-w-5xl px-5 pt-10">
           <header className="lime-tab mb-6 flex flex-wrap items-center justify-between gap-3 pl-4">
             <div>
               <p className="eyebrow text-dim">STEP 02 · 결정적 순간</p>

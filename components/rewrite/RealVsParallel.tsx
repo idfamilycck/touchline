@@ -47,7 +47,7 @@ function ScoreCard({
 }) {
   return (
     <div
-      className={`flex flex-1 flex-col items-center rounded-2xl border px-3 py-4 ${
+      className={`flex flex-1 flex-col items-center rounded-[10px] border px-3 py-4 ${
         highlight ? "border-accent/60 bg-accent/10" : "border-line bg-surface-2/40"
       }`}
     >
@@ -81,7 +81,7 @@ export function RealVsParallel({ compare, meCode, oppCode }: RealVsParallelProps
       : "var(--color-danger)";
 
   return (
-    <section className="panel rounded-3xl p-4">
+    <section className="panel rounded-[10px] p-4">
       <div className="flex items-center justify-between">
         <p className="eyebrow text-accent">실제 역사 vs 평행세계</p>
         <span className="text-[11px] text-dim">당신이 지휘봉을 잡았다면?</span>
@@ -114,7 +114,7 @@ export function RealVsParallel({ compare, meCode, oppCode }: RealVsParallelProps
       </div>
 
       <p
-        className="stat-num mt-4 rounded-xl bg-surface-2/50 px-3 py-3 text-center text-sm font-black"
+        className="stat-num mt-4 rounded-[10px] bg-surface-2/50 px-3 py-3 text-center text-sm font-black"
         style={{ color: deltaColor }}
       >
         {compare.deltaKo}

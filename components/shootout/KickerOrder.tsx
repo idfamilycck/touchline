@@ -56,7 +56,7 @@ export function KickerOrder({ meSetup, stamina, onConfirm }: KickerOrderProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="panel rounded-3xl p-4">
+      <div className="panel rounded-[10px] p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="eyebrow text-accent">키커 지정</p>
@@ -97,7 +97,7 @@ export function KickerOrder({ meSetup, stamina, onConfirm }: KickerOrderProps) {
 
       {/* 선택된 순서 미리보기 */}
       {order.length > 0 && (
-        <div className="panel rounded-3xl p-4">
+        <div className="panel rounded-[10px] p-4">
           <p className="eyebrow mb-2 text-dim">킥 순서</p>
           <ol className="flex flex-wrap gap-2">
             {order.map((id, i) => {
@@ -132,7 +132,7 @@ export function KickerOrder({ meSetup, stamina, onConfirm }: KickerOrderProps) {
                 aria-pressed={selected}
                 aria-label={`${p.name}, 페널티 ${p.penalty}, 멘탈 ${p.mental}, 체력 ${stPct}퍼센트${selected ? `, ${idx + 1}번째 키커로 선택됨` : ""}`}
                 onClick={() => toggle(p.id)}
-                className={`flex w-full items-center gap-3 rounded-xl border px-2.5 py-2 text-left transition-colors ${
+                className={`flex w-full items-center gap-3 rounded-[10px] border px-2.5 py-2 text-left transition-colors ${
                   selected
                     ? "border-accent bg-accent/10"
                     : "border-line bg-surface-2/50 hover:border-white/20"

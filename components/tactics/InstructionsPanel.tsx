@@ -97,7 +97,7 @@ export function InstructionsPanel() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => setInstructions({ formation: id })}
-                className={`flex flex-col items-center gap-1 rounded-2xl border px-2 py-2.5 transition-colors ${
+                className={`flex flex-col items-center gap-1 rounded-[10px] border px-2 py-2.5 transition-colors ${
                   active ? "border-accent bg-accent/15" : "border-line bg-surface-2/50 hover:border-white/20"
                 }`}
               >
@@ -161,7 +161,7 @@ export function InstructionsPanel() {
                     type="button"
                     aria-pressed={active}
                     onClick={() => setInstructions({ [tg.key]: opt.value } as Partial<TeamInstructions>)}
-                    className={`flex-1 rounded-xl border py-2 text-[12px] font-bold transition-colors ${
+                    className={`flex-1 rounded-[8px] border py-2 text-[12px] font-bold transition-colors ${
                       active ? "border-accent bg-accent/15 text-accent" : "border-line bg-surface-2/50 text-dim hover:border-white/20"
                     }`}
                   >
@@ -174,7 +174,7 @@ export function InstructionsPanel() {
         ))}
 
         {/* 오프사이드 트랩 스위치 */}
-        <div className="flex items-center justify-between rounded-xl border border-line bg-surface-2/50 px-3 py-2.5">
+        <div className="flex items-center justify-between rounded-[10px] border border-line bg-surface-2/50 px-3 py-2.5">
           <div>
             <span className="text-[13px] font-bold text-ink">오프사이드 트랩</span>
             <p className="text-[10px] text-dim">라인을 끌어올려 상대를 걸리게 하기</p>
