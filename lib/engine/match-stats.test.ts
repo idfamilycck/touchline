@@ -57,6 +57,16 @@ describe("matchStats", () => {
     expect(empty.attackShareMe).toBe(50);
     expect(empty.totalChances).toBe(0);
   });
+
+  it("점유율은 누적값/분으로 계산하고, 누적 필드가 없으면 50%로 폴백한다", () => {
+    // 30분 중 me가 합계 18(평균 0.6) -> 60%
+    const withPoss = matchStats({ events: [], possMeAccum: 18, possMinutes: 30 });
+    expect(withPoss.possessionMe).toBe(60);
+
+    // 옛 상태(누적 필드 없음)는 폴백.
+    const legacy = matchStats({ events: [] });
+    expect(legacy.possessionMe).toBe(50);
+  });
 });
 
 describe("interventionImpacts", () => {

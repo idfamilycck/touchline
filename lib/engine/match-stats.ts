@@ -30,7 +30,9 @@ export interface SideStats {
 export interface MatchStats {
   me: SideStats;
   opp: SideStats;
-  /** 찬스 생성 비중(0~100). 양쪽 찬스가 0이면 50으로 둔다. */
+  /** 볼 점유율(0~100, me 기준). 엔진이 매 분 누적한 실제 점유. */
+  possessionMe: number;
+  /** 찬스 생성 비중(0~100). 점유와 별개로 "공격 위협" 비교에 쓴다. */
   attackShareMe: number;
   totalChances: number;
 }
@@ -81,13 +83,22 @@ function countSide(events: MatchEvent[], side: "me" | "opp"): SideStats {
   };
 }
 
-export function matchStats(state: Pick<MatchState, "events">): MatchStats {
+export function matchStats(
+  state: Pick<MatchState, "events"> & Partial<Pick<MatchState, "possMeAccum" | "possMinutes">>
+): MatchStats {
   const me = countSide(state.events, "me");
   const opp = countSide(state.events, "opp");
   const totalChances = me.chances + opp.chances;
   const attackShareMe =
     totalChances > 0 ? Math.round((me.chances / totalChances) * 100) : 50;
-  return { me, opp, attackShareMe, totalChances };
+
+  // 점유율: 엔진이 누적한 값. 옛 상태(누적 필드 없음)는 50%로 폴백한다.
+  const possessionMe =
+    state.possMinutes && state.possMinutes > 0
+      ? Math.round(((state.possMeAccum ?? 0) / state.possMinutes) * 100)
+      : 50;
+
+  return { me, opp, possessionMe, attackShareMe, totalChances };
 }
 
 // ── 개입 효과 ────────────────────────────────────────────────────────────────

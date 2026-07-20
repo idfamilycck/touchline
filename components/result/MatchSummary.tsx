@@ -109,18 +109,17 @@ export function MatchSummary({
         ))}
       </ul>
 
-      {/* 공격 점유는 별도 블록. 다른 지표와 단위가 달라 같은 표에 섞지 않는다. */}
+      {/* 점유율은 단위(%)가 달라 위 표(횟수)와 섞지 않고 별도 블록으로 둔다. */}
       <div className="mt-3 rounded-panel border border-line bg-surface-2/50 p-3">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="stat-num text-lg text-accent">{s.attackShareMe}%</span>
-          <span className="text-[13px] text-dim">공격 점유</span>
-          <span className="stat-num text-lg text-danger">{100 - s.attackShareMe}%</span>
+          <span className="stat-num text-lg text-accent">{s.possessionMe}%</span>
+          <span className="text-[13px] text-dim">점유율</span>
+          <span className="stat-num text-lg text-danger">{100 - s.possessionMe}%</span>
         </div>
-        <CompareBar me={s.attackShareMe} opp={100 - s.attackShareMe} />
+        <CompareBar me={s.possessionMe} opp={100 - s.possessionMe} />
         <p className="mt-2 text-[13px] leading-relaxed text-dim">
-          양 팀이 만든 찬스 <span className="tnum text-ink">{s.totalChances}</span>회 중 우리가
-          만든 비중입니다. 이 시뮬레이터는 볼 점유 시간을 계산하지 않으므로 중계의 점유율과는
-          다른 지표입니다.
+          중원 장악력과 빌드업 성향, 템포로 결정되는 볼 점유 시간입니다. 짧은 패스와 느린
+          템포는 점유를 높이고, 롱볼과 빠른 템포는 낮춥니다.
         </p>
       </div>
     </section>

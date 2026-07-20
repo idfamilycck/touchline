@@ -2,6 +2,7 @@ import { createRngFrom, type Rng } from "./random";
 import { computeLambdas } from "./winprob";
 import { ENGINE_CONSTANTS } from "./constants";
 import { playerContribution, type LineStrengths } from "./strength";
+import { possessionShare } from "./possession";
 import { poissonPmf } from "./poisson";
 import { playersOf } from "@/lib/data/players";
 import { FORMATIONS } from "@/lib/data/formations";
@@ -74,6 +75,11 @@ export interface MatchState {
   lambdaMe: number;
   lambdaOpp: number;
   lines: { me: LineStrengths; opp: LineStrengths };
+  // 볼 점유 누적. possMeAccum은 "매 분 me의 점유 비율(0~1)"의 합이고, possMinutes는
+  // 누적된 분 수다. 실제 점유율 = possMeAccum / possMinutes. 매 분 결정론적으로
+  // 더하며(RNG 미사용), 개입으로 lines가 바뀌면 그 이후 분부터 자연히 반영된다.
+  possMeAccum: number;
+  possMinutes: number;
   injuryTime: number; // 0 = 아직 미계산, 계산 후 1~5
   // --- Task 9 확장 필드 (브리프 명세 외, 추가적 변경) ---
   // me/opp는 개입(교체·전술 변경) 적용 후의 "현재" 라인업/전술이라 카운터팩추얼
@@ -365,6 +371,8 @@ export function initMatch(me: SideSetup, opp: SideSetup, venueId: string, seed: 
     lambdaMe: base.lambdaMe,
     lambdaOpp: base.lambdaOpp,
     lines: base.lines,
+    possMeAccum: 0,
+    possMinutes: 0,
     injuryTime: 0,
     initialMe: me,
     initialOpp: opp,
@@ -535,6 +543,14 @@ export function simulateMinute(state: MatchState): MatchState {
     finished = true;
   }
 
+  // 이번 분의 볼 점유를 누적한다. lines/instructions만 보므로 결정론적이다.
+  const possMeThisMinute = possessionShare(
+    lines.me,
+    lines.opp,
+    state.me.instructions,
+    state.opp.instructions
+  );
+
   const remainingFraction = Math.max(0, (90 - newMinute) / 90);
   const win = winProbGivenScore(
     scoreMe,
@@ -556,6 +572,8 @@ export function simulateMinute(state: MatchState): MatchState {
     lambdaMe,
     lambdaOpp,
     lines,
+    possMeAccum: state.possMeAccum + possMeThisMinute,
+    possMinutes: state.possMinutes + 1,
     injuryTime,
   };
 }
