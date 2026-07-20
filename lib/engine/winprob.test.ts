@@ -32,6 +32,9 @@ function baseCtx(overrides: Partial<RuleCtx> = {}): RuleCtx {
     oppFbLContrib: 60,
     oppFbRContrib: 60,
     oppAttDribblingAvg: 70,
+    // 적합도 기본값은 0(중립) — 개별 규칙 테스트가 스쿼드 편차에 흔들리지 않게 한다.
+    meDirectFit: 0,
+    meWideFit: 0,
     ...overrides,
   };
 }
@@ -60,6 +63,68 @@ function findRule(id: string) {
   if (!rule) throw new Error(`rule not found: ${id}`);
   return rule;
 }
+
+// 회귀: 세부 지시(빌드업·폭·공격 방향)가 조건부 규칙만 갖고 있어서, 조건이 안 맞으면
+// 토글해도 승률이 전혀 움직이지 않던 문제. 이제 각 선택지에 상시 트레이드오프가 붙는다.
+describe("세부 지시 상시 기본 효과", () => {
+  it("빌드업은 조건 없이 항상 발동한다", () => {
+    const rule = findRule("buildup_style");
+    expect(rule.when(withMe(baseCtx(), { buildup: "direct" }))).toBe(true);
+    expect(rule.when(withMe(baseCtx(), { buildup: "short" }))).toBe(true);
+  });
+
+  it("폭도 조건 없이 항상 발동한다", () => {
+    const rule = findRule("width_style");
+    expect(rule.when(withMe(baseCtx(), { width: "wide" }))).toBe(true);
+    expect(rule.when(withMe(baseCtx(), { width: "narrow" }))).toBe(true);
+  });
+
+  it("공격 방향은 중앙일 때만 발동하지 않는다(중앙이 기준점)", () => {
+    const rule = findRule("focus_style");
+    expect(rule.when(withMe(baseCtx(), { focus: "center" }))).toBe(false);
+    expect(rule.when(withMe(baseCtx(), { focus: "left" }))).toBe(true);
+    expect(rule.when(withMe(baseCtx(), { focus: "right" }))).toBe(true);
+  });
+
+  it("빌드업 효과는 스쿼드 적합도의 부호를 따르고 롱볼/짧은패스가 서로 반대다", () => {
+    // 어느 한쪽이 항상 정답이면 안 된다. 공중전·피지컬 스쿼드는 롱볼이,
+    // 패스·드리블 스쿼드는 짧은 패스가 이득이어야 한다.
+    const rule = findRule("buildup_style");
+    const aerialSquad = baseCtx({ meDirectFit: 0.8 });
+    const techSquad = baseCtx({ meDirectFit: -0.8 });
+
+    expect(rule.effect(withMe(aerialSquad, { buildup: "direct" })).da).toBeGreaterThan(0);
+    expect(rule.effect(withMe(aerialSquad, { buildup: "short" })).da).toBeLessThan(0);
+    expect(rule.effect(withMe(techSquad, { buildup: "short" })).da).toBeGreaterThan(0);
+    expect(rule.effect(withMe(techSquad, { buildup: "direct" })).da).toBeLessThan(0);
+  });
+
+  it("폭 효과도 측면 자원 적합도의 부호를 따른다", () => {
+    const rule = findRule("width_style");
+    const wingers = baseCtx({ meWideFit: 0.8 });
+    expect(rule.effect(withMe(wingers, { width: "wide" })).da).toBeGreaterThan(0);
+    expect(rule.effect(withMe(wingers, { width: "narrow" })).da).toBeLessThan(0);
+  });
+
+  it("적합도가 0이면 기본 효과도 0이라 밸런스 기준선이 흔들리지 않는다", () => {
+    const neutral = baseCtx({ meDirectFit: 0, meWideFit: 0 });
+    for (const id of ["buildup_style", "width_style"]) {
+      const rule = findRule(id);
+      const e = rule.effect(withMe(neutral, { buildup: "short", width: "wide" }));
+      expect(e.da).toBeCloseTo(0, 10);
+      expect(e.dd).toBeCloseTo(0, 10);
+    }
+  });
+
+  it("공격/수비 효과가 정확히 상쇄되지 않는다(상쇄하면 승률이 안 움직인다)", () => {
+    // 회귀: 처음엔 da +0.02 / dd -0.02 로 맞바꿨더니 양 팀 득점 기대값이 같이
+    // 올라가 승률이 0.3%p밖에 안 움직였다. 주 효과(공격)가 부수 효과(수비)보다
+    // 확실히 커야 한다.
+    const rule = findRule("buildup_style");
+    const e = rule.effect(withMe(baseCtx({ meDirectFit: 1 }), { buildup: "direct" }));
+    expect(Math.abs(e.da)).toBeGreaterThan(Math.abs(e.dd) * 2);
+  });
+});
 
 describe("RULE_DEFS 개별 규칙", () => {
   it("high_line_vs_pace: line=3 & 상대 공격 평균 pace>80 → deltaDefense -0.08", () => {
@@ -301,6 +366,27 @@ describe("winProbability", () => {
     const usa = makeSetup("usa", "4-3-3", { width: "narrow", line: 3 });
     const result = winProbability(bra, usa, "metlife");
     expect(result.win).toBeGreaterThanOrEqual(0.6);
+  });
+
+  // 회귀: 세부 지시를 바꿔도 승률이 1도 안 움직이던 문제.
+  // 조건부 규칙이 하나도 안 걸리는 "밋밋한" 매치업에서도 토글이 반응해야 한다.
+  it("조건부 규칙이 안 걸려도 세부 지시 토글이 승률을 움직인다", () => {
+    const opp = makeSetup("jpn", "4-3-3");
+
+    // 빌드업: 롱볼(공격↑수비↓) vs 짧은 패스(공격↓수비↑)
+    const direct = winProbability(makeSetup("kor", "4-3-3", { buildup: "direct" }), opp, "metlife");
+    const short = winProbability(makeSetup("kor", "4-3-3", { buildup: "short" }), opp, "metlife");
+    expect(direct.win).not.toBeCloseTo(short.win, 6);
+
+    // 폭: 넓게 vs 좁게
+    const wide = winProbability(makeSetup("kor", "4-3-3", { width: "wide" }), opp, "metlife");
+    const narrow = winProbability(makeSetup("kor", "4-3-3", { width: "narrow" }), opp, "metlife");
+    expect(wide.win).not.toBeCloseTo(narrow.win, 6);
+
+    // 공격 방향: 중앙 vs 측면
+    const center = winProbability(makeSetup("kor", "4-3-3", { focus: "center" }), opp, "metlife");
+    const left = winProbability(makeSetup("kor", "4-3-3", { focus: "left" }), opp, "metlife");
+    expect(center.win).not.toBeCloseTo(left.win, 6);
   });
 
   it("고지대(azteca)에서 pressing=3 팀의 λ가 평지 대비 감소", () => {
