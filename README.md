@@ -5,7 +5,7 @@
 - **배포 URL**: https://touchline-fc.vercel.app
 - **대상**: 데이콘 월간 해커톤 "내가 축구 감독이라면 - 월드컵 전술 웹서비스 챌린지"
 - **특징**: 100% 클라이언트 통계 엔진 (외부 API·키·서버 **없음**), 시드 기반 재현 가능 시뮬레이션, 한국어 UI(국가대표 선수 실명 표기 포함)
-- **디자인**: 앰버(#ffb020) 액센트 × 차콜 중립 UI, 잔디는 별도 그린(`--color-turf`) - **제4심판 LED 보드**가 "몇 분부터 지휘하는가"를 모먼트 카드·프리셋·경기 중 배지 전 화면에서 동일하게 표시하는 시그니처 오브젝트
+- **디자인**: FM식 네이비-슬레이트 UI × 일렉트릭 시안(#22d3ee) 단일 액센트, 잔디는 별도 그린(`--color-turf`)으로 분리, 선수 능력치는 5단계 색상 스케일(등급 텍스트 병행)로 표시 - **제4심판 LED 보드**가 "몇 분부터 지휘하는가"를 모먼트 카드·프리셋·경기 중 배지 전 화면에서 동일하게 표시하는 시그니처 오브젝트
 
 ![작전실 - 실시간 승률 게이지와 라인별 전력 비교](docs/screenshots/02-tactics.png)
 
@@ -25,6 +25,7 @@
 | **카운터팩추얼 복기** | 같은 시드로 무개입 경기를 재시뮬해 "개입이 없었다면?" 평행세계와 비교, 개입별 승률 델타 산출 | 복기 |
 | **승부차기** | 무승부 시 키커 5명·순서를 지정, PK·멘탈 vs GK 선방 확률 대결 | 승부차기 |
 | **2026 월드컵 다시 쓰기** | 실제 2026 월드컵 103경기 중 하나를 골라 진입 방식을 선택 - 풀경기/전반전/후반전 프리셋 3종은 이벤트 유무와 무관하게 항상 뜨고, 그 경기의 모든 골·교체·경고·퇴장도 각각 "5분 전부터" 진입점이 되어(무카드 완승이라도 막다른 화면 없음) 실제 선발·스코어·체력 소모가 반영된 상태에서 남은 시간을 직접 지휘 → 종료 후 **실제 역사 vs 내 평행세계** 스코어를 나란히 비교. 선수는 한국어 실명, 경기장은 2026 개최 실제 16개 구장의 고도·기온·돔 데이터를 그대로 사용 | 다시 쓰기 |
+| **대회 - 조별리그 순위·토너먼트 대진표** | 실제 103경기 데이터에서 렌더 시점에 계산한 12개 조(A~L) 순위표(경기/승/무/패/득/실/득실/승점, 진출 2팀 라벨, 대한민국 행 강조)와 32강~결승 대진표(3·4위전 포함, 승부차기는 "(승부차기 N-N)"으로 표기) - 모든 경기 카드가 `/rewrite?match=<id>`로 연결돼 그 순간부터 바로 다시 지휘할 수 있음 | 대회 |
 
 ### 화면 갤러리
 
@@ -44,6 +45,10 @@
 |---|---|
 | ![경기 브라우저](docs/screenshots/07-rewrite-browser.png) | ![모먼트 카드](docs/screenshots/08-moments.png) |
 
+| 대회 - 조별리그 순위 | 대회 - 토너먼트 대진표 |
+|---|---|
+| ![조별리그 순위](docs/screenshots/09-tournament.png) | ![토너먼트 대진표](docs/screenshots/10-bracket.png) |
+
 ---
 
 ## 기획 의도 → 구현 매핑 (평가기준)
@@ -58,17 +63,19 @@
 | 실제 개최지 환경 변수(고도·더위·돔)가 전술 유불리를 바꿈 | `altitude`/`heat` 보정 규칙 + venue 데이터(고도·기온·돔) | `lib/engine/modifiers.ts`, `lib/data/venues.ts` |
 | "개입이 없었다면?" 카운터팩추얼 복기 | 동일 시드로 무개입 재시뮬 → 개입별 승률 델타·평행세계 스코어 비교 | `lib/engine/counterfactual.ts`, `app/result/page.tsx` |
 | 실제 2026 월드컵 경기 기반 "다시 쓰기" | 실제 103경기 데이터에서 결정적 순간을 자동 추출 → 그 시점의 실제 스코어·라인업·교체·퇴장을 엔진 상태로 복원 → 남은 시간을 시뮬레이션해 실제 역사와 비교 | `lib/wc2026/`, `lib/engine/rewrite.ts`, `app/rewrite/`, `components/rewrite/` |
+| "경기 목록"이 아니라 "대회" - 조별리그 순위·대진표를 렌더 시점에 계산 | 별도 저장 데이터 없이 103경기에서 승점/골득실 순위(타이브레이커: 승점→득실→다득점→팀코드)와 32강~결승 대진표를 그때그때 산출, 모든 경기가 다시 쓰기 진입점으로 연결 | `lib/wc2026/standings.ts`, `app/tournament/page.tsx`, `components/tournament/` |
 
 ### 감독 경험 설계 (25)
 
 | 기획 장치 | 구현 | 파일 경로 |
 |---|---|---|
 | 3계층 전술(팀 지시 → 선수 역할 → 특수 지시) | 포메이션·슬라이더·세부 지시, 역할별 능력치 가중, 맨마킹/세트피스/주장 | `components/tactics/`, `lib/data/formations.ts`, `lib/data/roles.ts`, `lib/engine/modifiers.ts` |
+| FM식 능력치 그리드 + 정렬 가능 스쿼드 | 선수 선택 시 12개 능력치(8종 기본 + 세트피스/공중볼/PK/멘탈) 전체를 5단계 색상 스케일로 표시(색이 유일한 신호가 되지 않도록 최상/우수/보통/미흡/취약 등급을 스크린리더 텍스트로 병행), 스쿼드는 이름·나이·선택한 능력치 기준으로 정렬(`aria-sort`, 방향 캐럿) - 드래그 배치·탭-투-배치는 그대로 유지 | `components/tactics/AttributeGrid.tsx`, `components/tactics/SquadList.tsx`, `components/tactics/squad-sort.ts`, `components/tactics/attr-color.ts` |
 | 드래그 배치 + 탭-투-배치(접근성) | dnd-kit 포인터/터치 센서 + 키보드 대체 배치 | `components/tactics/`, `app/tactics/page.tsx` |
 | 자유 일시정지 지시 · 위기 순간 알림 · 방송 중계형 연출 | 라이브 피치·중계 피드·승률 타임라인, 위기 배너, 개입 시트 | `components/match/`, `app/match/page.tsx`, `lib/engine/match.ts` |
 | 승부차기 키커 순서 지정 | PK·멘탈 vs GK 선방 확률 미니게임 | `lib/engine/shootout.ts`, `app/shootout/page.tsx` |
 | "그 순간, 감독이었다면" - 막다른 길 없는 유연한 개입 시점 | 경기 브라우저(라운드·조 필터, URL 딥링크) → 풀경기/전반전/후반전 프리셋 3종(이벤트 유무와 무관하게 항상 노출) + 그 경기의 모든 골·교체·경고·퇴장을 "5분 전부터" 진입 카드로 - 득점자, 교체 OUT→IN, 카드 받은 선수를 양 팀 동일한 방식으로 이름까지 표기 → 선택 즉시 그 시점의 실제 스코어·라인업·체력 소모가 반영된 상태로 `/tactics`·`/match`를 그대로 재사용해 지휘 | `app/rewrite/page.tsx`, `components/rewrite/MatchBrowser.tsx`, `components/rewrite/MomentCards.tsx`, `lib/wc2026/entry-points.ts`, `lib/engine/rewrite.ts` |
-| 제4심판 LED 보드 - 개입 시점의 시각적 시그니처 | "몇 분부터 지휘하는가"를 모먼트 카드·프리셋·경기 중 컨텍스트 배지 전부에서 동일한 LED 보드 컴포넌트로 표시(앰버 발광) - 장식이 아니라 그 숫자 자체가 핵심 정보 | `components/ui/OfficialBoard.tsx` |
+| 제4심판 LED 보드 - 개입 시점의 시각적 시그니처 | "몇 분부터 지휘하는가"를 모먼트 카드·프리셋·경기 중 컨텍스트 배지 전부에서 동일한 LED 보드 컴포넌트로 표시(시안 발광) - 장식이 아니라 그 숫자 자체가 핵심 정보 | `components/ui/OfficialBoard.tsx` |
 
 ### 완성도 (25) + 기획/구현 완성도 (20)
 
@@ -76,7 +83,7 @@
 |---|---|---|
 | 100% 클라이언트 엔진 (외부 API·키 없음 → 심사 중 장애 원천 차단) | `output: 'export'` 완전 정적 빌드, 순수 TS 엔진 | `next.config.ts`, `lib/engine/` |
 | 시드 기반 재현 가능한 시뮬레이션 | seedable RNG로 분 단위 이벤트 체인 결정론적 생성 | `lib/engine/random.ts`, `lib/engine/match.ts` |
-| 엔진 단위 테스트 + 밸런싱 검증 | vitest 220개(29파일, wc2026 정합성·복기·진입점 테스트 포함) + 몬테카를로 밸런스 게이트 | `lib/engine/*.test.ts`, `lib/engine/balance.test.ts`, `lib/wc2026/*.test.ts` |
+| 엔진 단위 테스트 + 밸런싱 검증 | vitest 255개(32파일, wc2026 정합성·복기·진입점·대회 순위·대진표 테스트 포함) + 몬테카를로 밸런스 게이트 | `lib/engine/*.test.ts`, `lib/engine/balance.test.ts`, `lib/wc2026/*.test.ts` |
 | 기획서 인터랙션 = 실제 화면 1:1, README 매핑표 | 4+1 화면(홈/작전실/경기/승부차기/복기) + 다시 쓰기 라우트 구현 | `app/page.tsx`, `app/tactics`, `app/match`, `app/shootout`, `app/result`, `app/rewrite` |
 | 실제 데이터 정합성 검증 + 100% 클라이언트 유지 | ESPN 원본 → 정규화 스키마 변환 스크립트(1회 실행, 결과만 커밋), 골 수=스코어·선발 11명·레드카드 이후 이벤트 없음 등 정합성 테스트 | `scripts/ingest-wc2026.mjs`, `scripts/build-wc2026.mjs`, `lib/wc2026/integrity.test.ts` |
 | 한국 관객 기준 선수 이름 표기 | ESPN 로마자 표기(예: Son Heung-Min)를 한글(손흥민)로 치환 - 국가대표 26명 전원 + 글로벌 약 68명 매핑, 미매핑 시 로마자 원본으로 폴백(공백/크래시 없음) | `lib/wc2026/player-names.ts` |
@@ -181,7 +188,7 @@ npm run build        # 정적 export 빌드 → out/
 ## 테스트
 
 ```bash
-npx vitest run       # 엔진 단위 + 밸런스 + wc2026 테스트 (220개 / 29파일)
+npx vitest run       # 엔진 단위 + 밸런스 + wc2026 테스트 (255개 / 32파일)
 npx playwright test  # 핵심 플로우 E2E 스모크 (홈→작전실→경기→복기)
 npx tsc --noEmit     # 타입 체크
 ```
@@ -204,7 +211,7 @@ Web Interface Guidelines 준수 점검을 반영했습니다.
 ## 기술 스택
 
 - **프레임워크**: Next.js 16 (App Router) + React 19 + TypeScript
-- **스타일**: Tailwind CSS v4 - 앰버(#ffb020) 액센트 × 차콜 중립(`--color-pitch: #0e0f11`) UI, 잔디만 별도 그린(`--color-turf: #123a22`)으로 분리
+- **스타일**: Tailwind CSS v4 - FM식 네이비-슬레이트 중립(`--color-pitch: #0f1319`) UI × 일렉트릭 시안(`--color-accent: #22d3ee`) 단일 액센트, 잔디만 별도 그린(`--color-turf: #10331f`)으로 분리, 능력치 전용 5단계 색상 스케일(`--color-attr-elite|good|mid|low|poor`)은 액센트와 분리된 시맨틱 데이터 색
 - **상태**: Zustand (`persist` + sessionStorage - 새로고침·뒤로가기에도 배치·역할·특수 지시 전부 보존)
 - **드래그 배치**: dnd-kit (포인터/터치 센서 + 탭-투-배치 대체)
 - **애니메이션·차트**: Framer Motion + 자체 SVG

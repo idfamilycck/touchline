@@ -6,17 +6,18 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
-    /* 터치라인 앰버×차콜 아이덴티티. 본문은 종이 위 가독성을 위해 항상 진한 잉크색을
-       유지하고, 앰버는 커버·룰선·콜아웃·강조 숫자 등 "단일 액센트"로만 절제해 쓴다. */
-    --charcoal: #16181c;
-    --charcoal-2: #1e2126;
-    --ink: #17181b;
+    /* 터치라인 네이비-슬레이트 × 일렉트릭 시안 아이덴티티(앱과 동일한 --color-accent: #22d3ee).
+       본문은 종이 위 가독성을 위해 항상 진한 잉크색을 유지하고, 시안은 커버·룰선·콜아웃·
+       강조 숫자 등 "단일 액센트"로만 절제해 쓴다. */
+    --charcoal: #141924;
+    --charcoal-2: #181e2a;
+    --ink: #171a1f;
     --sub: #5c6066;
     --line: #dfe1e6;
-    --bg-soft: #f4f4f6;
-    --accent: #ffb020;
-    --accent-ink: #17120a;
-    --accent-deep: #a05e00;
+    --bg-soft: #f2f6f7;
+    --accent: #22d3ee;
+    --accent-ink: #04222a;
+    --accent-deep: #0e7f95;
   }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
@@ -31,7 +32,7 @@
   .cover {
     height: 250mm;
     display: flex; flex-direction: column; justify-content: space-between;
-    background: linear-gradient(160deg, #0b0c0e 0%, #16181c 55%, #1c1f24 100%);
+    background: linear-gradient(160deg, #0a0d13 0%, #10141c 55%, #1a2130 100%);
     border-radius: 10px;
     color: #f0f1f3;
     padding: 20mm 18mm;
@@ -65,7 +66,7 @@
   ol { margin: 3mm 0 3mm 5mm; }
   li { margin-bottom: 1.1mm; }
   b, strong { font-weight: 700; }
-  .hl { background: linear-gradient(transparent 62%, #ffe3ab 62%); font-weight: 700; }
+  .hl { background: linear-gradient(transparent 62%, #bdeef4 62%); font-weight: 700; }
   .mono { font-family: Consolas, monospace; font-size: 0.94em; }
 
   table { width: 100%; border-collapse: collapse; margin: 1.6mm 0 4mm; font-size: 9.1pt; page-break-inside: avoid; }
@@ -123,7 +124,7 @@
   /* 제4심판 LED 보드 - 기획서 안에서도 앱과 동일한 시그니처를 재현(§2⑤ 참고) */
   .led {
     display: inline-flex; align-items: center; justify-content: center;
-    background: #070b09; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
+    background: #070a10; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
     padding: 0.6mm 1.8mm; font-family: Consolas, monospace; font-weight: 800; font-size: 8.6pt;
     color: var(--accent); vertical-align: 1px;
   }
@@ -249,20 +250,28 @@
     </tbody>
   </table>
 
-  <h3>④ 진입 장벽 제거</h3>
+  <h3>④ FM식 데이터 심도 - 능력치 그리드 + 정렬 가능 스쿼드</h3>
+  <p>선수를 고르면 <b>능력치 그리드</b>가 8종 기본 능력치(슈팅·패스·드리블·수비·스피드·피지컬·GK·체력)와
+  세트피스·공중볼·PK·멘탈까지 12개 값을 공격/수비·피지컬/특기 3개 군집으로 보여줍니다. 값마다 5단계
+  색상 스케일(최상·우수·보통·미흡·취약)을 적용하되, <b>색이 유일한 신호가 되지 않도록</b> 등급 텍스트를
+  스크린리더용으로 함께 제공합니다. 스쿼드 리스트도 이름·나이·선택한 능력치 기준으로 정렬할 수 있어(헤더 클릭,
+  <span class="mono">aria-sort</span> 반영) "지금 누가 제일 빠른가" 같은 질문에 훑어보는 것만으로 답할 수 있고,
+  정렬은 표시 순서만 바꿀 뿐 드래그 배치·탭-투-배치로 만든 라인업에는 영향을 주지 않습니다.</p>
+
+  <h3>⑤ 진입 장벽 제거</h3>
   <ul>
     <li><b>퀵스타트</b>: 홈의 "한국 vs 브라질 바로 지휘하기" 원클릭 → 프리셋 라인업으로 즉시 작전실 진입.
     첫 방문자가 <b>10초 안에</b> "승률이 반응하는" 핵심 경험에 도달합니다.</li>
     <li><b>온보딩·접근성·모바일</b>: "감독 브리핑" 3단계 코치마크(1회만), 탭-투-배치 대체 수단, 375px 모바일 검수</li>
   </ul>
 
-  <h3 style="page-break-after:auto; page-break-before:auto;">⑤ 디자인 시그니처 - 제4심판 LED 보드</h3>
+  <h3 style="page-break-after:auto; page-break-before:auto;">⑥ 디자인 시그니처 - 제4심판 LED 보드</h3>
   <p style="page-break-before:auto;">이 앱의 모든 결정이 수렴하는 <b>"몇 분부터 지휘할 것인가"</b>를 실제 제4심판의 LED 보드로 컴포넌트화해 <span class="led">63′</span> 형태로 앱 전체에서 동일하게 씁니다.</p>
 </div>
 
 <!-- ================= 3. 페이지 구성 (1/2) ================= -->
 <div class="sec">
-  <h2><span class="no">3</span>페이지 구성 - 4+1 화면</h2>
+  <h2><span class="no">3</span>페이지 구성 - 4+1 화면 + 대회</h2>
 
   <h3 style="margin-top:3mm;"><span class="tag">화면 1</span>홈 - 매치업 설정</h3>
   <div class="cols">
@@ -342,6 +351,28 @@
       <div class="cap">복기 - 카운터팩추얼 평행세계 비교</div>
     </div>
   </div>
+
+  <h3><span class="tag">화면 6</span>대회 - 조별리그 순위·토너먼트 대진표</h3>
+  <ul>
+    <li>별도로 저장된 순위 데이터는 없습니다 - 실제 103경기 데이터에서 <b>렌더 시점에</b> 승점·골득실을 계산합니다
+    (<span class="mono">lib/wc2026/standings.ts</span>)</li>
+    <li><b>조별리그 순위</b>: 12개 조(A~L) 표를 경기/승/무/패/득/실/득실/승점 열로, 상위 2팀에는 "진출" 라벨을
+    색상과 별개의 텍스트로 표시하고 대한민국 행은 굵게 강조</li>
+    <li><b>토너먼트 대진표</b>: 32강 → 16강 → 8강 → 4강 → 결승을 가로 컬럼으로, 3·4위전은 별도 카드로 배치.
+    승부차기로 갈린 경기는 "(승부차기 N-N)"으로 결과를 명시</li>
+    <li>모든 경기 카드가 <span class="mono">/rewrite?match=&lt;id&gt;</span>로 연결되어, 대회를 훑어보다가
+    바로 그 경기를 다시 지휘하는 흐름으로 이어집니다</li>
+  </ul>
+  <div class="shot-row">
+    <div class="shot">
+      <img src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/09-tournament.png" alt="대회 - 조별리그 순위">
+      <div class="cap">대회 - 조별리그 순위(12개 조, 진출 라벨, 대한민국 행 강조)</div>
+    </div>
+    <div class="shot">
+      <img src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/10-bracket.png" alt="대회 - 토너먼트 대진표">
+      <div class="cap">대회 - 토너먼트 대진표(3·4위전, 승부차기 표기)</div>
+    </div>
+  </div>
 </div>
 
 <!-- ================= 4. 인터랙션 명세 ================= -->
@@ -365,6 +396,7 @@
     <tr><td class="k">무승부 종료</td><td>승부차기 제안 → 키커 5명·순서 드래그 지정 → 킥별 1클릭 진행</td><td>승부차기</td></tr>
     <tr><td class="k">경기 종료</td><td>카운터팩추얼 자동 산출(개입별 승률 델타·평행세계 스코어), 전술 평가·보완 팁 생성</td><td>복기</td></tr>
     <tr><td class="k">공유 카드 저장</td><td>클라이언트에서 결과 이미지 생성·저장, 링크 복사</td><td>복기</td></tr>
+    <tr><td class="k">대회에서 조 순위·대진표 열람 후 경기 카드 클릭</td><td>103경기에서 렌더 시점에 계산한 순위·대진표 확인 → 그 경기의 다시 쓰기 진입점 선택 화면으로 이동</td><td>대회</td></tr>
     <tr><td class="k">새로고침·뒤로가기</td><td>배치·역할·특수 지시·경기 상태 전부 보존(sessionStorage 실시간 동기화), 지나간 장면 재연출 금지</td><td>전체</td></tr>
     </tbody>
   </table>
@@ -415,7 +447,7 @@
       <td>① 무개입 재시뮬=개입 이전 구간·이벤트 완전 동일 ② 개입 로그 재적용 시 원 경기 100% 재현 ③ 무개입 경기의 델타 = 정확히 0 - 전부 자동 테스트로 강제</td></tr>
     <tr><td class="k">몬테카를로 밸런싱 게이트</td>
       <td>전 매치업(16×15)×20시드=4,800회 자동 시뮬. 실측: ELO 우위팀 승률 0.596(게이트 0.55~0.90), 평균 3.12골(1.8~3.6), 블로아웃 0.77%(&lt;4%), 무승부 26.4%(15~35%)</td></tr>
-    <tr><td class="k">테스트 스위트</td><td>단위 테스트 <b>220개(29파일) 전부 통과</b> - 승률 합=1, 극단 입력 안정성, 보정 방향성, 카운터팩추얼 불변식, wc2026 데이터 정합성·다시 쓰기 진입점 정합성 등 + 핵심 플로우 E2E 스모크(Playwright)</td></tr>
+    <tr><td class="k">테스트 스위트</td><td>단위 테스트 <b>255개(32파일) 전부 통과</b> - 승률 합=1, 극단 입력 안정성, 보정 방향성, 카운터팩추얼 불변식, wc2026 데이터 정합성·다시 쓰기 진입점 정합성·대회 순위 집계 및 대진표 정합성 등 + 핵심 플로우 E2E 스모크(Playwright)</td></tr>
     </tbody>
   </table>
 </div>
