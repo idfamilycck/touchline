@@ -7,6 +7,7 @@ import type { Wc2026Match } from "@/lib/wc2026/types";
 import { wc2026TeamId } from "@/lib/wc2026/data";
 import { teamById } from "@/lib/data/teams";
 import { FlagBadge } from "@/components/ui/FlagBadge";
+import { OfficialBoard } from "@/components/ui/OfficialBoard";
 
 interface MomentCardsProps {
   match: Wc2026Match;
@@ -53,7 +54,10 @@ export function MomentCards({ match, side }: MomentCardsProps) {
                 onClick={() => handlePick(entry)}
                 className="panel flex w-full flex-col gap-1.5 rounded-[10px] border border-accent/40 bg-accent/5 p-4 text-left transition-colors duration-150 hover:border-accent/70 hover:bg-accent/10"
               >
-                <p className="text-sm font-black text-ink">{entry.labelKo}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-black text-ink">{entry.labelKo}</p>
+                  <OfficialBoard minute={entry.takeoverMinute} size="sm" />
+                </div>
                 {entry.subKo && <p className="text-[11px] leading-snug text-dim">{entry.subKo}</p>}
               </button>
             </li>
@@ -87,7 +91,7 @@ export function MomentCards({ match, side }: MomentCardsProps) {
                     }}
                   >
                     <div className="flex items-center justify-between gap-2 text-[10px]">
-                      <span className="stat-num text-dim">{entry.takeoverMinute}&apos;부터 개입</span>
+                      <OfficialBoard minute={entry.takeoverMinute} size="sm" label="부터 개입" />
                       <span
                         className={`shrink-0 rounded-full px-2 py-0.5 font-black ${
                           entry.isOurs ? "bg-accent/15 text-accent" : "bg-white/10 text-dim"

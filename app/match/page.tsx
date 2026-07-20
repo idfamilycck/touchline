@@ -16,6 +16,7 @@ import { LivePitch } from "@/components/match/LivePitch";
 import { CommentaryFeed } from "@/components/match/CommentaryFeed";
 import { ProbTimeline } from "@/components/match/ProbTimeline";
 import { CrisisBanner } from "@/components/match/CrisisBanner";
+import { OfficialBoard } from "@/components/ui/OfficialBoard";
 import { InterventionSheetPortal } from "@/components/match/InterventionSheet";
 import { SceneOverlay } from "@/components/match/SceneOverlay";
 import {
@@ -181,10 +182,13 @@ export default function MatchPage() {
 
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pt-5 sm:px-5">
         {mode === "rewrite" && rewriteContext && (
-          <p className="inline-flex w-fit max-w-full items-center gap-1.5 truncate self-start rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[11px] font-bold text-accent">
-            실제 경기 · {teamById(match.me.teamId)?.nameKo ?? "우리 팀"} vs{" "}
-            {teamById(match.opp.teamId)?.nameKo ?? "상대 팀"} · {rewriteContext.takeoverMinute}′부터 지휘
-          </p>
+          <span className="inline-flex w-fit max-w-full items-center gap-2 self-start rounded-full border border-accent/40 bg-accent/10 py-1 pl-3 pr-1.5 text-[11px] font-bold text-accent">
+            <span className="truncate">
+              실제 경기 · {teamById(match.me.teamId)?.nameKo ?? "우리 팀"} vs{" "}
+              {teamById(match.opp.teamId)?.nameKo ?? "상대 팀"}
+            </span>
+            <OfficialBoard minute={rewriteContext.takeoverMinute} size="sm" label="부터 지휘" />
+          </span>
         )}
         {/* 스코어보드 */}
         <Scoreboard
