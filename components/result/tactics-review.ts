@@ -4,6 +4,7 @@
 
 import type { MatchState } from "@/lib/engine/match";
 import type { AppliedRule, ModifierResult } from "@/lib/engine/modifiers";
+import { matchStats, interventionImpacts } from "@/lib/engine/match-stats";
 
 export interface TacticsReview {
   worked: AppliedRule[]; // 종합효과(공격+수비) 양수 — 통한 전술
@@ -41,15 +42,64 @@ export function buildTacticsReview(
 
   // 이기지 못했고 내 감점도 없을 때만 상대 우위를 꺼낸다(이겼으면 굳이 변명하지 않는다).
   const won = match.scoreMe > match.scoreOpp;
+  // 내가 이미 갖고 있던 강점은 "상대가 앞선 부분"이 아니다. 양 팀이 같은 기본 세팅이면
+  // 같은 규칙이 양쪽에 발동해, 초록 카드와 빨강 카드에 똑같은 문구가 나란히 실렸다.
+  // 화면상 고장으로 보일 뿐 아니라 "상대가 앞섰다"는 말 자체가 사실이 아니다.
+  const myRuleIds = new Set(worked.map((r) => r.id));
   const oppEdge =
     !won && hurt.length === 0
       ? oppMod.rules
-          .filter((r) => impact(r) >= MEANINGFUL)
+          .filter((r) => impact(r) >= MEANINGFUL && !myRuleIds.has(r.id))
           .sort((a, b) => impact(b) - impact(a))
           .slice(0, 3)
       : [];
 
   const tips: string[] = [];
+
+  // ── 경기 지표 기반 진단 ──────────────────────────────────────────────
+  // 규칙 발동 여부만 보면 "전술은 문제없었는데 왜 졌는지" 설명이 비는 경우가 많다.
+  // 실제 기록(결정력·유효슈팅·수비 노출)을 함께 읽어 원인을 좁힌다.
+  const s = matchStats(match);
+
+  // 결정력: 유효슈팅을 충분히 만들고도 못 넣었는가.
+  if (s.me.onTarget >= 4 && s.me.goals <= 1) {
+    tips.push(
+      `유효슈팅 ${s.me.onTarget}개로 ${s.me.goals}골. 기회는 만들었지만 마무리가 아쉬웠어요. 슈팅·침착성이 높은 선수를 최전방에 두거나 공격 성향을 한 단계 낮춰 더 좋은 자리에서 쏘게 해보세요.`
+    );
+  }
+  // 기회 생산: 찬스가 슈팅으로 이어지지 않았는가.
+  if (s.me.chances >= 6 && s.me.shots <= Math.floor(s.me.chances / 3)) {
+    tips.push(
+      `찬스 ${s.me.chances}회 중 슈팅은 ${s.me.shots}회에 그쳤어요. 템포를 올리거나 침투형 역할을 늘려 마지막 패스가 한 번 더 나오게 해보세요.`
+    );
+  }
+  // 수비 노출: 상대에게 유효슈팅을 많이 내줬는가.
+  if (s.opp.onTarget >= 5) {
+    tips.push(
+      `상대 유효슈팅을 ${s.opp.onTarget}개나 허용했어요. 수비 라인을 내리거나 수비형 미드필더 역할로 GK 앞 공간을 덮어보세요.`
+    );
+  }
+
+  // ── 개입 효과 ────────────────────────────────────────────────────────
+  // 이 앱에서 가장 감독 리포트다운 지표인데 지금까지 어디에서도 쓰이지 않았다.
+  const impacts = interventionImpacts(match.interventions ?? [], match.probTimeline ?? []);
+  if (impacts.length > 0) {
+    const best = [...impacts].sort((a, b) => b.deltaPct - a.deltaPct)[0];
+    const worst = [...impacts].sort((a, b) => a.deltaPct - b.deltaPct)[0];
+    if (best.deltaPct >= 3) {
+      tips.push(
+        `${best.minute}분 개입 이후 승률이 ${best.deltaPct}%p 올랐어요. 이 조정이 흐름을 바꿨습니다.`
+      );
+    } else if (worst.deltaPct <= -3) {
+      tips.push(
+        `${worst.minute}분 개입 이후 승률이 ${Math.abs(worst.deltaPct)}%p 떨어졌어요. 같은 상황이 오면 다른 카드를 써보세요.`
+      );
+    }
+  } else if (match.scoreMe <= match.scoreOpp) {
+    tips.push(
+      "경기 중 개입이 한 번도 없었어요. 위기 알림이 뜰 때 [작전 변경]으로 라인이나 성향을 조정하면 흐름을 되돌릴 수 있습니다."
+    );
+  }
 
   const crises = match.events.filter((e) => e.type === "crisis").length;
   if (crises >= 2) {
@@ -104,5 +154,7 @@ export function buildTacticsReview(
     }
   }
 
-  return { worked, hurt, oppEdge, tips: tips.slice(0, 4) };
+  // 상한 6: "너무 부족하다"는 지적을 받아 4에서 올렸다. 그 이상은 리포트가 아니라
+  // 목록이 되어 오히려 안 읽힌다.
+  return { worked, hurt, oppEdge, tips: tips.slice(0, 6) };
 }

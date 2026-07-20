@@ -1,8 +1,8 @@
 ﻿"use client";
 
 // 복기(result) 화면 — 종료된 경기에서만 진입.
-// 결론 한 문장(카운터팩추얼 히어로) → 평행세계 비교 → 승률 타임라인 → 상세 스탯 →
-// 공유 카드 → 다시 도전 / 새 매치업.
+// 결론 한 문장(카운터팩추얼 히어로) → 평행세계 비교 → 승률 타임라인 → 전술 평가 →
+// 경기 요약(스탯 시트) → 공유 카드 → 다시 도전 / 새 매치업.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,13 +11,13 @@ import { TrendUp, TrendDown, Target, type Icon } from "@phosphor-icons/react";
 import { useAppStore } from "@/lib/store";
 import { counterfactual } from "@/lib/engine/counterfactual";
 import { teamById } from "@/lib/data/teams";
-import type { MatchEvent } from "@/lib/engine/match";
 import { venueById } from "@/lib/data/venues";
 import { h2hOf } from "@/lib/data/h2h";
 import { applyModifiers } from "@/lib/engine/modifiers";
 import { CfCompare } from "@/components/result/CfCompare";
 import { FinalTimeline } from "@/components/result/FinalTimeline";
 import { ShareCard } from "@/components/result/ShareCard";
+import { MatchSummary } from "@/components/result/MatchSummary";
 import { heroLine } from "@/components/result/cf-labels";
 import { buildTacticsReview } from "@/components/result/tactics-review";
 import { TacticsReviewPanel } from "@/components/result/TacticsReviewPanel";
@@ -26,10 +26,6 @@ import { RealVsParallel } from "@/components/rewrite/RealVsParallel";
 import { buildCompare, resultRank } from "@/components/rewrite/compare";
 import { buildGoalTimeline } from "@/components/rewrite/goal-timeline";
 import { wc2026MatchById } from "@/lib/wc2026/data";
-
-function countBy(events: MatchEvent[], side: "me" | "opp", pred: (e: MatchEvent) => boolean): number {
-  return events.filter((e) => e.side === side && pred(e)).length;
-}
 
 const HERO_TONE: Record<"gain" | "danger" | "neutral", { color: string; bg: string; Icon: Icon }> = {
   gain: { color: "var(--color-gain)", bg: "rgba(59,227,138,0.12)", Icon: TrendUp },
@@ -47,7 +43,6 @@ export default function ResultPage() {
   const rewriteContext = useAppStore((s) => s.rewriteContext);
 
   const [hydrated, setHydrated] = useState(false);
-  const [statsOpen, setStatsOpen] = useState(false);
   // CTA(다시 도전/새 매치업)는 의도적으로 match를 비우고 다른 경로로 이동한다.
   // 이때 아래 "종료된 경기 없으면 홈으로" 가드가 match 소거를 오인해 "/"로
   // 리다이렉트하며 목적지(/tactics)를 덮어쓰지 않도록 플래그로 가드를 끈다.
@@ -166,21 +161,7 @@ export default function ResultPage() {
     : heroLine(cf.deltas);
   const tone = HERO_TONE[hero.tone];
 
-  // 상세 스탯(이벤트 파생): 슈팅 / 유효슈팅(골+선방) / 코너 / 카드
-  const stat = (side: "me" | "opp") => ({
-    shots: countBy(match.events, side, (e) => e.type === "shot"),
-    onTarget: countBy(match.events, side, (e) => e.type === "goal" || e.type === "save"),
-    corners: countBy(match.events, side, (e) => e.type === "corner"),
-    cards: countBy(match.events, side, (e) => e.type === "card"),
-  });
-  const meStat = stat("me");
-  const oppStat = stat("opp");
-  const STAT_ROWS: Array<{ key: keyof ReturnType<typeof stat>; label: string }> = [
-    { key: "shots", label: "슈팅" },
-    { key: "onTarget", label: "유효슈팅" },
-    { key: "corners", label: "코너킥" },
-    { key: "cards", label: "경고" },
-  ];
+  // 스탯 집계는 lib/engine/match-stats.ts가 단일 소스다(MatchSummary가 직접 읽는다).
 
   return (
     <main id="main" className="mx-auto flex w-full max-w-md flex-1 scroll-mt-14 flex-col gap-4 px-4 py-6 sm:px-5">
@@ -245,46 +226,13 @@ export default function ResultPage() {
       {/* 전술 평가 & 보완 */}
       {review && <TacticsReviewPanel review={review} />}
 
-      {/* 상세 스탯 아코디언 */}
-      <section className="panel overflow-hidden rounded-panel">
-        <button
-          type="button"
-          aria-expanded={statsOpen}
-          onClick={() => setStatsOpen((v) => !v)}
-          className="flex w-full items-center justify-between px-4 py-3.5 text-left"
-        >
-          <span className="eyebrow text-accent">상세 스탯</span>
-          <span className="text-sm text-dim" aria-hidden>
-            {statsOpen ? "▲ 접기" : "▼ 펼치기"}
-          </span>
-        </button>
-        {statsOpen && (
-          <div className="flex flex-col gap-2.5 border-t border-line px-4 py-4">
-            <div className="flex items-center justify-between text-[13px] font-bold text-dim">
-              <span>{me?.code ?? "ME"}</span>
-              <span>{opp?.code ?? "OPP"}</span>
-            </div>
-            {STAT_ROWS.map((row) => {
-              const m = meStat[row.key];
-              const o = oppStat[row.key];
-              const total = m + o || 1;
-              return (
-                <div key={row.key}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="stat-num font-black text-ink">{m}</span>
-                    <span className="text-[13px] text-dim">{row.label}</span>
-                    <span className="stat-num font-black text-ink">{o}</span>
-                  </div>
-                  <div className="mt-1 flex h-1.5 overflow-hidden rounded-full bg-surface-2">
-                    <div style={{ width: `${(m / total) * 100}%`, background: "var(--color-accent)" }} />
-                    <div style={{ width: `${(o / total) * 100}%`, background: "var(--color-danger)" }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+      {/* 경기 요약. 예전에는 접힌 아코디언 안에 네 줄뿐이라 "결과 요약이 없다"는
+          인상을 줬다. 펼친 상태로 두고 지표를 늘렸다. */}
+      <MatchSummary
+        match={match}
+        meNameKo={me?.nameKo ?? "우리"}
+        oppNameKo={opp?.nameKo ?? "상대"}
+      />
 
       {/* 공유 카드 */}
       <ShareCard match={match} cf={cf} shootout={shootout} />

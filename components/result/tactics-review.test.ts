@@ -82,6 +82,20 @@ describe("buildTacticsReview", () => {
       expect(review.oppEdge).toEqual([]);
     });
 
+    // 회귀: 양 팀이 같은 기본 세팅이면 같은 규칙이 양쪽에 발동해, "통한 전술"과
+    // "상대가 앞선 부분"에 똑같은 문구가 나란히 실렸다. 내가 이미 가진 강점은
+    // 상대의 우위가 아니다.
+    it("내가 이미 가진 강점은 상대 우위에서 제외한다", () => {
+      const shared = rule("shared_plus", 0.04);
+      const review = buildTacticsReview(
+        matchOf({ scoreMe: 0, scoreOpp: 1 }),
+        mod([shared]),
+        mod([rule("shared_plus", 0.04), rule("opp_only", 0.03)])
+      );
+      expect(review.worked.map((r) => r.id)).toEqual(["shared_plus"]);
+      expect(review.oppEdge.map((r) => r.id)).toEqual(["opp_only"]);
+    });
+
     it("내 감점이 있으면 그쪽이 우선이라 상대 우위는 비운다", () => {
       const review = buildTacticsReview(
         matchOf({ scoreMe: 0, scoreOpp: 1 }),
@@ -120,7 +134,9 @@ describe("buildTacticsReview", () => {
     expect(review.tips.some((t) => t.includes("폭염"))).toBe(true);
   });
 
-  it("근거가 없으면 유지 코멘트 1개, 팁은 최대 4개", () => {
+  // 상한은 4에서 6으로 올렸다("전술 평가가 너무 부족하다"는 지적). 그 이상은 리포트가
+  // 아니라 목록이 되어 오히려 안 읽히므로 상한 자체는 유지한다.
+  it("근거가 없으면 유지 코멘트 1개, 팁은 최대 6개", () => {
     const clean = buildTacticsReview(matchOf({ scoreMe: 2, scoreOpp: 0 }), mod([]), mod([]));
     expect(clean.tips).toHaveLength(1);
 
@@ -132,7 +148,43 @@ describe("buildTacticsReview", () => {
       mod([rule("bad", -0.06)], { heat: true, highTempo: true }),
       mod([rule("opp_top", 0.05)])
     );
-    expect(busy.tips.length).toBeLessThanOrEqual(4);
+    expect(busy.tips.length).toBeLessThanOrEqual(6);
     expect(busy.tips.length).toBeGreaterThanOrEqual(2);
+  });
+
+  // 회귀: 규칙 발동만 보면 "전술은 문제없었는데 왜 졌는지"가 비었다.
+  // 실제 기록(결정력·수비 노출)과 개입 효과를 함께 읽어야 리포트가 된다.
+  describe("경기 지표 기반 진단", () => {
+    it("유효슈팅을 많이 만들고 못 넣으면 결정력을 지적한다", () => {
+      const events = [
+        ...Array.from({ length: 5 }, () => ev("save", "me")),
+        ev("goal", "me"),
+      ];
+      const review = buildTacticsReview(
+        matchOf({ scoreMe: 1, scoreOpp: 2, events }),
+        mod([]),
+        mod([])
+      );
+      expect(review.tips.some((t) => t.includes("마무리"))).toBe(true);
+    });
+
+    it("상대 유효슈팅을 많이 허용하면 수비를 지적한다", () => {
+      const events = Array.from({ length: 6 }, () => ev("save", "opp"));
+      const review = buildTacticsReview(
+        matchOf({ scoreMe: 0, scoreOpp: 2, events }),
+        mod([]),
+        mod([])
+      );
+      expect(review.tips.some((t) => t.includes("유효슈팅을"))).toBe(true);
+    });
+
+    it("졌는데 개입이 한 번도 없으면 개입을 권한다", () => {
+      const review = buildTacticsReview(
+        matchOf({ scoreMe: 0, scoreOpp: 1, interventions: [] }),
+        mod([]),
+        mod([])
+      );
+      expect(review.tips.some((t) => t.includes("작전 변경"))).toBe(true);
+    });
   });
 });
