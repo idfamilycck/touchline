@@ -25,6 +25,7 @@ import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { RewriteContextBadge } from "@/components/rewrite/RewriteContextBadge";
 import { SquadList } from "@/components/tactics/SquadList";
+import { AttributeGrid } from "@/components/tactics/AttributeGrid";
 import { PitchBoard } from "@/components/tactics/PitchBoard";
 import { WinGauge } from "@/components/tactics/WinGauge";
 import { FactorCards } from "@/components/tactics/FactorCards";
@@ -244,6 +245,9 @@ export default function TacticsPage() {
   const teamColor = team?.color2 ?? "var(--color-accent)";
   const squad = playersOf(me.teamId);
   const activePlayer = activeId ? squad.find((p) => p.id === activeId) : undefined;
+  // 탭-투-배치/스쿼드 선택 중인 선수의 전체 능력치를 스쿼드 열 아래에 바로 보여준다
+  // (분석 탭으로 건너가지 않아도 즉시 확인 가능 — 모바일 탭 전환 왕복을 줄인다).
+  const selectedPlayer = selected ? squad.find((p) => p.id === selected.playerId) : undefined;
 
   // "경기 시작" 게이팅: 현재 포메이션의 슬롯이 모두 채워졌는지.
   // free 모드는 언제나 11명 필수. rewrite 모드는 실제 경기 상태(퇴장 등)로 인해
@@ -340,6 +344,7 @@ export default function TacticsPage() {
               selected={selected}
               onSelectPlayer={onSelectPlayer}
             />
+            <AttributeGrid player={selectedPlayer} className="mt-4" />
           </div>
 
           {/* 피치 열 */}
