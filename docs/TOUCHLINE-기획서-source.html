@@ -6,13 +6,17 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
-    --pitch: #14532d;
-    --pitch-light: #16a34a;
-    --ink: #1a2420;
-    --sub: #5b6b63;
-    --line: #dbe4de;
-    --bg-soft: #f2f7f4;
-    --accent: #b7f04d;
+    /* 터치라인 앰버×차콜 아이덴티티. 본문은 종이 위 가독성을 위해 항상 진한 잉크색을
+       유지하고, 앰버는 커버·룰선·콜아웃·강조 숫자 등 "단일 액센트"로만 절제해 쓴다. */
+    --charcoal: #16181c;
+    --charcoal-2: #1e2126;
+    --ink: #17181b;
+    --sub: #5c6066;
+    --line: #dfe1e6;
+    --bg-soft: #f4f4f6;
+    --accent: #ffb020;
+    --accent-ink: #17120a;
+    --accent-deep: #a05e00;
   }
   html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body {
@@ -27,61 +31,61 @@
   .cover {
     height: 250mm;
     display: flex; flex-direction: column; justify-content: space-between;
-    background: linear-gradient(160deg, #0c2818 0%, #14532d 55%, #0f3d22 100%);
+    background: linear-gradient(160deg, #0b0c0e 0%, #16181c 55%, #1c1f24 100%);
     border-radius: 10px;
-    color: #eef7ef;
+    color: #f0f1f3;
     padding: 20mm 18mm;
   }
   .cover .contest { font-size: 10.5pt; letter-spacing: 0.12em; color: var(--accent); font-weight: 700; }
   .cover h1 { font-size: 34pt; font-weight: 800; margin: 7mm 0 3mm; letter-spacing: -0.01em; }
-  .cover .subtitle { font-size: 14.5pt; color: #cfe6d3; font-weight: 600; }
+  .cover .subtitle { font-size: 14.5pt; color: #c7cbd1; font-weight: 600; }
   .cover .oneliner {
-    margin-top: 12mm; font-size: 11.5pt; line-height: 1.85; color: #e2efe4;
+    margin-top: 12mm; font-size: 11.5pt; line-height: 1.85; color: #e2e3e6;
     border-left: 3px solid var(--accent); padding-left: 6mm; max-width: 150mm;
   }
   .cover .oneliner b { color: #ffffff; }
-  .cover .meta { font-size: 10pt; color: #bcd6c2; line-height: 2.0; }
+  .cover .meta { font-size: 10pt; color: #a9adb4; line-height: 2.0; }
   .cover .meta b { color: #ffffff; font-weight: 700; }
-  .cover .meta .doc-type { display:inline-block; background: var(--accent); color:#0c2818; font-weight:800; padding: 1mm 4mm; border-radius: 99px; margin-bottom: 4mm; font-size: 10.5pt;}
+  .cover .meta .doc-type { display:inline-block; background: var(--accent); color:var(--accent-ink); font-weight:800; padding: 1mm 4mm; border-radius: 99px; margin-bottom: 4mm; font-size: 10.5pt;}
 
   /* ---------- section pages ---------- */
   .sec { page-break-before: always; padding: 2mm 1mm; }
 
   h2 {
-    font-size: 14.5pt; font-weight: 800; color: var(--pitch);
-    border-bottom: 2.5px solid var(--pitch); padding-bottom: 2mm; margin: 0 0 4.5mm;
+    font-size: 14.5pt; font-weight: 800; color: var(--charcoal);
+    border-bottom: 2.5px solid var(--accent); padding-bottom: 2mm; margin: 0 0 4.5mm;
     letter-spacing: -0.01em;
     page-break-after: avoid;
   }
-  h2 .no { color: var(--pitch-light); margin-right: 2.5mm; }
+  h2 .no { color: var(--accent-deep); margin-right: 2.5mm; }
   h3 { font-size: 11pt; font-weight: 700; margin: 5mm 0 2.2mm; color: var(--ink); page-break-after: avoid; }
-  h3 .tag { font-size: 8.5pt; color: #fff; background: var(--pitch); border-radius: 4px; padding: 0.5mm 2.5mm; margin-right: 2mm; vertical-align: 1px;}
+  h3 .tag { font-size: 8.5pt; color: #fff; background: var(--charcoal); border-radius: 4px; padding: 0.5mm 2.5mm; margin-right: 2mm; vertical-align: 1px;}
   p { margin-bottom: 2.6mm; }
   ul { margin: 0 0 2.6mm 5mm; }
   ol { margin: 3mm 0 3mm 5mm; }
   li { margin-bottom: 1.1mm; }
   b, strong { font-weight: 700; }
-  .hl { background: linear-gradient(transparent 62%, #d9f2a3 62%); font-weight: 700; }
+  .hl { background: linear-gradient(transparent 62%, #ffe3ab 62%); font-weight: 700; }
   .mono { font-family: Consolas, monospace; font-size: 0.94em; }
 
   table { width: 100%; border-collapse: collapse; margin: 1.6mm 0 4mm; font-size: 9.1pt; page-break-inside: avoid; }
   table.split { page-break-inside: auto; }
   table.split tr { page-break-inside: avoid; }
-  th { background: var(--pitch); color: #fff; font-weight: 700; padding: 1.8mm 2.5mm; text-align: left; }
+  th { background: var(--charcoal); color: #fff; font-weight: 700; padding: 1.8mm 2.5mm; text-align: left; }
   td { border-bottom: 1px solid var(--line); padding: 1.8mm 2.5mm; vertical-align: top; }
   tbody tr:nth-child(even) td { background: var(--bg-soft); }
   td.k { font-weight: 700; }
 
   .callout {
-    background: var(--bg-soft); border-left: 3.5px solid var(--pitch-light);
+    background: var(--bg-soft); border-left: 3.5px solid var(--accent);
     border-radius: 0 6px 6px 0; padding: 2.6mm 4mm; margin: 2.5mm 0 4mm; font-size: 9.4pt;
     page-break-inside: avoid;
   }
-  .callout b { color: var(--pitch); }
+  .callout b { color: var(--accent-deep); }
 
   .shot { page-break-inside: avoid; }
   .shot img {
-    max-width: 100%; border: 1px solid #c8d4cc; border-radius: 6px; display: block; margin: 0 auto;
+    max-width: 100%; border: 1px solid var(--line); border-radius: 6px; display: block; margin: 0 auto;
   }
   .shot .cap { font-size: 8.6pt; color: var(--sub); margin-top: 1.4mm; text-align: center; }
   .shot-row { display: flex; gap: 4mm; margin: 2.5mm 0 4mm; align-items: flex-end; page-break-inside: avoid; }
@@ -95,26 +99,34 @@
 
   .kpi-row { display: flex; gap: 3.5mm; margin: 2.5mm 0 4mm; page-break-inside: avoid; }
   .kpi {
-    flex: 1; background: var(--bg-soft); border: 1px solid var(--line); border-radius: 8px;
+    flex: 1; background: var(--bg-soft); border: 1px solid var(--line); border-top: 2.5px solid var(--accent); border-radius: 8px;
     padding: 3mm 3.5mm; text-align: center;
   }
-  .kpi .n { font-size: 14.5pt; font-weight: 800; color: var(--pitch); }
+  .kpi .n { font-size: 14.5pt; font-weight: 800; color: var(--charcoal); }
   .kpi .l { font-size: 8.4pt; color: var(--sub); margin-top: 0.5mm; }
 
   .flow { display: flex; flex-wrap: wrap; gap: 2mm; align-items: center; margin: 2.5mm 0 4mm; page-break-inside: avoid; }
   .flow .step {
-    background: #fff; border: 1.5px solid var(--pitch); border-radius: 6px;
-    padding: 1.6mm 3mm; font-size: 8.8pt; font-weight: 700; color: var(--pitch);
+    background: #fff; border: 1.5px solid var(--accent); border-radius: 6px;
+    padding: 1.6mm 3mm; font-size: 8.8pt; font-weight: 700; color: var(--charcoal);
   }
   .flow .step small { display: block; font-weight: 400; color: var(--sub); font-size: 7.8pt; }
-  .flow .arr { color: var(--pitch-light); font-weight: 800; }
+  .flow .arr { color: var(--accent-deep); font-weight: 800; }
 
   .formula {
-    font-family: Consolas, monospace; font-size: 8.8pt; background: #0c2818; color: #d7f0da;
+    font-family: Consolas, monospace; font-size: 8.8pt; background: var(--charcoal); color: #eef0f2;
     border-radius: 6px; padding: 3mm 4.5mm; margin: 1.6mm 0 3.5mm; line-height: 1.65; white-space: pre;
     page-break-inside: avoid;
   }
   .footer-note { font-size: 8.4pt; color: var(--sub); border-top: 1px solid var(--line); padding-top: 2mm; margin-top: 5mm; page-break-inside: avoid; }
+
+  /* 제4심판 LED 보드 - 기획서 안에서도 앱과 동일한 시그니처를 재현(§2⑤ 참고) */
+  .led {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #070b09; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
+    padding: 0.6mm 1.8mm; font-family: Consolas, monospace; font-weight: 800; font-size: 8.6pt;
+    color: var(--accent); vertical-align: 1px;
+  }
 </style>
 </head>
 <body>
@@ -123,9 +135,9 @@
 <div class="cover-page">
   <div class="cover">
     <div>
-      <div class="contest">데이콘 월간 해커톤 · 내가 축구 감독이라면 — 월드컵 전술 웹서비스 챌린지</div>
+      <div class="contest">데이콘 월간 해커톤 · 내가 축구 감독이라면 - 월드컵 전술 웹서비스 챌린지</div>
       <h1>터치라인 <span style="font-size:20pt; font-weight:600;">TOUCHLINE</span></h1>
-      <div class="subtitle">당신이 감독이라면 — 실시간 승률로 증명하는 월드컵 전술 시뮬레이터</div>
+      <div class="subtitle">당신이 감독이라면 - 실시간 승률로 증명하는 월드컵 전술 시뮬레이터</div>
       <div class="oneliner">
         상대팀·경기장을 고르고 선수를 드래그로 배치하면, 통계 엔진이 <b>조작할 때마다 실시간으로 승률을 갱신</b>하고
         근거와 함께 최적 전술을 추천합니다. 그 전술로 90분을 직접 지휘하고,
@@ -137,7 +149,7 @@
       <b>서비스 URL</b> &nbsp;https://touchline-fc.vercel.app<br>
       <b>GitHub</b> &nbsp;https://github.com/idfamilycck/touchline<br>
       <b>참가 형태</b> &nbsp;개인 &nbsp;·&nbsp; <b>제출일</b> 2026년 7월<br>
-      <span style="font-size:8.5pt; color:#9dbfa5;">※ 본 서비스의 모든 선수·팀 능력치는 가상으로 구성된 데이터이며, 선수 초상·사진을 사용하지 않습니다.</span>
+      <span style="font-size:8.5pt; color:#8a8f97;">※ 본 서비스의 모든 선수·팀 능력치는 가상으로 구성된 데이터이며, 선수 초상·사진을 사용하지 않습니다.</span>
     </div>
   </div>
 </div>
@@ -147,7 +159,7 @@
   <h2><span class="no">1</span>서비스 개요</h2>
 
   <p>월드컵 시즌, 누구나 한 번쯤 말합니다. <b>"내가 감독이면 저기서 교체했다."</b>
-  터치라인은 그 말을 검증 가능한 숫자로 바꾸는 서비스입니다. 사용자는 16개국 중 두 팀과 2026 실제 개최지 기반 경기장을 고르고,
+  터치라인은 그 말을 검증 가능한 숫자로 바꾸는 서비스입니다. 사용자는 2026 월드컵 실제 출전 48개국 중 두 팀과 실제 개최지 기반 경기장을 고르고,
   작전실에서 선수를 배치하고 전술을 설계한 뒤, 90분 경기를 직접 지휘합니다.
   모든 결정은 통계 엔진이 즉시 승률로 환산하고, 경기가 끝나면 <b>"개입이 없었다면?"</b>의 평행세계와 비교해
   감독으로서의 가치를 수치로 돌려줍니다.</p>
@@ -174,7 +186,7 @@
     </tbody>
   </table>
 
-  <h3>운영 안정성 — 100% 클라이언트 엔진</h3>
+  <h3>운영 안정성 - 100% 클라이언트 엔진</h3>
   <p>승률 계산·AI 추천·경기 시뮬레이션·카운터팩추얼이 전부 <b>브라우저 안의 순수 TypeScript 엔진</b>에서 동기 실행됩니다.
   서버 런타임·외부 API·API 키가 전무한 완전 정적 빌드(<span class="mono">output: 'export'</span>)로 배포되어,
   심사·투표 기간 중 서버 장애나 네트워크 의존으로 인한 접속 불가가 원천 차단됩니다.</p>
@@ -187,7 +199,7 @@
   </div>
 
   <div class="callout">
-    <b>공정성·저작권 안전장치</b> — 모든 선수·팀 능력치는 가상 구성 데이터임을 서비스 내에 명시하고,
+    <b>공정성·저작권 안전장치</b> - 모든 선수·팀 능력치는 가상 구성 데이터임을 서비스 내에 명시하고,
     선수 사진·초상 대신 이니셜 아바타, 자체 제작 텍스트 배지를 사용합니다.
   </div>
 </div>
@@ -196,37 +208,32 @@
 <div class="sec">
   <h2><span class="no">2</span>감독 경험 설계 의도</h2>
 
-  <p>설계 철학은 한 문장입니다 — <span class="hl">"엔진은 복잡하게, 화면은 단순하게."</span>
+  <p>설계 철학은 한 문장입니다 - <span class="hl">"엔진은 복잡하게, 화면은 단순하게."</span>
   수많은 변수(능력치 8종 × 역할 × 상성 × 환경 × 히스토리)가 계산에 쓰이지만,
   화면에는 일반인이 3초 안에 읽는 형태로만 노출합니다.</p>
 
-  <h3>① 3계층 전술 시스템 — "감독의 의도"를 세부까지</h3>
+  <h3>① 3계층 전술 시스템 - "감독의 의도"를 세부까지</h3>
   <table>
     <thead><tr><th style="width:16%;">계층</th><th>내용</th></tr></thead>
     <tbody>
     <tr><td class="k">1층 · 팀 지시</td>
-      <td>포메이션 6종(4-3-3, 4-4-2, 4-2-3-1, 3-5-2, 3-4-3, 5-4-1) + 압박 강도·수비 라인·공격 성향·템포 슬라이더
-      + 빌드업(숏패스/롱볼) + 공격 방향(좌/중/우) + 공격 폭 + 수비 방식(지역/대인) + 오프사이드 트랩</td></tr>
+      <td>포메이션 6종(4-3-3, 4-4-2, 4-2-3-1, 3-5-2, 3-4-3, 5-4-1) + 압박·라인·공격성향·템포 슬라이더 + 빌드업·방향·폭·수비방식·오프사이드 트랩</td></tr>
     <tr><td class="k">2층 · 선수 역할</td>
-      <td>같은 포지션이라도 역할이 다르면 반영 능력치 가중이 달라집니다 — ST: 타겟맨/폴스나인/포처,
-      윙어: 인버티드/클래식, 중앙 MF: 딥라잉 플레이메이커/박스투박스/홀딩, 풀백: 오버래핑/수비형 등</td></tr>
+      <td>같은 포지션도 역할이 다르면 능력치 가중이 달라집니다 - ST: 타겟맨/폴스나인/포처, 윙어: 인버티드/클래식, MF: 딥라잉/박스투박스/홀딩, 풀백: 오버래핑/수비형</td></tr>
     <tr><td class="k">3층 · 특수 지시</td>
-      <td><b>맨마킹 지정</b>(상대 에이스 전담 — 피치 위 연결선으로 시각화, 위협도 감소 vs 마커의 공격 기여·체력 소모 트레이드오프),
-      세트피스 키커 지정(FK·CK 배지), 주장 지정(멘탈 보정, C 배지)</td></tr>
+      <td><b>맨마킹 지정</b>(상대 에이스 전담, 피치 위 연결선 시각화, 위협도 감소 vs 마커 체력 소모 트레이드오프), 세트피스 키커(FK·CK 배지), 주장(멘탈 보정, C 배지)</td></tr>
     </tbody>
   </table>
-  <h3>② 경기 중 개입 루프 — 긴장과 결정의 반복</h3>
+  <h3>② 경기 중 개입 루프 - 긴장과 결정의 반복</h3>
   <ul>
-    <li><b>하이라이트 점프 재생</b>: 90분을 전부 틀지 않고 슛·골·코너·위기 등 핵심 장면에서 자동 정지·연출.
-    장면마다 자막과 함께 <b>"발동 전술" 칩</b>을 표시해, 엔진이 실제 계산에 반영한 전술 규칙만 정직하게 귀속시킵니다.</li>
-    <li><b>자유 일시정지 + 위기 알림</b>: 언제든 멈춰 교체(최대 5명)·포메이션·지시를 바꿀 수 있고,
-    실점·연속 위기·체력 급감 시 <i>"감독님, 지시가 필요합니다"</i> 배너로 개입을 유도합니다.</li>
-    <li><b>후반 체력 감쇠</b>: 교체 카드가 실제 승률에 유의미하게 작용하도록 설계했습니다.</li>
-    <li><b>라이브 피치</b>: 22명 전원 이름 표시, 점유 팀 사이를 순환하는 공, 장면 주인공의 전진 연출로
-    "전술이 승리를 만드는 과정"을 보여줍니다.</li>
+    <li><b>하이라이트 점프 재생</b>: 90분 전부가 아닌 슛·골·코너·위기 등 핵심 장면에서 자동 정지·연출하며,
+    <b>"발동 전술" 칩</b>으로 엔진이 실제 반영한 전술 규칙만 정직하게 귀속시킵니다.</li>
+    <li><b>자유 일시정지 + 위기 알림</b>: 언제든 멈춰 교체(최대 5명)·포메이션·지시를 바꿀 수 있고, 실점·연속 위기 시
+    <i>"감독님, 지시가 필요합니다"</i> 배너로 개입을 유도합니다. 후반 체력 감쇠로 교체 타이밍이 실제 승률을 좌우합니다.</li>
+    <li><b>라이브 피치</b>: 22명 전원 이름 표시, 점유 팀 사이를 순환하는 공과 장면 주인공의 전진 연출.</li>
   </ul>
 
-  <h3>③ 정보 설계 — 3초 안에 읽히는 화면</h3>
+  <h3>③ 정보 설계 - 3초 안에 읽히는 화면</h3>
   <table>
     <thead><tr><th style="width:22%;">원칙</th><th>내용</th></tr></thead>
     <tbody>
@@ -234,9 +241,9 @@
       <td>1층(항상): 승률 게이지 큰 숫자 + 라인별 전력 막대 대결 → 2층: 근거 카드(아이콘+자연어 한 문장+델타,
       예: "🏔 고지대라 강한 압박은 후반에 지칩니다 −4%p") → 3층(펼치기): 상세 수치·산식</td></tr>
     <tr><td class="k">3중 인코딩</td>
-      <td>유리=초록·↑, 불리=빨강·↓ — 항상 색+방향+수치를 함께 표기(색약 대응). 승률 변동은 카운트업 애니메이션</td></tr>
+      <td>유리=초록·↑, 불리=빨강·↓ - 항상 색+방향+수치를 함께 표기(색약 대응). 승률 변동은 카운트업 애니메이션</td></tr>
     <tr><td class="k">조작→반응 1:1</td>
-      <td>무언가를 바꾸면 그 조작 때문에 변한 근거 카드만 하이라이트 — 내 결정과 결과를 즉시 연결</td></tr>
+      <td>무언가를 바꾸면 그 조작 때문에 변한 근거 카드만 하이라이트 - 내 결정과 결과를 즉시 연결</td></tr>
     <tr><td class="k">용어 규칙</td>
       <td>축구 팬이 아닌 사람 기준 문구(예: "점유율 지향" 대신 "공을 오래 소유하며 풀어가기"), 전문 용어는 툴팁 보조</td></tr>
     </tbody>
@@ -246,31 +253,34 @@
   <ul>
     <li><b>퀵스타트</b>: 홈의 "한국 vs 브라질 바로 지휘하기" 원클릭 → 프리셋 라인업으로 즉시 작전실 진입.
     첫 방문자가 <b>10초 안에</b> "승률이 반응하는" 핵심 경험에 도달합니다.</li>
-    <li><b>온보딩·접근성·모바일</b>: "감독 브리핑" 3단계 코치마크(1회만 표시), 탭-투-배치 대체 수단, 시맨틱 마크업·aria 라벨, 375px 모바일 검수</li>
+    <li><b>온보딩·접근성·모바일</b>: "감독 브리핑" 3단계 코치마크(1회만), 탭-투-배치 대체 수단, 375px 모바일 검수</li>
   </ul>
+
+  <h3 style="page-break-after:auto; page-break-before:auto;">⑤ 디자인 시그니처 - 제4심판 LED 보드</h3>
+  <p style="page-break-before:auto;">이 앱의 모든 결정이 수렴하는 <b>"몇 분부터 지휘할 것인가"</b>를 실제 제4심판의 LED 보드로 컴포넌트화해 <span class="led">63′</span> 형태로 앱 전체에서 동일하게 씁니다.</p>
 </div>
 
 <!-- ================= 3. 페이지 구성 (1/2) ================= -->
 <div class="sec">
-  <h2><span class="no">3</span>페이지 구성 — 4+1 화면</h2>
+  <h2><span class="no">3</span>페이지 구성 - 4+1 화면</h2>
 
-  <h3 style="margin-top:3mm;"><span class="tag">화면 1</span>홈 — 매치업 설정</h3>
+  <h3 style="margin-top:3mm;"><span class="tag">화면 1</span>홈 - 매치업 설정</h3>
   <div class="cols">
     <div>
       <ul>
         <li><b>퀵스타트</b> 추천 매치업 원클릭 버튼(최우선 배치)</li>
-        <li>16개국 카드 그리드에서 내 팀 → 상대 팀 순서 선택, 팀 카드에 ELO·최근 폼·상대전적 요약</li>
+        <li>48개국(2026 월드컵 실제 출전국) 카드 그리드에서 내 팀 → 상대 팀 순서 선택, 실제 국기 색상·ELO·최근 폼·최종 성적 태그(조별리그~결승)와 상대전적 요약</li>
         <li><b>경기장 선택</b>: 2026 실제 개최지 기반, 고도·기온·돔 아이콘으로 전술 영향 안내</li>
         <li>푸터에 가상 데이터 고지</li>
       </ul>
     </div>
     <div class="shot" style="flex: 1.5;">
       <img src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/01-home.png" alt="홈 화면">
-      <div class="cap">홈 — 매치업·경기장 설정과 퀵스타트</div>
+      <div class="cap">홈 - 매치업·경기장 설정과 퀵스타트</div>
     </div>
   </div>
 
-  <h3><span class="tag">화면 2</span>작전실 — 전술 보드 (핵심 화면)</h3>
+  <h3><span class="tag">화면 2</span>작전실 - 전술 보드 (핵심 화면)</h3>
   <ul>
     <li>좌: 스쿼드 리스트(포지션·능력치·나이) / 중앙: 2D 피치 드래그 배치 / 우: <b>승률 게이지 + 라인별 전력 비교 + 3계층 전술 패널</b></li>
     <li>모든 조작(배치·교체·포메이션·슬라이더·역할·특수 지시)이 승률을 즉시 갱신, 변동량 애니메이션</li>
@@ -281,20 +291,20 @@
   <div class="shot-row">
     <div class="shot" style="flex: 1.6;">
       <img src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/02-tactics.png" alt="작전실">
-      <div class="cap">작전실 — 실시간 승률 게이지·라인별 전력·전술 패널</div>
+      <div class="cap">작전실 - 실시간 승률 게이지·라인별 전력·전술 패널</div>
     </div>
     <div class="shot">
       <img src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/03-recommendation.png" alt="AI 추천 전술">
-      <div class="cap">AI 추천 전술 — 근거 카드</div>
+      <div class="cap">AI 추천 전술 - 근거 카드</div>
     </div>
   </div>
 </div>
 
 <!-- ================= 3. 페이지 구성 (2/2) ================= -->
 <div class="sec">
-  <h3 style="margin-top:0;"><span class="tag">화면 3</span>경기 — 하이라이트 점프 시뮬레이션</h3>
+  <h3 style="margin-top:0;"><span class="tag">화면 3</span>경기 - 하이라이트 점프 시뮬레이션</h3>
   <ul>
-    <li>상단: 2D 라이브 피치 — 22명 전원 이름 표시, 공 순환·장면 연출, 스코어보드</li>
+    <li>상단: 2D 라이브 피치 - 22명 전원 이름 표시, 공 순환·장면 연출, 스코어보드</li>
     <li>하단: 캐스터 톤 텍스트 중계 피드 + 실시간 승률 타임라인(골·개입 마커)</li>
     <li>핵심 장면(슛·골·코너·위기·카드)에서 자동 정지 + 장면 자막 + <b>발동 전술 칩</b>(엔진이 실제 반영한 규칙만 인용)</li>
     <li>자유 일시정지 → 교체·포메이션·지시 변경 → 엔진 재계산 후 재개 / 위기 알림 배너로 개입 유도</li>
@@ -303,21 +313,21 @@
   <div class="shot-row">
     <div class="shot">
       <img src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/04-match-live.png" alt="경기 라이브">
-      <div class="cap">경기 — 라이브 피치·중계 피드·위기 알림</div>
+      <div class="cap">경기 - 라이브 피치·중계 피드·위기 알림</div>
     </div>
     <div class="shot">
       <img src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/05-match-intervention.png" alt="작전 변경 시트">
-      <div class="cap">개입 — 일시정지 후 작전 변경 시트</div>
+      <div class="cap">개입 - 일시정지 후 작전 변경 시트</div>
     </div>
   </div>
 
   <h3><span class="tag">화면 4</span>승부차기 (조건부)</h3>
   <ul>
     <li>무승부 종료 시 "승부차기로 결판내시겠습니까?" 선택지 제시</li>
-    <li>키커 5명과 순서를 드래그로 지정(PK·멘탈 스탯 노출), 킥마다 1회 클릭 — PK 능력 vs GK 선방 확률 대결 연출</li>
+    <li>키커 5명과 순서를 드래그로 지정(PK·멘탈 스탯 노출), 킥마다 1회 클릭 - PK 능력 vs GK 선방 확률 대결 연출</li>
   </ul>
 
-  <h3><span class="tag">화면 5</span>복기 — 리포트</h3>
+  <h3><span class="tag">화면 5</span>복기 - 리포트</h3>
   <div class="cols">
     <div>
       <ul>
@@ -329,7 +339,7 @@
     </div>
     <div class="shot" style="flex: 1.1;">
       <img class="portrait" src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/06-result-top.png" alt="복기 화면">
-      <div class="cap">복기 — 카운터팩추얼 평행세계 비교</div>
+      <div class="cap">복기 - 카운터팩추얼 평행세계 비교</div>
     </div>
   </div>
 </div>
@@ -360,23 +370,23 @@
   </table>
 
   <div class="callout">
-    <b>접근성</b> — 드래그가 어려운 환경을 위한 탭-투-배치(선수 선택 → 슬롯 선택) 대체 수단,
+    <b>접근성</b> - 드래그가 어려운 환경을 위한 탭-투-배치(선수 선택 → 슬롯 선택) 대체 수단,
     시맨틱 마크업·aria 라벨, 색+방향+수치 3중 인코딩(색약 대응)을 전 화면에 적용했습니다.
   </div>
 </div>
 
 <!-- ================= 5. 데이터 활용 ================= -->
 <div class="sec">
-  <h2><span class="no">5</span>데이터 활용 — 통계 엔진</h2>
+  <h2><span class="no">5</span>데이터 활용 - 통계 엔진</h2>
 
   <h3>① 데이터 구성 (직접 구성한 가상 데이터)</h3>
   <table>
     <thead><tr><th style="width:18%;">데이터</th><th>내용</th></tr></thead>
     <tbody>
-    <tr><td class="k">팀 (16개국)</td><td>ELO 레이팅, FIFA 랭킹, 최근 10경기 폼 지수, 스타일 태그</td></tr>
+    <tr><td class="k">팀 (48개국)</td><td>2026 월드컵 실제 출전국 - ELO·최종 성적은 실측 기반, 순위·폼 지수는 ELO 파생 근사치, 국기 색상은 실제 국가 색</td></tr>
     <tr><td class="k">선수 (팀당 ~20명)</td><td>포지션(주/부)·나이·A매치 수·능력치 8종(슈팅·패스·드리블·수비·스피드·피지컬·GK·체력)·세트피스·공중볼·PK·멘탈</td></tr>
-    <tr><td class="k">경기장</td><td>2026 실제 개최지 기반 — 고도(m)·평균 기온·돔 여부·수용 인원</td></tr>
-    <tr><td class="k">상대전적</td><td>국가 쌍별 역대 승무패 — 심리 보정용(상한 캡 적용)</td></tr>
+    <tr><td class="k">경기장</td><td>2026 실제 개최지 기반 - 고도(m)·평균 기온·돔 여부·수용 인원</td></tr>
+    <tr><td class="k">상대전적</td><td>국가 쌍별 역대 승무패 - 심리 보정용(상한 캡 적용)</td></tr>
     <tr><td class="k">전술 정의</td><td>포메이션 슬롯 좌표, 역할별 능력치 가중 프로파일, 팀 지시·스타일 상성 매트릭스</td></tr>
     </tbody>
   </table>
@@ -392,24 +402,20 @@
   <div class="formula">λ = clamp( λ_base × (내 공격력 / 상대 수비력)^탄력도 × 전술·환경 보정 × ELO 보정,  λ_min, λ_max )
 승/무/패 확률 = 양 팀 λ의 포아송 이중합  (합 = 1, 테스트로 검증)</div>
   <ul>
-    <li><b>보정 규칙 15종</b>: 전술 상성(높은 라인 vs 스피드, 롱볼×타겟맨 시너지, 폭 상성, 오프사이드 트랩 등)
-    · 맨마킹 · 환경(고지대·폭염) · 히스토리(폼·상대전적·주장 멘탈) · 템포</li>
-    <li><b>AI 추천</b>: 포메이션 6 × 슬라이더·지시 이산화 = 23,328개 조합을 클릭 시 전수 평가, 선수 배치·역할은 그리디 최적 배치</li>
-    <li><b>경기 시뮬</b>: 시드 기반 분 단위 이벤트 체인(찬스→슈팅→골/세이브·코너·카드), 분당 λ를 시간·체력·전술에 따라 갱신 —
-    동일 입력·시드는 항상 동일 경기(카운터팩추얼의 전제)</li>
-    <li><b>카운터팩추얼</b>: 동일 시드 + 개입 로그 무시 재시뮬 → 개입별 승률 델타 산출</li>
+    <li><b>보정 규칙 15종</b>: 전술 상성(높은 라인 vs 스피드, 롱볼×타겟맨 등) · 맨마킹 · 환경(고지대·폭염) · 히스토리(폼·상대전적·주장 멘탈) · 템포</li>
+    <li><b>AI 추천</b>: 포메이션 6 × 슬라이더·지시 이산화 = 23,328개 조합 클릭 시 전수 평가, 배치·역할은 그리디 최적화</li>
+    <li><b>경기 시뮬 · 카운터팩추얼</b>: 시드 기반 분 단위 이벤트 체인 - 동일 입력·시드는 항상 동일 경기이므로, 개입 로그를 무시하고 재시뮬해 개입별 승률 델타를 산출</li>
   </ul>
 
-  <h3>③ 신뢰성 — "이상한 결과"는 버그보다 치명적</h3>
+  <h3>③ 신뢰성 - "이상한 결과"는 버그보다 치명적</h3>
   <table class="split">
     <thead><tr><th style="width:26%;">검증 장치</th><th>내용</th></tr></thead>
     <tbody>
     <tr><td class="k">카운터팩추얼 불변식 3종</td>
-      <td>① 무개입 재시뮬은 개입 이전 구간과 이벤트 완전 동일 ② 개입 로그 재적용 시 원 경기 100% 재현 ③ 무개입 경기의 델타 = 정확히 0 — 전부 자동 테스트로 강제</td></tr>
+      <td>① 무개입 재시뮬=개입 이전 구간·이벤트 완전 동일 ② 개입 로그 재적용 시 원 경기 100% 재현 ③ 무개입 경기의 델타 = 정확히 0 - 전부 자동 테스트로 강제</td></tr>
     <tr><td class="k">몬테카를로 밸런싱 게이트</td>
-      <td>전 매치업(16×15) × 20시드 = 4,800회 시뮬을 테스트로 자동화. 실측: ELO 우위팀 승률 0.596(게이트 0.55~0.90),
-      경기당 평균 3.12골(1.8~3.6), 5골차 이상 블로아웃 0.77%(&lt;4%), 무승부 26.4%(15~35%)</td></tr>
-    <tr><td class="k">테스트 스위트</td><td>단위 테스트 <b>170개(24파일) 전부 통과</b> — 승률 합=1, 극단 입력 안정성, 보정 방향성, 카운터팩추얼 불변식, wc2026 데이터 정합성 등 + 핵심 플로우 E2E 스모크(Playwright)</td></tr>
+      <td>전 매치업(16×15)×20시드=4,800회 자동 시뮬. 실측: ELO 우위팀 승률 0.596(게이트 0.55~0.90), 평균 3.12골(1.8~3.6), 블로아웃 0.77%(&lt;4%), 무승부 26.4%(15~35%)</td></tr>
+    <tr><td class="k">테스트 스위트</td><td>단위 테스트 <b>220개(29파일) 전부 통과</b> - 승률 합=1, 극단 입력 안정성, 보정 방향성, 카운터팩추얼 불변식, wc2026 데이터 정합성·다시 쓰기 진입점 정합성 등 + 핵심 플로우 E2E 스모크(Playwright)</td></tr>
     </tbody>
   </table>
 </div>
@@ -418,7 +424,7 @@
 <div class="sec">
   <h2><span class="no">6</span>사용 흐름</h2>
 
-  <h3>대표 시나리오 — "0-1로 뒤지던 경기를 교체로 뒤집다"</h3>
+  <h3>대표 시나리오 - "0-1로 뒤지던 경기를 교체로 뒤집다"</h3>
   <div class="flow">
     <span class="step">홈<small>퀵스타트: 한국 vs 브라질</small></span><span class="arr">→</span>
     <span class="step">작전실<small>드래그 배치마다 승률이 출렁</small></span><span class="arr">→</span>
@@ -431,14 +437,14 @@
   </div>
 
   <ol>
-    <li style="margin-bottom:2mm;"><b>진입 (0~10초)</b> — 홈에서 퀵스타트 원클릭. 프리셋 라인업으로 작전실에 도착하면
+    <li style="margin-bottom:2mm;"><b>진입 (0~10초)</b> - 홈에서 퀵스타트 원클릭. 프리셋 라인업으로 작전실에 도착하면
     이미 승률 게이지가 살아 있습니다. 첫 조작(선수 하나 이동)에서 바로 숫자가 반응합니다.</li>
-    <li style="margin-bottom:2mm;"><b>전술 설계</b> — 라인별 전력 비교로 약점을 파악하고, 3계층 지시를 조정합니다.
+    <li style="margin-bottom:2mm;"><b>전술 설계</b> - 라인별 전력 비교로 약점을 파악하고, 3계층 지시를 조정합니다.
     막히면 "추천 전술 보기"가 최고 승률 세팅과 이유를 알려줍니다. 온보딩 코치마크가 첫 방문자를 3단계로 안내합니다.</li>
-    <li style="margin-bottom:2mm;"><b>경기 지휘</b> — 하이라이트 점프로 긴장감 있게 진행되는 90분.
+    <li style="margin-bottom:2mm;"><b>경기 지휘</b> - 하이라이트 점프로 긴장감 있게 진행되는 90분.
     실점하면 위기 배너가 뜨고, 일시정지해 교체 카드를 꺼냅니다. 후반 체력 감쇠 때문에 교체 타이밍이 실제로 승률을 좌우합니다.</li>
-    <li style="margin-bottom:2mm;"><b>결판</b> — 무승부라면 승부차기. 키커 순서를 직접 정하는 마지막 결정까지 감독의 몫입니다.</li>
-    <li style="margin-bottom:2mm;"><b>복기와 공유</b> — "당신의 63' 교체가 승률을 +14%p 바꿨습니다."
+    <li style="margin-bottom:2mm;"><b>결판</b> - 무승부라면 승부차기. 키커 순서를 직접 정하는 마지막 결정까지 감독의 몫입니다.</li>
+    <li style="margin-bottom:2mm;"><b>복기와 공유</b> - "당신의 63' 교체가 승률을 +14%p 바꿨습니다."
     무개입 평행세계와 비교한 내 개입의 가치, 통한 전술과 보완점을 확인하고, 결과 카드를 공유하거나 재도전합니다.</li>
   </ol>
 
@@ -448,15 +454,15 @@
     <tbody>
     <tr><td class="k">프레임워크</td><td>Next.js (App Router) + React + TypeScript, Tailwind CSS</td></tr>
     <tr><td class="k">엔진</td><td><span class="mono">lib/engine/</span> 순수 TypeScript 함수(UI 무의존), 튜닝 상수 단일 파일 격리</td></tr>
-    <tr><td class="k">상태</td><td>Zustand persist(sessionStorage) — 새로고침·뒤로가기에도 배치·역할·특수 지시 전부 보존</td></tr>
+    <tr><td class="k">상태</td><td>Zustand persist(sessionStorage) - 새로고침·뒤로가기에도 배치·역할·특수 지시 전부 보존</td></tr>
     <tr><td class="k">인터랙션</td><td>dnd-kit(포인터/터치 센서 + 탭-투-배치), Framer Motion + 자체 SVG 차트</td></tr>
-    <tr><td class="k">배포</td><td>Vercel, <span class="mono">output: 'export'</span> 완전 정적 빌드 — 서버 기능 전무를 빌드 타임에 강제</td></tr>
+    <tr><td class="k">배포</td><td>Vercel, <span class="mono">output: 'export'</span> 완전 정적 빌드 - 서버 기능 전무를 빌드 타임에 강제</td></tr>
     <tr><td class="k">품질</td><td>엔진 단위 테스트 + 몬테카를로 밸런싱 게이트 + E2E 스모크, 콘솔 에러 제로, 375px 모바일 검수</td></tr>
     </tbody>
   </table>
 
   <div class="callout">
-    <b>기획 = 구현 1:1</b> — 본 기획서의 화면·인터랙션 명세는 배포된 서비스(https://touchline-fc.vercel.app)와 1:1로 대응하며,
+    <b>기획 = 구현 1:1</b> - 본 기획서의 화면·인터랙션 명세는 배포된 서비스(https://touchline-fc.vercel.app)와 1:1로 대응하며,
     GitHub README에 평가 기준별 "기획 장치 → 구현 파일 경로" 매핑표를 수록했습니다.
   </div>
 </div>
@@ -465,49 +471,64 @@
 <div class="sec">
   <h2><span class="no">7</span>2026 월드컵 다시 쓰기 모드</h2>
 
-  <p><b>"내가 그때 감독이었다면?"</b> — 가상 매치업이 아니라 <b>실제 2026 월드컵 103경기</b>를 무대로,
+  <p><b>"내가 그때 감독이었다면?"</b> - 가상 매치업이 아니라 <b>실제 2026 월드컵 103경기</b>를 무대로,
   승부를 가른 결정적 순간 직전으로 돌아가 직접 지휘하고 실제 역사와 비교하는 확장 모드입니다.
   자유 모드의 카운터팩추얼이 "내 개입 vs 내 무개입"을 비교한다면, 다시 쓰기 모드는
   <b>"내 지휘 vs 실제 역사"</b>를 비교합니다. 작전실·경기·엔진은 자유 모드와 완전히 동일한 코드를 재사용하며,
   진입 경로와 초기 상태만 다릅니다.</p>
 
-  <h3>① 결정적 순간 5분 전 개입 UX</h3>
+  <h3>① 막다른 길 없는 개입 시점 선택 UX</h3>
   <div class="flow">
-    <span class="step">경기 선택<small>라운드·팀 필터, 103경기</small></span><span class="arr">→</span>
+    <span class="step">경기 선택<small>라운드·조 필터, URL 딥링크, 103경기</small></span><span class="arr">→</span>
     <span class="step">관리 팀 선택<small>홈/원정 중 한 팀</small></span><span class="arr">→</span>
-    <span class="step">결정적 순간 카드<small>실점·리드 상실·퇴장·막판 동점</small></span><span class="arr">→</span>
-    <span class="step">5분 전 인수<small>실제 상태로 /tactics 진입</small></span><span class="arr">→</span>
+    <span class="step">진입점 선택<small>프리셋 3종 + 모든 이벤트 카드</small></span><span class="arr">→</span>
+    <span class="step">인수(<span class="led">T′</span>)<small>실제 상태로 /tactics 진입</small></span><span class="arr">→</span>
     <span class="step">남은 시간 직접 지휘<small>기존 경기 화면 재사용</small></span>
   </div>
-  <p>경기 이벤트를 분 단위로 훑어 <b>실점 / 리드 상실 / 퇴장 / 75분 이후 막판 동점</b> 네 종류의 결정적 순간을
-  자동 추출합니다. 카드를 고르면 사건 발생 5분 전(<span class="mono">max(사건 분 − 5, 0)</span>) 시점의 실제
-  스코어·선발 라인업·그때까지의 교체·퇴장·체력 소모를 엔진 상태로 복원해 작전실로 진입시킵니다.</p>
+  <p>진입점은 두 층으로 구성됩니다. <b>① 프리셋 3종</b>(풀경기 / 전반전 0-45′ / 후반전 45′-종료)은 그 경기에 기록된 이벤트 수와 무관하게 <b>항상</b> 뜹니다 -
+  무카드 완승처럼 "극적인 순간"이 없는 경기를 골라도 진입이 막히는 화면이 없다는 뜻입니다.
+  <b>② 그 경기에 기록된 모든 골·자책골·교체·경고·퇴장</b>도 각각 "이 시점 5분 전부터" 진입 카드가 되어
+  (<span class="mono">max(사건 분 − 5, 0)</span>), 득점자·교체 OUT→IN 선수·카드 받은 선수의 이름을 두 팀 모두 동일한 방식으로 표기합니다.
+  어떤 카드를 고르든 그 시점의 실제 스코어·선발 라인업·그때까지의 체력 소모를 엔진 상태로 복원해 작전실로 진입시킵니다.</p>
 
-  <h3>② 실제 역사 vs 평행세계 — 비교 리뷰</h3>
+  <div class="shot-row">
+    <div class="shot">
+      <img src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/07-rewrite-browser.png" alt="다시 쓰기 경기 브라우저">
+      <div class="cap">경기 브라우저 - 라운드·조 필터, URL 딥링크</div>
+    </div>
+    <div class="shot">
+      <img src="file:///C:/Users/ROG/Desktop/claudetest/worldcup/docs/screenshots/08-moments.png" alt="다시 쓰기 진입점 선택">
+      <div class="cap">진입점 선택 - 프리셋 3종 + 모든 이벤트, 제4심판 LED 보드로 분(分) 표시</div>
+    </div>
+  </div>
+
+  <h3>② 실제 역사 vs 평행세계 - 비교 리뷰</h3>
   <p>정규시간(0~90분) 종료 후 실제 경기의 정규시간 스코어(연장·승부차기 제외)와 사용자가 지휘한 결과를
   나란히 카드로 보여주고, 결과가 바뀌었는지(패배→무승부 등)를 한 문장으로 요약합니다.
   예: <i>"실제 패배를 무승부로 바꿨습니다."</i> 실제 경기가 연장에 갔더라도 비교 기준은 항상 정규시간
   90분 스코어로 통일합니다.</p>
 
-  <h3>③ 데이터 활용 — ESPN 1회 수집 · 정합성 검증 · 가상 능력치는 그대로</h3>
+  <h3>③ 데이터 활용 - ESPN 1회 수집 · 정합성 검증 · 가상 능력치는 그대로</h3>
   <table>
     <thead><tr><th style="width:20%;">항목</th><th>내용</th></tr></thead>
     <tbody>
-    <tr><td class="k">수집</td><td>ESPN 공개 데이터에서 <b>빌드 타임에 1회</b> 수집 → <span class="mono">data/wc2026/matches.json</span>(103경기)·<span class="mono">teams.json</span>(48개국)에 정적 커밋. 런타임 외부 호출 없음 — 100% 클라이언트 원칙 유지</td></tr>
+    <tr><td class="k">수집</td><td>ESPN 공개 데이터에서 <b>빌드 타임에 1회</b> 수집 → <span class="mono">data/wc2026/matches.json</span>(103경기)·<span class="mono">teams.json</span>(48개국)에 정적 커밋. 런타임 외부 호출 없음 - 100% 클라이언트 원칙 유지</td></tr>
     <tr><td class="k">실제 사용 데이터</td><td>경기 결과·득점(자책골 포함)·교체·카드를 <b>분 단위</b>로, 선수는 <b>이름·포지션</b>만 사용</td></tr>
     <tr><td class="k">가상 데이터(변함없음)</td><td>능력치 8종·세트피스·공중볼·PK·멘탈은 여전히 (선수ID·이름·포지션·팀 ELO) 기반 시드 결정론적 가상 수치</td></tr>
+    <tr><td class="k">선수 표기</td><td>ESPN 로마자 원본을 한글로 치환해 표시(예: Son Heung-Min → 손흥민) - 국가대표 26명 전원 + 글로벌 약 68명 매핑, 미매핑 시 로마자 폴백</td></tr>
+    <tr><td class="k">경기장 환경</td><td>실제 2026 개최 16개 구장을 등록해 고도·평균 기온·돔 여부를 실측치로 반영 - 고지대(멕시코시티 2,240m)·폭염 페널티가 다시 쓰기 모드에서 실제로 발동</td></tr>
     <tr><td class="k">정합성 검증</td><td>골 수=스코어·교체 ≤5회·선발 11명·레드카드 이후 이벤트 없음을 자동 테스트로 강제, 위반 시 해당 경기 제외</td></tr>
     </tbody>
   </table>
 
   <div class="callout">
-    <b>기존 엔진 재사용</b> — 새 시뮬레이션 엔진이 아니라, 실제 경기의 "T-5분" 상태를 기존 엔진의
+    <b>기존 엔진 재사용</b> - 새 시뮬레이션 엔진이 아니라, 실제 경기의 "T-5분" 상태를 기존 엔진의
     <span class="mono">MatchState</span>로 변환하는 어댑터 하나로 구현했습니다.
     이후 승률 계산·이벤트 생성·개입 로직은 자유 모드와 완전히 동일한 코드 경로를 탑니다.
   </div>
 
   <div class="footer-note">
-    터치라인 (TOUCHLINE) — 데이콘 월간 해커톤 "내가 축구 감독이라면" 제출 기획서 ·
+    터치라인 (TOUCHLINE) - 데이콘 월간 해커톤 "내가 축구 감독이라면" 제출 기획서 ·
     서비스: https://touchline-fc.vercel.app · 저장소: https://github.com/idfamilycck/touchline ·
     모든 선수·팀 능력치는 가상으로 구성된 데이터입니다.
   </div>
