@@ -34,7 +34,7 @@ export function SceneOverlay({ sceneEvents, attribution }: SceneOverlayProps) {
             className="rounded-[10px] border px-4 py-3 backdrop-blur-md"
             style={{
               background: "rgba(6, 22, 14, 0.82)",
-              borderColor: primary.side === "me" ? "rgba(200,255,60,0.4)" : "rgba(255,90,120,0.4)",
+              borderColor: primary.side === "me" ? "rgba(255,176,32,0.4)" : "rgba(255,90,120,0.4)",
             }}
           >
             <div className="flex flex-wrap items-center gap-2">

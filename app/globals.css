@@ -2,21 +2,21 @@
 
 /* ────────────────────────────────────────────────────────────
    TOUCHLINE — 방송 중계 그래픽 + 감독의 작전실
-   다크 피치 그린 위에 형광 라임 액센트 하나만 절제해서 사용.
+   중립 차콜 UI 크롬 위에 제4심판 LED 보드의 앰버 액센트 하나만 절제해서 사용.
    유리 = 초록/↑ · 불리 = 빨강/↓ 컨벤션을 앱 전역에서 공유한다.
    ──────────────────────────────────────────────────────────── */
 
 @theme {
-  /* UI 크롬(패널·배경)은 그래파이트(FM 코치석 톤), 실제 잔디는 --color-turf* 로 분리한다. */
-  --color-pitch: #0b100e;
-  --color-pitch-2: #101613;
-  --color-surface: #141b18;
-  --color-surface-2: #1c2521;
-  --color-line: rgba(228, 255, 240, 0.1);
-  --color-ink: #eef4f0;
-  --color-dim: #8c9a94;
-  --color-accent: #c8ff3c;
-  --color-accent-ink: #0a1204;
+  /* UI 크롬(패널·배경)은 중립 차콜, 실제 잔디는 --color-turf* 로 분리한다. */
+  --color-pitch: #0e0f11;
+  --color-pitch-2: #131519;
+  --color-surface: #16181c;
+  --color-surface-2: #1e2126;
+  --color-line: rgba(255, 245, 230, 0.1);
+  --color-ink: #f0f1f3;
+  --color-dim: #949aa3;
+  --color-accent: #ffb020;
+  --color-accent-ink: #17120a;
   --color-danger: #ff5470;
   --color-gain: #34e08a;
 
@@ -50,8 +50,7 @@ html {
 body {
   min-height: 100%;
   background:
-    radial-gradient(120% 80% at 50% -10%, rgba(200, 255, 60, 0.06), transparent 55%),
-    radial-gradient(90% 60% at 50% 0%, rgba(59, 227, 138, 0.05), transparent 60%),
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 176, 32, 0.05), transparent 55%),
     var(--color-pitch);
   color: var(--color-ink);
   font-family: var(--font-sans);
@@ -83,11 +82,11 @@ body {
   line-height: 0.92;
 }
 
-/* 방송 자막 하단 3분할(lower-third)의 라임 탭 */
-.lime-tab {
+/* 방송 자막 하단 3분할(lower-third)의 앰버 탭 */
+.accent-tab {
   position: relative;
 }
-.lime-tab::before {
+.accent-tab::before {
   content: "";
   position: absolute;
   left: 0;
@@ -137,18 +136,18 @@ body {
   border-bottom: 1px solid var(--color-line);
 }
 
-/* 조작→반응 1:1: 마지막 조작으로 바뀐 근거 카드가 딱 한 번 라임으로 번쩍인다.
+/* 조작→반응 1:1: 마지막 조작으로 바뀐 근거 카드가 딱 한 번 앰버로 번쩍인다.
    키를 remount해 재생하며, prefers-reduced-motion에서는 위 미디어쿼리가 무력화한다. */
 @keyframes touchline-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(200, 255, 60, 0);
-    background-color: rgba(200, 255, 60, 0.16);
+    box-shadow: 0 0 0 0 rgba(255, 176, 32, 0);
+    background-color: rgba(255, 176, 32, 0.16);
   }
   35% {
-    box-shadow: 0 0 0 3px rgba(200, 255, 60, 0.55);
+    box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.55);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(200, 255, 60, 0);
+    box-shadow: 0 0 0 0 rgba(255, 176, 32, 0);
     background-color: transparent;
   }
 }
@@ -166,7 +165,7 @@ body {
   animation: touchline-spin 0.7s linear infinite;
 }
 
-/* 전술 슬라이더: 라임 액센트 썸 + 표면색 트랙 */
+/* 전술 슬라이더: 앰버 액센트 썸 + 표면색 트랙 */
 .touchline-range {
   accent-color: var(--color-accent);
   height: 6px;

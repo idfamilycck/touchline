@@ -260,7 +260,7 @@ export function LivePitch({ meSetup, oppSetup, scene = null, lean = 0 }: LivePit
             animate={{ opacity: [0, 0.9, 0] }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2, times: [0, 0.2, 1] }}
-            style={{ background: "radial-gradient(circle, rgba(200,255,60,0.5), transparent 70%)" }}
+            style={{ background: "radial-gradient(circle, rgba(255,176,32,0.5), transparent 70%)" }}
           >
             <span className="display text-4xl text-accent" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.6)" }}>
               GOAL!

@@ -32,7 +32,7 @@ function countBy(events: MatchEvent[], side: "me" | "opp", pred: (e: MatchEvent)
 const HERO_TONE: Record<"gain" | "danger" | "neutral", { color: string; bg: string; icon: string }> = {
   gain: { color: "var(--color-gain)", bg: "rgba(59,227,138,0.12)", icon: "📈" },
   danger: { color: "var(--color-danger)", bg: "rgba(255,92,122,0.12)", icon: "📉" },
-  neutral: { color: "var(--color-ink)", bg: "rgba(200,255,60,0.10)", icon: "🎯" },
+  neutral: { color: "var(--color-ink)", bg: "rgba(255,176,32,0.10)", icon: "🎯" },
 };
 
 export default function ResultPage() {

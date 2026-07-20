@@ -20,7 +20,7 @@ export function QuickStart() {
         type="button"
         onClick={go}
         className="group inline-flex items-center gap-3 rounded-full bg-accent px-7 py-4 text-lg font-black text-accent-ink transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
-        style={{ boxShadow: "0 0 0 1px rgba(200,255,60,0.5), 0 14px 40px -12px rgba(200,255,60,0.55)" }}
+        style={{ boxShadow: "0 0 0 1px rgba(255,176,32,0.5), 0 14px 40px -12px rgba(255,176,32,0.55)" }}
       >
         <span aria-hidden>🇰🇷</span>
         <span>한국 vs 브라질 바로 지휘하기</span>

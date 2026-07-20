@@ -5,7 +5,7 @@
  * 순간을 알리는 물건이 제4심판의 LED 교체 보드다. 그래서 개입 시점(분)은 항상
  * 이 보드 위에 올린다 — 장식이 아니라 그 숫자 자체가 정보다.
  *
- * 브랜드 액센트(라임)를 LED 발광색으로 그대로 쓴다. 앱의 나머지는 조용히 두고,
+ * 브랜드 액센트(앰버)를 LED 발광색으로 그대로 쓴다. 앱의 나머지는 조용히 두고,
  * 과감함은 이 하나에만 쓴다.
  */
 
@@ -43,7 +43,7 @@ export function OfficialBoard({ minute, size = "md", label }: OfficialBoardProps
         />
         <span
           className={`stat-num relative text-accent ${md ? "text-base" : "text-[11px]"}`}
-          style={{ textShadow: "0 0 6px rgba(200,255,60,0.5)", letterSpacing: "0.02em" }}
+          style={{ textShadow: "0 0 6px rgba(255,176,32,0.5)", letterSpacing: "0.02em" }}
         >
           {minute}′
         </span>

@@ -73,10 +73,10 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    // 상단 라임 글로우
+    // 상단 앰버 글로우
     const glow = ctx.createRadialGradient(W / 2, 0, 0, W / 2, 0, W * 0.7);
-    glow.addColorStop(0, "rgba(200,255,60,0.14)");
-    glow.addColorStop(1, "rgba(200,255,60,0)");
+    glow.addColorStop(0, "rgba(255,176,32,0.14)");
+    glow.addColorStop(1, "rgba(255,176,32,0)");
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, W, 360);
 
@@ -87,7 +87,7 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
 
     // 서비스명
     ctx.textAlign = "center";
-    ctx.fillStyle = "#c8ff3c";
+    ctx.fillStyle = "#ffb020";
     ctx.font = `800 30px ${font}`;
     ctx.fillText("T O U C H L I N E", W / 2, 108);
     ctx.fillStyle = "#8c9a94";
@@ -139,7 +139,7 @@ export function ShareCard({ match, cf, shootout }: ShareCardProps) {
     ctx.stroke();
 
     ctx.textAlign = "center";
-    ctx.fillStyle = "#c8ff3c";
+    ctx.fillStyle = "#ffb020";
     ctx.font = `700 16px ${font}`;
     ctx.fillText("이 경기의 결정적 순간", W / 2, boxY + 44);
 
