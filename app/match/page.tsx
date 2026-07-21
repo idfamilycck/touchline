@@ -452,6 +452,7 @@ export default function MatchPage() {
         open={sheetOpen}
         meSetup={match.me}
         oppSetup={match.opp}
+        venueId={match.venueId}
         subsUsedMe={match.subsUsedMe}
         stamina={match.stamina}
         interventions={match.interventions}

@@ -101,6 +101,9 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
             <h2 className="display text-balance text-2xl text-ink sm:text-3xl">
               어느 경기를 다시 쓸까
             </h2>
+            <p className="mt-1.5 text-[13px] text-dim">
+              다시 쓰고 싶은 경기를 눌러 지휘할 팀과 인수 시점을 고르세요.
+            </p>
           </header>
           <MatchBrowser
             matches={matches}

@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowsClockwise, X } from "@phosphor-icons/react";
 import { FORMATIONS } from "@/lib/data/formations";
+import { winProbability } from "@/lib/engine/winprob";
 import { playersOf } from "@/lib/data/players";
 import { jerseyOf } from "@/components/tactics/tactics-labels";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
@@ -96,6 +97,7 @@ function StaminaBar({ value }: { value: number }) {
 interface InterventionSheetProps {
   meSetup: SideSetup;
   oppSetup: SideSetup;
+  venueId: string;
   subsUsedMe: number;
   stamina: Record<string, number>;
   interventions: Intervention[];
@@ -106,6 +108,7 @@ interface InterventionSheetProps {
 export function InterventionSheet({
   meSetup,
   oppSetup,
+  venueId,
   subsUsedMe,
   stamina,
   interventions,
@@ -177,6 +180,30 @@ export function InterventionSheet({
     subs.length > 0 ||
     !instructionsEqual(instructions, meSetup.instructions) ||
     !manMarkEqual(special.manMark, meSetup.special.manMark);
+
+  // 승률 미리보기: 지시를 "전달"하기 전에 그 효과를 보여준다. 감독의 판단이
+  // 결과에 어떻게 작용하는지가 이 앱의 핵심인데, 기존 시트는 제출·재개 후에야
+  // 승률 변화를 확인할 수 있었다. 여기서 초안(교체·성향·세부지시·맨마킹)을 그대로
+  // 반영한 draft 세팅으로 앱의 실시간 게이지와 동일한 winProbability를 돌려,
+  // "이렇게 지시하면 승률이 이렇게 된다"를 확정 전에 병기한다.
+  const draftMe: SideSetup = useMemo(() => {
+    const lineup = { ...meSetup.lineup };
+    for (const { out, in: inId } of subs) {
+      const slotId = Object.keys(lineup).find((k) => lineup[k] === out);
+      if (slotId) lineup[slotId] = inId;
+    }
+    return { ...meSetup, lineup, instructions, special };
+  }, [meSetup, subs, instructions, special]);
+
+  const baseWin = useMemo(
+    () => Math.round(winProbability(meSetup, oppSetup, venueId).win * 100),
+    [meSetup, oppSetup, venueId]
+  );
+  const draftWin = useMemo(
+    () => Math.round(winProbability(draftMe, oppSetup, venueId).win * 100),
+    [draftMe, oppSetup, venueId]
+  );
+  const winDelta = draftWin - baseWin;
 
   const submit = () => {
     const iv: Omit<Intervention, "minute"> = { side: "me" };
@@ -468,6 +495,40 @@ export function InterventionSheet({
 
         {/* 푸터 CTA */}
         <div className="border-t border-line px-5 py-4">
+          {/* 지시 효과 미리보기: 확정 전에 예상 승률과 개입 전 대비 변화를 보여준다. */}
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-control border border-line bg-surface-2/50 px-3.5 py-2.5">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[13px] font-bold text-dim">
+                {hasChanges ? "이 지시의 예상 승률" : "현재 예상 승률"}
+              </span>
+              <span
+                className="stat-num text-2xl leading-none"
+                style={{ color: hasChanges && winDelta !== 0
+                  ? winDelta > 0 ? "var(--color-gain)" : "var(--color-danger)"
+                  : "var(--color-ink)" }}
+              >
+                {draftWin}
+                <span className="ml-0.5 text-sm font-black text-dim">%</span>
+              </span>
+            </div>
+            {hasChanges && winDelta !== 0 ? (
+              <span
+                className="stat-num inline-flex shrink-0 items-center gap-0.5 rounded-full px-2 py-0.5 text-[13px]"
+                style={{
+                  color: winDelta > 0 ? "var(--color-gain)" : "var(--color-danger)",
+                  background: winDelta > 0 ? "rgba(59,227,138,0.14)" : "rgba(255,92,122,0.14)",
+                }}
+                aria-label={`개입 전 ${baseWin}퍼센트 대비 ${winDelta > 0 ? "상승" : "하락"} ${Math.abs(winDelta)}퍼센트포인트`}
+              >
+                <span aria-hidden>{winDelta > 0 ? "▲" : "▼"}</span>
+                {winDelta > 0 ? "+" : "−"}
+                {Math.abs(winDelta)}%p
+                <span className="ml-1 font-normal text-dim">개입 전 {baseWin}%</span>
+              </span>
+            ) : (
+              <span className="shrink-0 text-[13px] text-dim">지시를 바꾸면 반응해요</span>
+            )}
+          </div>
           <button
             type="button"
             onClick={submit}

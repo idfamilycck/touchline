@@ -6,7 +6,7 @@
 // "실제 역사"라는 점이 다르다. 유리(결과 개선)=초록, 불리(결과 악화)=빨강,
 // 동일=중립.
 
-import { SoccerBall, ClockCounterClockwise, SealCheck } from "@phosphor-icons/react";
+import { SoccerBall, ClockCounterClockwise, SealCheck, Trophy, ArrowUUpLeft } from "@phosphor-icons/react";
 import type { RewriteCompare, ResultWord } from "./compare";
 import { resultRank } from "./compare";
 import type { GoalTimeline, RealGoal } from "./goal-timeline";
@@ -145,9 +145,11 @@ export function RealVsParallel({ compare, meCode, oppCode, timeline }: RealVsPar
   const myFor = compare.myFor;
   const myAgainst = compare.myAgainst;
 
+  const improved = compare.changedOutcome && resultRank(myWord) > resultRank(realWord);
+  const worsened = compare.changedOutcome && resultRank(myWord) < resultRank(realWord);
   const deltaColor = !compare.changedOutcome
     ? "var(--color-dim)"
-    : resultRank(myWord) > resultRank(realWord)
+    : improved
       ? "var(--color-gain)"
       : "var(--color-danger)";
 
@@ -157,6 +159,22 @@ export function RealVsParallel({ compare, meCode, oppCode, timeline }: RealVsPar
         <p className="eyebrow text-accent">실제 역사 vs 평행세계</p>
         <span className="text-[13px] text-dim">당신이 지휘봉을 잡았다면?</span>
       </div>
+
+      {/* 결과 판정 도장: 감독의 개입이 실제 역사를 뒤집었는지가 이 앱의 페이오프다.
+          개선(역사 변경)=트로피·초록, 악화=되감기·빨강. 동률이면 도장 없이
+          아래 deltaKo 문장으로만 알린다(과장 방지). */}
+      {improved && (
+        <div className="mt-3 flex items-center gap-2 rounded-panel border border-gain/50 bg-gain/12 px-3.5 py-2.5">
+          <Trophy size={20} weight="fill" aria-hidden className="shrink-0 text-gain" />
+          <p className="text-sm font-black text-gain">역사를 다시 썼습니다</p>
+        </div>
+      )}
+      {worsened && (
+        <div className="mt-3 flex items-center gap-2 rounded-panel border border-danger/40 bg-danger/10 px-3.5 py-2.5">
+          <ArrowUUpLeft size={20} weight="bold" aria-hidden className="shrink-0 text-danger" />
+          <p className="text-sm font-black text-danger">이번엔 역사를 넘지 못했습니다</p>
+        </div>
+      )}
 
       <div className="mt-3 flex items-stretch gap-3">
         <ScoreCard
