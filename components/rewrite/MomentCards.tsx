@@ -108,7 +108,7 @@ export function MomentCards({ match, side }: MomentCardsProps) {
                     }}
                   >
                     <div className="flex items-center justify-between gap-2 text-[13px]">
-                      <OfficialBoard minute={entry.takeoverMinute} size="sm" label="부터 개입" />
+                      <OfficialBoard minute={entry.takeoverMinute} size="sm" label="부터 지휘" />
                       <span
                         className={`shrink-0 rounded-full px-2 py-0.5 font-black ${
                           entry.isOurs ? "bg-accent/15 text-accent" : "bg-white/10 text-dim"

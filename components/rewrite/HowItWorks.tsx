@@ -1,6 +1,6 @@
 // 히어로 아래 "이렇게 진행돼요" 3단계. 첫 화면에서 이 앱이 무엇을 하는지가
-// 헤드라인만으로는 안 잡힌다는 진단에 대한 답이다. 경기 선택 -> 순간 인수 -> 지휘,
-// 세 스텝을 한 줄로 보여줘 심사위원이 핵심 루프를 5초 안에 파악하게 한다.
+// 헤드라인만으로는 안 잡힌다는 진단에 대한 답이다. 경기 선택 -> 지휘봉 잡기 -> 역사
+// 변경, 세 스텝을 한 줄로 보여줘 심사위원이 핵심 루프를 5초 안에 파악하게 한다.
 
 import { ListChecks, ClockCounterClockwise, Strategy, SealCheck } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
@@ -16,8 +16,8 @@ const STEPS: Array<{ n: number; Icon: Icon; title: string; body: string }> = [
   {
     n: 2,
     Icon: ClockCounterClockwise,
-    title: "결정적 순간 인수",
-    body: "승부가 갈린 그 시점부터 감독으로 지휘봉을 넘겨받습니다.",
+    title: "그 순간, 지휘봉을 잡다",
+    body: "승부가 갈린 바로 그 순간, 감독석에 올라 직접 지휘봉을 잡습니다.",
   },
   {
     n: 3,

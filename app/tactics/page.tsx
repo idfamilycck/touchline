@@ -24,6 +24,8 @@ import { lineStrengths } from "@/lib/engine/strength";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { RewriteContextBadge } from "@/components/rewrite/RewriteContextBadge";
+import { HandoffOverlay } from "@/components/rewrite/HandoffOverlay";
+import { AnimatePresence } from "framer-motion";
 import { SquadList } from "@/components/tactics/SquadList";
 import { AttributeGrid } from "@/components/tactics/AttributeGrid";
 import { PitchBoard } from "@/components/tactics/PitchBoard";
@@ -159,11 +161,43 @@ export default function TacticsPage() {
   const beginMatch = useAppStore((s) => s.beginMatch);
   const mode = useAppStore((s) => s.mode);
   const rewriteContext = useAppStore((s) => s.rewriteContext);
+  // rewrite 모드에서 startRewrite가 저장한 인수 시점 상태(fromRealState). 지휘봉 인계
+  // 오버레이가 그 순간의 스코어·분을 읽는다(free 모드에선 beginMatch 전까지 undefined).
+  const match = useAppStore((s) => s.match);
 
   const wp = useWinProb();
   const [tab, setTab] = useState<Tab>("pitch");
   const [selected, setSelected] = useState<Selection | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  // 지휘봉 인계 순간: 결정적 순간을 골라 작전실에 처음 들어설 때 뜬다. 순간(momentId)
+  // 마다 세션에서 한 번만(뒤로가기 재진입 시 반복 방지). localStorage를 쓰는 Coachmarks
+  // (최초 1회 튜토리얼)와 달리 순간별 서사 비트라 sessionStorage로 분리 게이팅한다.
+  const [showHandoff, setShowHandoff] = useState(false);
+  useEffect(() => {
+    if (mode !== "rewrite" || !rewriteContext) return;
+    const key = `touchline-handoff-${rewriteContext.momentId}`;
+    try {
+      if (!sessionStorage.getItem(key)) {
+        // 세션 스토리지(브라우저 API) 확인 후 표시 여부를 정하는 동기화라 setState가 맞다.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setShowHandoff(true);
+      }
+    } catch {
+      // 접근 불가 환경에서는 조용히 표시하지 않는다.
+    }
+  }, [mode, rewriteContext]);
+
+  const dismissHandoff = useCallback(() => {
+    if (rewriteContext) {
+      try {
+        sessionStorage.setItem(`touchline-handoff-${rewriteContext.momentId}`, "1");
+      } catch {
+        /* noop */
+      }
+    }
+    setShowHandoff(false);
+  }, [rewriteContext]);
 
   // PointerSensor 하나만 등록한다. TouchSensor를 함께 등록하면 터치 환경에서 센서가
   // 경쟁(anti-pattern)하므로, 최신 브라우저의 포인터 이벤트를 처리하는 PointerSensor로
@@ -421,6 +455,21 @@ export default function TacticsPage() {
           </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showHandoff && match && oppTeam && (
+          <HandoffOverlay
+            meNameKo={team?.nameKo ?? "우리 팀"}
+            oppNameKo={oppTeam.nameKo ?? "상대 팀"}
+            meCode={team?.code ?? "ME"}
+            oppCode={oppTeam.code ?? "OPP"}
+            minute={match.minute}
+            scoreMe={match.scoreMe}
+            scoreOpp={match.scoreOpp}
+            onStart={dismissHandoff}
+          />
+        )}
+      </AnimatePresence>
 
       <Coachmarks />
     </main>

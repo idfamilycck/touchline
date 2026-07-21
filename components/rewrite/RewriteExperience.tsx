@@ -102,7 +102,7 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
               어느 경기를 다시 쓸까
             </h2>
             <p className="mt-1.5 text-[13px] text-dim">
-              다시 쓰고 싶은 경기를 눌러 지휘할 팀과 인수 시점을 고르세요.
+              다시 쓰고 싶은 경기를 눌러, 지휘할 팀과 지휘봉을 잡을 순간을 고르세요.
             </p>
           </header>
           <MatchBrowser
