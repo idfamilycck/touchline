@@ -19,10 +19,10 @@ test.use({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 });
 
 test.describe.configure({ mode: "serial" });
 
-/** 홈에서 팀 2개 + 경기장을 골라 작전실까지 들어간다(스모크와 같은 경로). */
+/** 자유 매치업(/free)에서 팀 2개 + 경기장을 골라 작전실까지 들어간다. */
 async function enterTactics(page: Page) {
-  await page.goto("/");
-  // 검색·필터 버튼과 섞이지 않도록 팀 목록으로 좁힌다.
+  await page.goto("/free");
+  // 대륙 필터 버튼과 섞이지 않도록 팀 목록으로 좁힌다.
   const teams = page
     .getByRole("region", { name: "매치업 구성" })
     .locator('ul[aria-label="팀 목록"] button');
@@ -36,14 +36,16 @@ async function enterTactics(page: Page) {
   await expect(page.getByText("라이브 승률 예측")).toBeVisible();
 }
 
-test("01 홈", async ({ page }) => {
-  await page.goto("/");
+test("01 홈(자유 매치업)", async ({ page }) => {
+  // 01-home은 기획서에서 "팀 선택" 화면으로 쓰이므로 자유 매치업을 캡처한다.
+  await page.goto("/free");
   await page.waitForTimeout(700);
   await page.screenshot({ path: `${OUT}/01-home.png` });
 });
 
 test("07 다시 쓰기 경기 브라우저 + 08 결정적 순간", async ({ page }) => {
-  await page.goto("/rewrite");
+  // 홈(/)이 곧 다시 쓰기 경험이다.
+  await page.goto("/");
   await page.waitForTimeout(700);
   await page.screenshot({ path: `${OUT}/07-rewrite-browser.png` });
 

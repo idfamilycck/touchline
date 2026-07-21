@@ -1,130 +1,14 @@
 "use client";
 
-// /rewrite — 2026 월드컵 다시 쓰기 진입점.
-// 실제 2026 경기를 골라(라운드 탭 + KOR 우선 정렬) 관리할 팀을 고르면, 그 팀의
-// "결정적 순간" 카드가 열린다. 순간을 고르면 startRewrite()가 그 시점(takeoverMinute)
-// 부터의 매치 상태를 만들고 /tactics로 넘어가 실제로 개입한다.
+// /rewrite — 다시 쓰기 딥링크 진입점(대진표·대회의 ?match= 링크가 여기로 온다).
+// 홈(/)과 같은 RewriteExperience를 렌더하되, 다른 화면에서 왔으므로 "처음으로" 링크를 둔다.
 
 import { Suspense } from "react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { registerWc2026 } from "@/lib/wc2026/register";
-import { wc2026Matches } from "@/lib/wc2026/data";
-import type { Wc2026Match } from "@/lib/wc2026/types";
-import { MatchBrowser } from "@/components/rewrite/MatchBrowser";
-import { MatchDetail } from "@/components/rewrite/MatchDetail";
-import { Disclaimer } from "@/components/ui/Disclaimer";
+import { RewriteExperience } from "@/components/rewrite/RewriteExperience";
 
-// 모듈 로드 시 1회 등록(idempotent) — MatchBrowser의 최초 렌더부터 wc 팀 이름을
-// 바로 조회할 수 있도록 useEffect보다 먼저 실행되는 이 시점에 호출한다.
+// 모듈 로드 시 1회 등록(idempotent) — 최초 렌더부터 wc 팀 이름을 바로 조회할 수 있도록.
 registerWc2026();
-
-// 선택한 경기/사이드는 ?match=&side= 쿼리에 산다(라운드/조 필터는 MatchBrowser가
-// 같은 URL의 ?round=&group=을 소유한다). 그래서 URL 하나로 라운드 탭, 조 칩,
-// 선택된 경기, 선택된 사이드, 순간 카드까지 전부 복원되고 뒤로/앞으로가기가 된다.
-// useSearchParams()는 정적 내보내기 프리렌더 시 Suspense 경계가 필요해 이 본문을
-// RewriteContent로 분리하고 기본 export에서 <Suspense>로 감싼다.
-function RewriteContent() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const matches = wc2026Matches();
-
-  const matchId = searchParams.get("match") ?? undefined;
-  const selectedMatch = matchId ? matches.find((m) => m.id === matchId) : undefined;
-  const selectedSide = selectedMatch ? (searchParams.get("side") ?? undefined) : undefined;
-
-  function updateQuery(next: Record<string, string | undefined>) {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(next)) {
-      if (value === undefined) params.delete(key);
-      else params.set(key, value);
-    }
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }
-
-  const handleSelectMatch = (match: Wc2026Match) => {
-    updateQuery({ match: match.id, side: undefined });
-  };
-
-  const resetSelection = () => {
-    updateQuery({ match: undefined, side: undefined });
-  };
-
-  return (
-    <main id="main" className="flex flex-1 scroll-mt-14 flex-col pb-12">
-      {/* ── 히어로 ───────────────────────────────────────── */}
-      <section
-        aria-label="히어로"
-        className="pitch-stripes relative overflow-hidden border-b border-line"
-      >
-        {/* PC에서는 제목과 설명을 가로로 나눠 히어로 높이를 줄인다. 세로로 쌓으면
-            경기 브라우저가 화면 밖으로 밀려 "본론이 안 보이는" 첫인상이 된다. */}
-        <div className="mx-auto w-full max-w-6xl px-5 pb-6 pt-6 sm:pt-8">
-          <Link href="/" className="text-xs text-dim transition-colors hover:text-ink">
-            ← 처음으로
-          </Link>
-          <div className="mt-3 grid grid-cols-1 gap-x-10 gap-y-4 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end">
-            <div>
-              <p className="eyebrow text-accent">2026 월드컵 다시 쓰기</p>
-              <h1 className="display mt-2 text-balance text-4xl text-ink sm:text-5xl">
-                그 순간,<br />감독이었다면.
-              </h1>
-            </div>
-            <p className="max-w-xl text-pretty text-sm leading-relaxed text-dim sm:text-base lg:pb-1">
-              실제 2026 월드컵 경기에서 승부를 가른 결정적 순간을 골라, 그 시점부터
-              직접 전술을 지휘해 결과를 바꿔보세요.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 마스터-디테일 ─────────────────────────────────
-          좌: 경기 행 리스트(넓게) / 우: 선택한 경기 상세(좁게, lg 이상 sticky).
-          lg 미만에서는 우측 컬럼을 숨기고 상세를 선택된 행 아래에 인라인으로 편다
-          (같은 MatchDetail을 쓰되 둘 중 하나는 항상 display:none). */}
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 px-5 pt-9 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <section aria-label="경기 선택" className="min-w-0">
-          <header className="accent-tab mb-5 pl-4">
-            <h2 className="display text-balance text-2xl text-ink sm:text-3xl">
-              어느 경기를 다시 쓸까
-            </h2>
-          </header>
-          <MatchBrowser
-            matches={matches}
-            selectedMatchId={selectedMatch?.id}
-            onSelectMatch={handleSelectMatch}
-            renderInlineDetail={(m) => (
-              <MatchDetail
-                match={m}
-                side={selectedSide}
-                onSelectSide={(side) => updateQuery({ side })}
-                onReset={resetSelection}
-              />
-            )}
-          />
-        </section>
-
-        {/* 우측 상세 컬럼(lg 이상에서만). 라벨은 MatchDetail이 직접 들고 있다. */}
-        <div className="hidden min-w-0 lg:sticky lg:top-[4.5rem] lg:block lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
-          <MatchDetail
-            match={selectedMatch}
-            side={selectedSide}
-            onSelectSide={(side) => updateQuery({ side })}
-            onReset={resetSelection}
-            aside
-          />
-        </div>
-      </div>
-
-      {/* ── 하단 고지 ────────────────────────────────────── */}
-      <footer className="mx-auto mt-16 w-full max-w-6xl px-5 pb-4">
-        <Disclaimer />
-      </footer>
-    </main>
-  );
-}
 
 export default function RewritePage() {
   return (
@@ -135,7 +19,7 @@ export default function RewritePage() {
         </main>
       }
     >
-      <RewriteContent />
+      <RewriteExperience showBackLink />
     </Suspense>
   );
 }

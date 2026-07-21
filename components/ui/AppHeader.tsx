@@ -7,14 +7,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// 메인은 홈(/)의 "월드컵 다시 쓰기". 자유 매치업은 /free로 분리했다.
 const NAV = [
-  { href: "/", label: "자유 매치업", short: "자유" },
-  { href: "/rewrite", label: "월드컵 다시 쓰기", short: "다시 쓰기" },
+  { href: "/", label: "월드컵 다시 쓰기", short: "다시 쓰기" },
+  { href: "/free", label: "자유 매치업", short: "자유" },
   { href: "/tournament", label: "대회", short: "대회" },
 ] as const;
 
 export function AppHeader() {
   const pathname = usePathname();
+
+  // /rewrite 딥링크는 홈과 같은 경험이므로 "월드컵 다시 쓰기" 탭을 활성으로 본다.
+  const isActive = (href: string) =>
+    pathname === href || (href === "/" && pathname === "/rewrite");
 
   return (
     <header className="sticky top-0 z-30 h-14 border-b border-line bg-pitch/85 backdrop-blur-md">
@@ -31,7 +36,7 @@ export function AppHeader() {
 
         <nav aria-label="주요 이동" className="flex shrink-0 items-center gap-1">
           {NAV.map((item) => {
-            const active = pathname === item.href;
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}

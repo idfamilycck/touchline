@@ -16,10 +16,9 @@ import { test, expect } from "@playwright/test";
 test("월드컵 다시 쓰기 → 결정적 순간 선택 → 경기 완주 → 복기(평행세계 비교) 도달", async ({
   page,
 }) => {
-  // ── 홈: "2026 월드컵 다시 쓰기" 진입 ──────────────────────
+  // ── 홈(/)이 곧 월드컵 다시 쓰기다(메인 경험). ──────────────
   await page.goto("/");
-  await page.getByRole("link", { name: /2026 월드컵 다시 쓰기/ }).click();
-  await expect(page).toHaveURL(/\/rewrite/);
+  await expect(page.getByRole("region", { name: "경기 선택" })).toBeVisible();
 
   // ── 경기 선택: 첫 몇 경기 × 양쪽 사이드를 순회해 순간이 있는 조합을 찾는다 ──
   // 레이아웃은 마스터-디테일이다: 좌측 region "경기 선택"이 경기 행(ul > li) 목록,

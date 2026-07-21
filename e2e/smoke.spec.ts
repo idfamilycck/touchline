@@ -8,9 +8,10 @@ import { test, expect } from "@playwright/test";
 // 정규종료(승/패)와 무승부(승부차기) 분기가 갈릴 수 있다. 두 분기를 모두 처리한다.
 
 test("매치업 구성 → 작전실 → 경기 완주 → 복기 도달", async ({ page }) => {
-  // ── 홈: 팀 2개 + 경기장 선택 후 작전실 입장 ────────────────
-  await page.goto("/");
-  // 매치업 구성 섹션에는 검색·단계 필터 버튼도 있으므로 팀 목록(ul[aria-label])으로 좁힌다.
+  // ── 자유 매치업: 팀 2개 + 경기장 선택 후 작전실 입장 ──────────
+  // 자유 매치업은 이제 /free 라우트다(홈 /은 월드컵 다시 쓰기).
+  await page.goto("/free");
+  // 매치업 구성 섹션에는 대륙 필터 버튼도 있으므로 팀 목록(ul[aria-label])으로 좁힌다.
   const teamCards = page
     .getByRole("region", { name: "매치업 구성" })
     .locator('ul[aria-label="팀 목록"] button');
