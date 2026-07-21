@@ -1,14 +1,19 @@
 // 엔진 검증 회귀 테스트.
 //
-// 실제 2026 월드컵 103경기를 무개입(실제 선발 라인업, 0~90분)으로 시뮬레이션해 실제
-// 결과 재현율을 잰다. 시드가 고정이라 결정론적이므로, lib/wc2026/validation.ts에
-// 박아둔 표시용 수치와 실측이 일치하는지 검증한다. 엔진을 바꿔 수치가 움직이면 이
-// 테스트가 실패해, 화면·기획서에 노출되는 숫자를 갱신하도록 강제한다.
+// 엔진의 킥오프 승률 모델(분석적 poisson)을 실제 2026 월드컵 103경기에 무개입(실제
+// 선발 라인업)으로 적용해 실제 결과 재현율을 잰다. 결정론적이므로 lib/wc2026/validation.ts에
+// 박아둔 표시용 수치와 실측이 일치하는지 검증한다. 엔진을 바꿔 수치가 움직이면 이 테스트가
+// 실패해, 화면·기획서에 노출되는 숫자를 갱신하도록 강제한다.
+//
+// 골 MAE는 분당 시뮬레이션(찬스->슛->골 체인)이 실현하는 평균 스코어로 재므로 시드가
+// 필요하다. 승/무/패는 분석적 λ로 바로 계산되어 시드가 필요 없다.
 
 import { describe, it, expect } from "vitest";
 import { registerWc2026 } from "@/lib/wc2026/register";
 import { wc2026Matches } from "@/lib/wc2026/data";
 import { fromRealState } from "@/lib/engine/rewrite";
+import { computeLambdas } from "@/lib/engine/winprob";
+import { outcomeProbs } from "@/lib/engine/poisson";
 import { simulateMinute, type MatchState } from "@/lib/engine/match";
 import { ENGINE_VALIDATION } from "@/lib/wc2026/validation";
 import type { Wc2026Match } from "@/lib/wc2026/types";
@@ -38,6 +43,14 @@ function outcome(h: number, a: number): Outcome {
   return "D";
 }
 
+// 분석적 예측: 킥오프 λ로 poisson 승/무/패를 구하고 승/패 중 큰 쪽을 예측한다.
+function predictOutcome(match: Wc2026Match): Outcome {
+  const s0 = fromRealState(match, match.home, { takeoverMinute: 0 }, 1);
+  const { lambdaMe, lambdaOpp } = computeLambdas(s0.me, s0.opp, s0.venueId);
+  const p = outcomeProbs(lambdaMe, lambdaOpp);
+  return p.win >= p.loss ? "W" : "L";
+}
+
 function simulateNoIntervention(match: Wc2026Match, seed: number): { home: number; away: number } {
   let s: MatchState = fromRealState(match, match.home, { takeoverMinute: 0 }, seed);
   let guard = 0;
@@ -49,11 +62,9 @@ function simulateNoIntervention(match: Wc2026Match, seed: number): { home: numbe
 }
 
 describe("엔진 검증: 실제 경기 재현율", () => {
-  const SEEDS = ENGINE_VALIDATION.seedsPerMatch;
-
-  // 무거운 계산(103경기 × 15시드)을 한 번만 하고 결과를 공유한다.
   registerWc2026();
   const matches = wc2026Matches();
+  const GOAL_SEEDS = 15;
 
   let winnerHit = 0;
   let total = 0;
@@ -65,23 +76,23 @@ describe("엔진 검증: 실제 경기 재현율", () => {
   for (const match of matches) {
     const real = realRegulation(match);
     const realOut = outcome(real.home, real.away);
-    const votes: Record<Outcome, number> = { W: 0, D: 0, L: 0 };
-    let sumHome = 0;
-    let sumAway = 0;
-    for (let k = 0; k < SEEDS; k++) {
-      const sim = simulateNoIntervention(match, 1000 + k * 7 + match.id.length);
-      votes[outcome(sim.home, sim.away)] += 1;
-      sumHome += sim.home;
-      sumAway += sim.away;
-    }
-    const predicted = (Object.keys(votes) as Outcome[]).sort((a, b) => votes[b] - votes[a])[0];
+    const predicted = predictOutcome(match);
+
     total += 1;
     if (predicted === realOut) winnerHit += 1;
     if (realOut !== "D") {
       decidedTotal += 1;
       if (predicted === realOut) decidedHit += 1;
     }
-    goalAbsErr += Math.abs(sumHome / SEEDS - real.home) + Math.abs(sumAway / SEEDS - real.away);
+
+    let sumHome = 0;
+    let sumAway = 0;
+    for (let k = 0; k < GOAL_SEEDS; k++) {
+      const sim = simulateNoIntervention(match, 1000 + k * 7 + match.id.length);
+      sumHome += sim.home;
+      sumAway += sim.away;
+    }
+    goalAbsErr += Math.abs(sumHome / GOAL_SEEDS - real.home) + Math.abs(sumAway / GOAL_SEEDS - real.away);
     goalCount += 2;
   }
 
@@ -93,7 +104,6 @@ describe("엔진 검증: 실제 경기 재현율", () => {
     expect(total).toBe(ENGINE_VALIDATION.matches);
   });
 
-  // 결정론적이므로 표시용 수치와 소수점 첫째 자리까지 일치해야 한다(±0.1%p 허용 오차).
   it("승/무/패 재현율이 표시 수치와 일치한다", () => {
     expect(outcomeRatePct).toBeCloseTo(ENGINE_VALIDATION.outcomeRatePct, 1);
   });
@@ -107,6 +117,6 @@ describe("엔진 검증: 실제 경기 재현율", () => {
   });
 
   it("승자 재현율은 무작위 기준선(33%)을 확실히 넘는다", () => {
-    expect(outcomeRatePct).toBeGreaterThan(45);
+    expect(outcomeRatePct).toBeGreaterThan(50);
   });
 });

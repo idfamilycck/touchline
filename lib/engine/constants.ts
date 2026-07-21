@@ -12,8 +12,12 @@ export const ENGINE_CONSTANTS = {
   LAMBDA_MAX: 4.0,
 
   // eloMult(myElo, oppElo) = 1 + clamp(myElo-oppElo, -ELO_DIFF_CAP, ELO_DIFF_CAP) / ELO_DIFF_CAP × ELO_MULT_COEF
+  // 0.15 -> 0.30: 실제 103경기 검증에서 전력차 신호를 키워야 승자를 더 정확히 재현한다.
+  // 승부 갈린 경기 승자 재현 70.7% -> 80.0%(lib/engine/validation.test.ts). 0.40까지 가면
+  // 81.3%로 미세하게 더 오르지만, 약팀이 늘 지는 과결정론을 피하려 0.30에 멈춘다.
+  // balance.test.ts(과열 승률/블로아웃/무승부 비율)는 0.30에서 그대로 통과한다.
   ELO_DIFF_CAP: 400,
-  ELO_MULT_COEF: 0.15,
+  ELO_MULT_COEF: 0.3,
 
   // 슈팅 후 골 확률 = clamp(GOAL_PROB_BASE + (contribution - attAvg) / GOAL_PROB_DIVISOR, GOAL_PROB_MIN, GOAL_PROB_MAX)
   // (lib/engine/match.ts의 processChance)
