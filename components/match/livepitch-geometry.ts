@@ -23,27 +23,31 @@ export interface PlayerDot {
   cy: number;
 }
 
-// ── 공 따라가기: 모든 선수가 포메이션 기준점에서 공 방향으로 라인별 강도만큼 끌려간다 ──
-// 실제 축구의 팀 전형 이동 느낌: GK 미세, 수비 소폭, 미드필더 최대, 공격수 중간.
-const FOLLOW: Record<string, { k: number; cap: number }> = {
-  gk: { k: 0.05, cap: 4 },
-  cb: { k: 0.11, cap: 12 },
-  fb: { k: 0.12, cap: 13 },
-  dm: { k: 0.18, cap: 18 },
-  cm: { k: 0.2, cap: 18 },
-  am: { k: 0.2, cap: 18 },
-  wg: { k: 0.15, cap: 16 },
-  st: { k: 0.14, cap: 16 },
+// ── 공 쪽으로 쏠림: 선수가 공 방향으로 살짝 이동하되 "라인은 유지"한다 ──
+// 예전엔 깊이(cx)와 좌우(cy)를 같은 강도로 끌어당겨, 공이 골문 근처로 가면 전원이
+// 그쪽으로 collapse하며 뭉쳐 다녔다(수비수가 공격 진영까지 딸려감). 실제 축구는
+// 공 "쪽(좌우)"으로 블록이 시프트하되 각자 깊이 라인은 지킨다. 그래서 깊이(kx)는
+// 아주 약하게(수비수는 뒤에, 공격수는 앞에 그대로), 좌우(ky)만 완만히 쏠리게 한다.
+// 팀 전체의 전진/후퇴(하프라인 넘나듦)는 dynamicDots(tilt)가 이미 담당한다.
+const FOLLOW: Record<string, { kx: number; ky: number; capx: number; capy: number }> = {
+  gk: { kx: 0.03, ky: 0.05, capx: 3, capy: 6 },
+  cb: { kx: 0.05, ky: 0.11, capx: 6, capy: 13 },
+  fb: { kx: 0.06, ky: 0.13, capx: 7, capy: 15 },
+  dm: { kx: 0.07, ky: 0.14, capx: 8, capy: 16 },
+  cm: { kx: 0.08, ky: 0.15, capx: 9, capy: 16 },
+  am: { kx: 0.09, ky: 0.15, capx: 10, capy: 16 },
+  wg: { kx: 0.07, ky: 0.13, capx: 9, capy: 15 },
+  st: { kx: 0.09, ky: 0.13, capx: 10, capy: 15 },
 };
-const FOLLOW_DEFAULT = { k: 0.15, cap: 15 };
+const FOLLOW_DEFAULT = { kx: 0.07, ky: 0.13, capx: 8, capy: 14 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 export function followBall(dot: PlayerDot, ball: { cx: number; cy: number }): { tx: number; ty: number } {
   const prefix = dot.slotId.replace(/[_0-9].*$/, "");
-  const { k, cap } = FOLLOW[prefix] ?? FOLLOW_DEFAULT;
-  const dx = clamp((ball.cx - dot.cx) * k, -cap, cap);
-  const dy = clamp((ball.cy - dot.cy) * k, -cap, cap);
+  const { kx, ky, capx, capy } = FOLLOW[prefix] ?? FOLLOW_DEFAULT;
+  const dx = clamp((ball.cx - dot.cx) * kx, -capx, capx);
+  const dy = clamp((ball.cy - dot.cy) * ky, -capy, capy);
   return {
     tx: clamp(dot.cx + dx, 10, VB_W - 10),
     ty: clamp(dot.cy + dy, 10, VB_H - 10),
@@ -75,8 +79,11 @@ export function dynamicDots(setup: SideSetup, side: "me" | "opp", tilt: number):
   const t = Math.max(0, Math.min(1, side === "me" ? tilt : 1 - tilt));
   const lerp = (a: number, b: number, f: number) => a + (b - a) * f;
   const formation = FORMATIONS[setup.instructions.formation];
-  const defLine = lerp(24, 152, t); // 최후방 필드플레이어 기준선
-  const attLine = lerp(118, 272, t); // 최전방 기준선
+  // 최후방/최전방 기준선. 공세(t=1)에도 최후방은 센터라인(150) 살짝 뒤에 머물러
+  // 수비 라인을 남기고, 수세(t=0)에도 최전방은 센터 부근에 outlet으로 남긴다 —
+  // 그래야 팀이 한 진영에 뭉치지 않고 세로로 늘 펼쳐진 모양을 유지한다.
+  const defLine = lerp(22, 132, t); // 최후방 필드플레이어 기준선
+  const attLine = lerp(116, 266, t); // 최전방 기준선
   const dots: PlayerDot[] = [];
   for (const slot of formation.slots) {
     const playerId = setup.lineup[slot.id];

@@ -17,7 +17,7 @@ export interface TacticsReview {
    * 이전 구현은 내 발동 규칙만 봐서 두 경우를 구분하지 못하고 똑같이 침묵했다.
    */
   oppEdge: AppliedRule[];
-  tips: string[]; // 다음 경기 보완 제안 (최대 4, 최소 1)
+  tips: string[]; // 이번 경기에서 짚어볼 점 (회고 · 최대 4, 최소 1)
 }
 
 const impact = (r: AppliedRule) => r.deltaAttack + r.deltaDefense;

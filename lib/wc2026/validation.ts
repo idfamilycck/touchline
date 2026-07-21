@@ -23,5 +23,5 @@ export const ENGINE_VALIDATION = {
   /** 승부가 갈린 경기(무승부 제외)에서 이긴 팀 재현율(%). 대표 지표. */
   decisiveWinRatePct: 80.0,
   /** 팀당 평균 득점 오차(골). 시뮬레이션 평균 스코어 vs 실제. */
-  goalMae: 0.87,
+  goalMae: 0.88,
 } as const;

@@ -144,14 +144,41 @@ function recomputeLambdas(state: MatchState): {
 }
 
 // ---- 스태미나 분당 감소 -----------------------------------------------------
+// 포지션별 활동량 계수 — 중원·윙어가 가장 많이 뛰고, 센터백·GK가 적게 뛴다.
+// 실측 GPS 데이터의 포지션별 커버 거리 경향(미드필더 > 풀백/윙어 > 스트라이커 >
+// 센터백 > GK)을 단순화한 값이다.
+const POSITION_EXERTION: Record<string, number> = {
+  gk: 0.55,
+  cb: 0.85,
+  fb: 1.1,
+  dm: 1.1,
+  cm: 1.2,
+  am: 1.15,
+  wg: 1.2,
+  st: 1.0,
+};
+
 function decayOnPitch(
   stamina: Record<string, number>,
   setup: SideSetup,
   flags: ReturnType<typeof computeStaminaFlags>
 ): void {
   const marker = setup.special?.manMark?.markerId;
-  for (const playerId of Object.values(setup.lineup)) {
+  const formation = FORMATIONS[setup.instructions.formation];
+  const squad = playersOf(setup.teamId);
+  // 슬롯을 순회해야 포지션별 활동량을 반영할 수 있다(예전엔 lineup의 playerId만 돌아
+  // 전원이 같은 rate로 균일하게 닳았다 — "체력이 다 똑같이 준다"는 문제의 원인).
+  for (const slot of formation.slots) {
+    const playerId = setup.lineup[slot.id];
+    if (!playerId) continue;
+    const prefix = slot.id.replace(/[_0-9].*$/, ""); // "cb2" -> "cb"
     let rate = 1 / 110;
+    // ① 포지션 활동량
+    rate *= POSITION_EXERTION[prefix] ?? 1;
+    // ② 개인 스태미나 능력치: 높을수록 덜 지친다(99 → 0.8×, 1 → 1.2×). 개인차를 만든다.
+    const sta = squad.find((p) => p.id === playerId)?.attrs.stamina ?? 50;
+    rate *= 1.2 - (sta / 99) * 0.4;
+    // ③ 팀 전체 환경·전술
     if (flags.altitude) rate *= 1.3;
     if (flags.heat) rate *= 1.25;
     if (flags.highTempo) rate *= 1.15;

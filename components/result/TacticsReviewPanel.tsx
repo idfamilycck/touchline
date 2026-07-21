@@ -1,6 +1,8 @@
 ﻿"use client";
 
-// 전술 평가 & 보완 패널: 통한 전술 / 발목 잡은 부분 / 다음 경기 보완 제안.
+// 전술 평가 & 보완 패널: 통한 전술 / 발목 잡은 부분 / 이번 경기에서 짚어볼 점.
+// 복기(rewrite)는 그 순간에 대한 일회성 what-if라 "다음 경기"가 없다 — 팁은 전부
+// 방금 치른 이 경기의 지표를 근거로 한 회고이며, 그렇게 프레이밍한다.
 // 내용은 buildTacticsReview(순수 로직)가 엔진 데이터로 생성한다.
 
 import { CheckCircle, Warning, ClipboardText } from "@phosphor-icons/react";
@@ -77,8 +79,11 @@ export function TacticsReviewPanel({ review }: { review: TacticsReview }) {
 
       <div className="mt-4 rounded-panel border border-line bg-surface-2/60 p-4">
         <h3 className="flex items-center gap-1.5 text-sm font-bold text-ink">
-          <ClipboardText size={16} weight="bold" aria-hidden /> 다음 경기 보완
+          <ClipboardText size={16} weight="bold" aria-hidden /> 이번 경기, 짚어볼 점
         </h3>
+        <p className="mt-1 text-xs text-dim">
+          이 경기에서 이렇게 조정했다면 흐름이 달라졌을 지점이에요.
+        </p>
         <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-5">
           {review.tips.map((tip) => (
             <li key={tip} className="text-sm leading-relaxed text-ink">

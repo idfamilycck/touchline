@@ -100,11 +100,12 @@ export function LivePitch({
 
   const possession = lean >= 0 ? "me" : "opp";
 
-  // 국면: 장면 중엔 공격 측으로 강하게, 평상시엔 점유+흐름(lean)에 따라 완만하게.
+  // 국면: 장면 중엔 공격 측으로 기울되, 과하게 밀면 양 팀이 한 진영에 뭉친다.
+  // 0.72/0.28로 낮춰 공격 팀은 전진하되 수비 라인·상대 outlet이 세로로 남게 한다.
   const tilt = scene
     ? scene.side === "me"
-      ? 0.85
-      : 0.15
+      ? 0.72
+      : 0.28
     : 0.5 + lean * 0.16 + (possession === "me" ? 0.06 : -0.06);
 
   // 킥오프 전에는 동적 전형(dynamicDots) 대신 포메이션 그대로의 정적 배치를 쓴다.
