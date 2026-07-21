@@ -33,6 +33,7 @@ import { InstructionsPanel } from "@/components/tactics/InstructionsPanel";
 import { RolePicker } from "@/components/tactics/RolePicker";
 import { SpecialPanel } from "@/components/tactics/SpecialPanel";
 import { RecommendPanel } from "@/components/tactics/RecommendPanel";
+import { MobileWinStrip } from "@/components/tactics/MobileWinStrip";
 import { Coachmarks } from "@/components/tactics/Coachmarks";
 import { jerseyOf, type Selection } from "@/components/tactics/tactics-labels";
 
@@ -159,6 +160,7 @@ export default function TacticsPage() {
   const mode = useAppStore((s) => s.mode);
   const rewriteContext = useAppStore((s) => s.rewriteContext);
 
+  const wp = useWinProb();
   const [tab, setTab] = useState<Tab>("pitch");
   const [selected, setSelected] = useState<Selection | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -327,6 +329,8 @@ export default function TacticsPage() {
             </button>
           ))}
         </div>
+        {/* 승률 스트립: 탭과 함께 고정돼, 어느 탭에서 조작해도 반응이 보인다. */}
+        <MobileWinStrip wp={wp} />
       </div>
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
