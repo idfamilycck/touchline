@@ -38,6 +38,9 @@ const DEFAULT_INSTRUCTIONS: TeamInstructions = {
   width: "wide",
   marking: "zonal",
   offsideTrap: false,
+  lineSpacing: 2,
+  possession: 2,
+  transitionSpeed: 2,
 };
 const DEFAULT_SPECIAL: SpecialInstructions = { ckBigMenForward: false };
 
