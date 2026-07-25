@@ -18,7 +18,10 @@ const PAD_L = 30;
 const PAD_R = 12;
 const PAD_T = 14;
 const PAD_B = 22;
-const MAX_MIN = 95;
+// x축 상한. 정규시간 경기는 95분(추가시간 포함)이면 충분하지만, 연장으로 가면
+// 125분까지 그려야 그래프가 잘리지 않는다. 마지막 분에서 파생해 두 경우를 모두 담는다.
+const REGULATION_MAX_MIN = 95;
+const EXTRA_MAX_MIN = 125;
 
 interface ProbTimelineProps {
   timeline: Array<{ minute: number; win: number; draw: number }>;
@@ -34,8 +37,8 @@ interface ProbTimelineProps {
   shootoutWinProb?: number;
 }
 
-function xOf(minute: number): number {
-  return PAD_L + (Math.min(minute, MAX_MIN) / MAX_MIN) * (W - PAD_L - PAD_R);
+function xOf(minute: number, maxMin: number): number {
+  return PAD_L + (Math.min(minute, maxMin) / maxMin) * (W - PAD_L - PAD_R);
 }
 function yOf(win01: number): number {
   const clamped = Math.max(0, Math.min(1, win01));
@@ -57,11 +60,15 @@ export function ProbTimeline({
   const drawProb = last.draw ?? 0;
   const drawPct = Math.round(drawProb * 100);
   const lossPct = Math.max(0, 100 - winPct - drawPct);
+  // 연장 여부는 마지막 분으로 판정한다(엔진은 연장으로 가는 경기에서 정규 추가시간
+  // 티크를 만들지 않으므로 95분을 넘는 분은 연장뿐이다).
+  const maxMin = last.minute > REGULATION_MAX_MIN ? EXTRA_MAX_MIN : REGULATION_MAX_MIN;
+  const ticks = maxMin === EXTRA_MAX_MIN ? [0, 45, 90, 120] : [0, 45, 90];
   const advancePct =
     shootoutWinProb != null ? Math.round((last.win + drawProb * shootoutWinProb) * 100) : null;
 
-  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${xOf(p.minute).toFixed(1)} ${yOf(p.win).toFixed(1)}`).join(" ");
-  const areaPath = `${linePath} L ${xOf(last.minute).toFixed(1)} ${yOf(0)} L ${xOf(pts[0].minute).toFixed(1)} ${yOf(0)} Z`;
+  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${xOf(p.minute, maxMin).toFixed(1)} ${yOf(p.win).toFixed(1)}`).join(" ");
+  const areaPath = `${linePath} L ${xOf(last.minute, maxMin).toFixed(1)} ${yOf(0)} L ${xOf(pts[0].minute, maxMin).toFixed(1)} ${yOf(0)} Z`;
 
   const winAt = (minute: number): number => {
     // 해당 분의 타임라인 값을 찾고, 없으면 가장 가까운 이전 값을 쓴다.
@@ -121,10 +128,10 @@ export function ProbTimeline({
           </g>
         ))}
         {/* x축 분 라벨 */}
-        {[0, 45, 90].map((m) => (
+        {ticks.map((m) => (
           <text
             key={m}
-            x={xOf(m)}
+            x={xOf(m, maxMin)}
             y={H - 6}
             textAnchor="middle"
             fontSize="9"
@@ -142,9 +149,9 @@ export function ProbTimeline({
         {interventions.map((iv, i) => (
           <g key={`iv-${i}-${iv.minute}`}>
             <line
-              x1={xOf(iv.minute)}
+              x1={xOf(iv.minute, maxMin)}
               y1={PAD_T}
-              x2={xOf(iv.minute)}
+              x2={xOf(iv.minute, maxMin)}
               y2={H - PAD_B}
               stroke="var(--color-accent)"
               strokeWidth={0.8}
@@ -152,7 +159,7 @@ export function ProbTimeline({
               opacity={0.6}
             />
             <Brain
-              x={xOf(iv.minute) - 5.5}
+              x={xOf(iv.minute, maxMin) - 5.5}
               y={PAD_T - 14}
               size={11}
               weight="bold"
@@ -165,7 +172,7 @@ export function ProbTimeline({
         {goals.map((g, i) => (
           <SoccerBall
             key={`goal-${i}-${g.minute}`}
-            x={xOf(g.minute) - 6}
+            x={xOf(g.minute, maxMin) - 6}
             y={yOf(winAt(g.minute)) - 18}
             size={12}
             weight="bold"
@@ -175,15 +182,15 @@ export function ProbTimeline({
 
         {/* 현재 분 커서 */}
         <line
-          x1={xOf(last.minute)}
+          x1={xOf(last.minute, maxMin)}
           y1={PAD_T}
-          x2={xOf(last.minute)}
+          x2={xOf(last.minute, maxMin)}
           y2={H - PAD_B}
           stroke={lineColor}
           strokeWidth={1}
           opacity={0.5}
         />
-        <circle cx={xOf(last.minute)} cy={yOf(last.win)} r={3.5} fill={lineColor} stroke="var(--color-pitch)" strokeWidth={1.5} />
+        <circle cx={xOf(last.minute, maxMin)} cy={yOf(last.win)} r={3.5} fill={lineColor} stroke="var(--color-pitch)" strokeWidth={1.5} />
 
         {/* 50% 기준선 라벨 */}
         <text x={W - PAD_R} y={y50 - 3} textAnchor="end" fontSize="8" fill="var(--color-dim)" opacity={0.7}>

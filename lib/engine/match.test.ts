@@ -234,6 +234,123 @@ describe("winProbGivenScore / advanceProb", () => {
   });
 });
 
+describe("연장전", () => {
+  const me = () => makeSetup("kor", "4-3-3");
+  const opp = () => makeSetup("jpn", "4-3-3");
+
+  it("extraTimeEligible=false면 정규시간 + 추가시간에서 끝난다 (기존 동작 유지)", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const s = runFullMatch(me(), opp(), "metlife", seed);
+      expect(s.extraTime).toBe(false);
+      expect(s.minute).toBeLessThanOrEqual(95);
+      expect(s.minute).toBeGreaterThanOrEqual(91);
+    }
+  });
+
+  it("무승부 + extraTimeEligible → 연장에 들어가 120분 이후에 끝난다", () => {
+    let found: MatchState | undefined;
+    for (let seed = 1; seed <= 80 && !found; seed++) {
+      let s = initMatch(me(), opp(), "metlife", seed, { extraTimeEligible: true });
+      let guard = 0;
+      while (!s.finished && guard++ < 400) s = simulateMinute(s);
+      if (s.extraTime) found = s;
+    }
+    expect(found, "80개 시드 안에 무승부가 한 번도 없다면 조건을 확인해야 한다").toBeDefined();
+
+    // 연장 진입 이벤트가 90분에 있다
+    const entry = found!.events.find((e) => e.type === "period" && e.textKo.includes("연장전"));
+    expect(entry?.minute).toBe(90);
+    // 정규 추가시간 티크는 만들지 않는다(클럭이 공식 시계와 일치)
+    expect(found!.injuryTime).toBe(0);
+    // 연장 종료는 120분 + 추가시간
+    expect(found!.minute).toBeGreaterThanOrEqual(121);
+    expect(found!.minute).toBeLessThanOrEqual(123);
+    // 연장 전반 종료 안내
+    expect(found!.events.some((e) => e.type === "period" && e.minute === 105)).toBe(true);
+  });
+
+  it("승부가 갈린 경기는 연장에 가지 않는다", () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      let s = initMatch(me(), opp(), "metlife", seed, { extraTimeEligible: true });
+      let guard = 0;
+      while (!s.finished && guard++ < 400) s = simulateMinute(s);
+      if (s.scoreMe !== s.scoreOpp && !s.extraTime) {
+        expect(s.minute).toBeLessThanOrEqual(95);
+        return;
+      }
+    }
+    throw new Error("40개 시드 안에 승부가 갈린 정규시간 종료 경기가 없었다");
+  });
+
+  it("연장에서는 체력이 더 빨리 닳는다 (같은 시드·같은 구간 비교)", () => {
+    // 경기 후반의 실측 감소량을 그대로 비교하면 안 된다: 스태미나에 0 하한이 있어
+    // 90분 시점에 이미 바닥에 닿은 선수가 많고, 그러면 연장 구간의 "감소량"이
+    // 하한에 눌려 오히려 작게 나온다. 그래서 EXTRA_TIME_EXERTION 계수 자체를
+    // 격리해 검증한다 — 체력이 넉넉한 동일 구간을 extraTime만 바꿔 두 번 돌린다.
+    const base = initMatch(me(), opp(), "metlife", 42, { extraTimeEligible: true });
+    const fresh = { ...base, minute: 50 };
+
+    let regulation: MatchState = { ...fresh, extraTime: false };
+    let extra: MatchState = { ...fresh, extraTime: true };
+    for (let i = 0; i < 5; i++) {
+      regulation = simulateMinute(regulation);
+      extra = simulateMinute(extra);
+    }
+
+    expect(avgStaminaOnPitch(extra)).toBeLessThan(avgStaminaOnPitch(regulation));
+  });
+
+  it("연장에서는 교체 한도가 6장이 된다", () => {
+    let s = initMatch(me(), opp(), "metlife", 3, { extraTimeEligible: true });
+    // 정규시간에 5장을 모두 쓴다
+    const bench = playersOf("kor").filter((p) => !Object.values(s.me.lineup).includes(p.id));
+    const starters = Object.values(s.me.lineup);
+    for (let i = 0; i < 5; i++) {
+      s = applyIntervention(s, {
+        minute: s.minute,
+        side: "me",
+        subs: [{ out: starters[i], in: bench[i].id }],
+      });
+    }
+    expect(s.subsUsedMe).toBe(5);
+
+    // 정규시간에는 6번째가 무시된다
+    const sixthInRegulation = applyIntervention(s, {
+      minute: s.minute,
+      side: "me",
+      subs: [{ out: starters[5], in: bench[5].id }],
+    });
+    expect(sixthInRegulation.subsUsedMe).toBe(5);
+
+    // 연장에 들어가면 6번째가 허용된다
+    const inExtra = applyIntervention(
+      { ...s, extraTime: true },
+      { minute: 95, side: "me", subs: [{ out: starters[5], in: bench[5].id }] }
+    );
+    expect(inExtra.subsUsedMe).toBe(6);
+  });
+
+  it("연장 중 승률의 잔여 시간은 120분을 기준으로 계산된다", () => {
+    // 연장 진입 시점(90분)의 잔여 비율은 (120-90)/90 = 1/3이므로, 0:0 상황의
+    // 무승부 확률이 정규시간 90분 지점(잔여 0)보다 낮아야 한다.
+    for (let seed = 1; seed <= 80; seed++) {
+      let s = initMatch(me(), opp(), "metlife", seed, { extraTimeEligible: true });
+      let guard = 0;
+      while (!s.finished && guard++ < 400) {
+        s = simulateMinute(s);
+        if (s.minute === 90 && s.extraTime) {
+          const p = s.probTimeline[s.probTimeline.length - 1];
+          // 아직 30분이 남았으므로 무승부가 확정(=1)이 아니다
+          expect(p.draw).toBeLessThan(0.95);
+          expect(p.draw).toBeGreaterThan(0);
+          return;
+        }
+      }
+    }
+    throw new Error("80개 시드 안에 연장 진입 경기가 없었다");
+  });
+});
+
 describe("경고·퇴장", () => {
   it("경고를 받은 선수는 booked에 쌓이고, 같은 선수가 다시 지목되면 퇴장한다", () => {
     // 압박 최대(카드 확률 최대)로 여러 시드를 돌려 실제로 퇴장이 나오는 경기를 찾는다.
@@ -260,21 +377,23 @@ describe("경고·퇴장", () => {
     expect(Object.keys(lineup).length).toBeLessThan(11);
   });
 
-  it("퇴장한 팀의 λ는 내려가고 상대 λ는 올라간다 (같은 경기 내 전후 비교)", () => {
+  it("상대가 퇴장당하면 전력 균형(λ 비율)이 우리 쪽으로 기운다", () => {
+    // λ 절대값을 전후로 비교하면 안 된다: 직전 λ는 몇 분 전 5분 경계에서 계산된 값이라
+    // 그 사이의 체력 저하가 섞여 들어와 양쪽이 함께 내려갈 수 있다. 체력은 두 팀에
+    // 비슷하게 작용하므로, 비율 λ_opp/λ_me가 수적 열세의 순효과를 드러낸다.
     const me = makeSetup("kor", "4-3-3", { pressing: 3 });
     const opp = makeSetup("bra", "4-3-3", { pressing: 3 });
 
     for (let seed = 1; seed <= 400; seed++) {
       let state = initMatch(me, opp, "metlife", seed);
-      let before: { me: number; opp: number } | undefined;
       while (!state.finished) {
-        const prev = { me: state.lambdaMe, opp: state.lambdaOpp };
+        const prevRatio = state.lambdaOpp / state.lambdaMe;
+        const prevOppCount = Object.keys(state.opp.lineup).length;
         state = simulateMinute(state);
         const red = state.events.filter((e) => e.minute === state.minute && e.type === "red")[0];
         if (red && red.side === "opp") {
-          before = prev;
-          expect(state.lambdaOpp).toBeLessThan(before.opp);
-          expect(state.lambdaMe).toBeGreaterThan(before.me);
+          expect(Object.keys(state.opp.lineup).length).toBe(prevOppCount - 1);
+          expect(state.lambdaOpp / state.lambdaMe).toBeLessThan(prevRatio);
           return;
         }
       }

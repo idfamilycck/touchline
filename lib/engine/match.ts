@@ -4,6 +4,7 @@ import { ENGINE_CONSTANTS } from "./constants";
 import { playerContribution, type LineStrengths } from "./strength";
 import { possessionShare } from "./possession";
 import { nextOpponentReaction } from "./opponent-ai";
+import { cornerGoalProb, cornerTaker, selectCornerScorer } from "./setpiece";
 import { poissonPmf } from "./poisson";
 import { playersOf } from "@/lib/data/players";
 import { FORMATIONS } from "@/lib/data/formations";
@@ -34,6 +35,10 @@ export type MatchEventType =
   | "sub"
   | "tactic_change"
   | "halftime"
+  // 연장 진입 / 연장 전반 종료 같은 "구간 전환". halftime(45분 휴식)과 분리한 이유는
+  // UI가 halftime 이벤트를 보고 하프타임 안내 모달을 띄우기 때문이다 — 연장 전환에
+  // 같은 모달이 뜨면 문구가 맞지 않는다.
+  | "period"
   | "fulltime";
 
 export interface MatchEvent {
@@ -86,6 +91,16 @@ export interface MatchState {
   possMeAccum: number;
   possMinutes: number;
   injuryTime: number; // 0 = 아직 미계산, 계산 후 1~5
+  // ---- 연장전 (B-2) ----------------------------------------------------------
+  // extraTimeEligible: 이 경기가 무승부일 때 연장으로 갈 수 있는가(녹아웃). 기본값은
+  // false다 — 조별리그·자유 경기는 정규시간에 끝나고, 밸런싱·검증 테스트도 정규시간
+  // 기준으로 수치를 재기 때문이다(validation.test.ts의 realRegulation). 스토어가
+  // 녹아웃 맥락에서만 true로 켠다.
+  extraTimeEligible: boolean;
+  /** 현재 연장전(또는 그 이후)인가. minuteLabel의 표기 분기 기준이기도 하다. */
+  extraTime: boolean;
+  /** 연장 종료(120분) 추가시간. 0 = 아직 미계산, 계산 후 1~3 */
+  etInjuryTime: number;
   // 경고 보유 선수(팀별 playerId). 두 번째 경고를 받으면 퇴장하므로 이 목록이
   // "다음 파울에 퇴장당할 수 있는 선수"이기도 하다. 경고 자체도 페널티가 있다:
   // 조심스러운 태클로 수비 기여가 떨어진다(recomputeLambdas의 BOOKED_LAMBDA_PENALTY).
@@ -106,6 +121,20 @@ export interface MatchState {
 }
 
 const MAX_SUBS = 5;
+// 연장전에 들어가면 교체 1장이 추가된다(실제 규정과 동일).
+export const MAX_SUBS_EXTRA_TIME = 6;
+/** 정규시간 길이(분). 연장은 여기서 30분 더 간다. */
+const REGULATION_END = 90;
+const EXTRA_TIME_END = 120;
+// 연장전 체력 소모 가속. 이미 90분을 뛴 몸으로 30분을 더 뛰는 구간이라 같은 비율로
+// 닳게 두면 "연장은 그냥 30분 더"가 되어 교체·체력 관리의 의미가 사라진다.
+const EXTRA_TIME_EXERTION = 1.3;
+// 중원에서 나온 슈팅의 원거리 불이익. 슈터 기준선을 자기 라인 평균으로 바꾸면서
+// (A-5 주석 참고) 사라진 "미드필더 슈팅은 어렵다"는 성질을 명시적 계수로 되돌린다.
+const MID_SHOT_PENALTY = 0.75;
+// GK 기여도의 중립 기준선. 이 값이면 슈팅 확률에 가감이 없다. lineStrengths의 gk는
+// playerContribution 스케일(대략 55~90)이므로 그 중앙 부근을 기준으로 잡았다.
+const GK_BASELINE = 72;
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, v));
@@ -114,6 +143,13 @@ function clamp(v: number, lo: number, hi: number): number {
 function average(nums: number[]): number {
   if (nums.length === 0) return 1;
   return nums.reduce((a, b) => a + b, 0) / nums.length;
+}
+
+// 골이 아닌 슈팅 중 "선방"으로 처리할 비중(나머지는 코너). 좋은 GK일수록 코너로
+// 흘리는 대신 직접 잡아낸다. 0.55~0.85 범위로 제한해 코너(=세트피스 기회)가 아예
+// 사라지지 않게 한다.
+function saveShare(gkContribution: number): number {
+  return clamp(0.7 + (gkContribution - GK_BASELINE) / 200, 0.55, 0.85);
 }
 
 function tempoFactor(tempo: TeamInstructions["tempo"]): number {
@@ -189,7 +225,8 @@ const POSITION_EXERTION: Record<string, number> = {
 function decayOnPitch(
   stamina: Record<string, number>,
   setup: SideSetup,
-  flags: ReturnType<typeof computeStaminaFlags>
+  flags: ReturnType<typeof computeStaminaFlags>,
+  exertionMult = 1
 ): void {
   const marker = setup.special?.manMark?.markerId;
   const formation = FORMATIONS[setup.instructions.formation];
@@ -212,6 +249,8 @@ function decayOnPitch(
     if (flags.highTempo) rate *= 1.15;
     if (flags.highPress) rate *= 1.15;
     if (marker && marker === playerId) rate *= 1.2;
+    // ④ 연장전 가속
+    rate *= exertionMult;
     const current = stamina[playerId] ?? 1;
     stamina[playerId] = Math.max(0, current - rate);
   }
@@ -319,6 +358,16 @@ const TEXT_TEMPLATES: Record<"chance" | "shot" | "goal" | "save" | "corner" | "c
 
 function eventText(type: keyof typeof TEXT_TEMPLATES, rng: Rng, name: string): string {
   return pickVariant(rng, TEXT_TEMPLATES[type](name));
+}
+
+// 세트피스 득점 문구. 코너 키커를 알면 어시스트로 함께 읽어준다 — 코너 키커 지정이
+// 실제로 결과에 관여한다는 걸 유저가 화면에서 확인할 수 있어야 한다.
+// RNG를 쓰지 않는다(코너 판정에서 이미 두 번 소비했고, 변형 추첨으로 스트림을 더
+// 흔들면 세트피스 유무에 따라 이후 전개가 갈린다).
+function setPieceGoalText(scorerName: string, takerName?: string): string {
+  return takerName && takerName !== scorerName
+    ? `${takerName}의 코너킥, ${scorerName}이(가) 헤더로 밀어넣습니다!`
+    : `코너킥 상황에서 ${scorerName}의 헤더 골!`;
 }
 
 // 퇴장 문구는 RNG를 소비하지 않는다 — 퇴장은 이미 카드 판정에서 RNG를 쓴 뒤의
@@ -429,7 +478,15 @@ export function advanceProb(
 }
 
 // =============================================================================
-export function initMatch(me: SideSetup, opp: SideSetup, venueId: string, seed: number): MatchState {
+export function initMatch(
+  me: SideSetup,
+  opp: SideSetup,
+  venueId: string,
+  seed: number,
+  // 녹아웃 경기만 연장이 있다. 기본 false — 기존 호출부(밸런싱·검증 테스트 포함)의
+  // 동작을 그대로 유지하고, 녹아웃 맥락을 아는 스토어에서만 켠다.
+  opts: { extraTimeEligible?: boolean } = {}
+): MatchState {
   const stamina: Record<string, number> = {};
   for (const p of playersOf(me.teamId)) stamina[p.id] = 1;
   for (const p of playersOf(opp.teamId)) stamina[p.id] = 1;
@@ -463,6 +520,9 @@ export function initMatch(me: SideSetup, opp: SideSetup, venueId: string, seed: 
     possMeAccum: 0,
     possMinutes: 0,
     injuryTime: 0,
+    extraTimeEligible: opts.extraTimeEligible ?? false,
+    extraTime: false,
+    etInjuryTime: 0,
     booked: { me: [], opp: [] },
     oppReactions: [],
     initialMe: me,
@@ -576,12 +636,31 @@ export function simulateMinute(state: MatchState): MatchState {
       const contribution = slot
         ? playerContribution(player, slot.position, slot.role, state.stamina[player.id] ?? 1)
         : 0;
-      // 라인평균 기준선은 슈터의 실제 소속 라인(mid 풀에서 뽑힌 슈터라도)과 무관하게
-      // 항상 ATT 라인 평균을 사용한다 — mid 풀 슈터는 구조적으로 더 낮은 골 확률을
-      // 갖게 되는 의도적인 설계 선택이다. 밸런스 튜닝(Task 10)에서 재검토 대상.
-      const attAvg = side === "me" ? lines.me.att : lines.opp.att;
+
+      // 기준선은 슈터가 실제로 속한 라인의 평균을 쓴다.
+      //
+      // 예전엔 mid 풀에서 뽑힌 슈터에게도 ATT 라인 평균을 기준선으로 적용했다. 미드필더의
+      // 기여도는 구조적으로 ATT 평균보다 낮으므로 "미드필더 슈팅은 언제나 손해"가 되는
+      // 편향이었고, 코드 주석도 이를 재검토 대상으로 남겨뒀다. 대신 원거리 슈팅이라는
+      // 실제 불리함은 라인별 계수(MID_SHOT_PENALTY)로 명시적으로 표현한다 — 편향을
+      // 우연한 부작용이 아니라 의도된 값으로 바꾼다.
+      const myLines = side === "me" ? lines.me : lines.opp;
+      const isMidShooter =
+        slot?.position === "DM" || slot?.position === "CM" || slot?.position === "AM";
+      const lineAvg = isMidShooter ? myLines.mid : myLines.att;
+      const distancePenalty = isMidShooter ? MID_SHOT_PENALTY : 1;
+
+      // 상대 GK가 슈팅 결과에 관여한다(A-5).
+      //
+      // 예전엔 goalProb 식에 GK가 아예 없었다. GK는 oppDef의 20% 가중치로 λ에만
+      // 들어가고, 개별 슈팅에서는 "골이 아니면 70% 확률로 선방 문구"라는 장식일 뿐이었다.
+      // 그래서 월드클래스 GK를 세워도 빅세이브 서사가 만들어지지 않았다.
+      const oppGkContribution = side === "me" ? lines.opp.gk : lines.me.gk;
       const goalProb = clamp(
-        ENGINE_CONSTANTS.GOAL_PROB_BASE + (contribution - attAvg) / ENGINE_CONSTANTS.GOAL_PROB_DIVISOR,
+        (ENGINE_CONSTANTS.GOAL_PROB_BASE +
+          (contribution - lineAvg) / ENGINE_CONSTANTS.GOAL_PROB_DIVISOR -
+          (oppGkContribution - GK_BASELINE) / ENGINE_CONSTANTS.GK_SAVE_DIVISOR) *
+          distancePenalty,
         ENGINE_CONSTANTS.GOAL_PROB_MIN,
         ENGINE_CONSTANTS.GOAL_PROB_MAX
       );
@@ -596,7 +675,9 @@ export function simulateMinute(state: MatchState): MatchState {
           playerId: player.id,
           textKo: eventText("goal", rng, player.name),
         });
-      } else if (rng.next() < 0.7) {
+      } else if (rng.next() < saveShare(oppGkContribution)) {
+        // 골이 아닌 슈팅이 "선방"으로 끝날 비중을 GK 기여도에 연동한다. 예전엔 고정
+        // 70%라 GK가 좋든 나쁘든 선방 장면 수가 같았다.
         additions.push({
           minute: newMinute,
           type: "save",
@@ -612,6 +693,25 @@ export function simulateMinute(state: MatchState): MatchState {
           playerId: player.id,
           textKo: eventText("corner", rng, player.name),
         });
+
+        // 코너 해결(B-4). 예전엔 코너 이벤트가 여기서 끝나 세트피스 득점이 정확히
+        // 0이었고 setPiece 능력치·코너 키커 지정·장신 전진이 모두 사장돼 있었다.
+        const defendingSide = side === "me" ? oppSide : meSide;
+        if (rng.next() < cornerGoalProb(setup, defendingSide)) {
+          const scorer = selectCornerScorer(setup, rng.next());
+          if (scorer) {
+            if (side === "me") scoreMe++;
+            else scoreOpp++;
+            const taker = cornerTaker(setup);
+            additions.push({
+              minute: newMinute,
+              type: "goal",
+              side,
+              playerId: scorer.id,
+              textKo: setPieceGoalText(scorer.name, taker?.name),
+            });
+          }
+        }
       }
     }
   }
@@ -689,22 +789,68 @@ export function simulateMinute(state: MatchState): MatchState {
 
   // 스태미나 감소: 온피치 선수만, 벤치는 감소하지 않는다.
   const stamina: Record<string, number> = { ...state.stamina };
-  decayOnPitch(stamina, meSide, staminaFlagsMe);
-  decayOnPitch(stamina, oppSide, staminaFlagsOpp);
+  const exertion = state.extraTime ? EXTRA_TIME_EXERTION : 1;
+  decayOnPitch(stamina, meSide, staminaFlagsMe, exertion);
+  decayOnPitch(stamina, oppSide, staminaFlagsOpp, exertion);
 
   if (newMinute === 45) {
     additions.push({ minute: 45, type: "halftime", side: "me", textKo: "⏱ 전반전이 종료되었습니다." });
   }
 
+  // ---- 종료 판정 / 연장전 진입 ----------------------------------------------
+  //
+  // 클럭 설계: 연장으로 가는 경기는 정규 추가시간 티크를 만들지 않고 90분에서 곧장
+  // 91분(연장 전반)으로 넘어간다. 그래야 카운터가 공식 시계와 일치해(91~120 = 연장)
+  // minuteLabel이 상태 하나(extraTime)만 보고 "90+n"과 "연장 n분"을 구분할 수 있다.
+  // 대가: 정규 추가시간에 결승골이 나는 전개는 재현하지 못한다 — 추가시간이 이미
+  // 1~5티크로 압축된 근사인 만큼 받아들일 수 있는 단순화로 판단했다.
   let injuryTime = state.injuryTime;
-  if (newMinute === 90 && injuryTime === 0) {
-    injuryTime = 1 + Math.floor(rng.next() * 5);
-  }
-
+  let etInjuryTime = state.etInjuryTime ?? 0;
+  let extraTime = state.extraTime ?? false;
   let finished = false;
-  if (injuryTime > 0 && newMinute === 90 + injuryTime) {
-    additions.push({ minute: newMinute, type: "fulltime", side: "me", textKo: "경기 종료!" });
-    finished = true;
+
+  if (!extraTime) {
+    if (newMinute === REGULATION_END) {
+      if (state.extraTimeEligible && scoreMe === scoreOpp) {
+        extraTime = true;
+        additions.push({
+          minute: newMinute,
+          type: "period",
+          side: "me",
+          textKo: "⏱ 정규시간 종료 — 승부를 가리지 못했습니다. 연장전에 들어갑니다.",
+        });
+      } else if (injuryTime === 0) {
+        injuryTime = 1 + Math.floor(rng.next() * 5);
+      }
+    }
+    if (!extraTime && injuryTime > 0 && newMinute === REGULATION_END + injuryTime) {
+      additions.push({ minute: newMinute, type: "fulltime", side: "me", textKo: "경기 종료!" });
+      finished = true;
+    }
+  } else {
+    if (newMinute === 105) {
+      additions.push({
+        minute: newMinute,
+        type: "period",
+        side: "me",
+        textKo: "⏱ 연장 전반이 종료되었습니다.",
+      });
+    }
+    if (newMinute === EXTRA_TIME_END && etInjuryTime === 0) {
+      etInjuryTime = 1 + Math.floor(rng.next() * 3);
+    }
+    if (etInjuryTime > 0 && newMinute === EXTRA_TIME_END + etInjuryTime) {
+      additions.push({
+        minute: newMinute,
+        type: "fulltime",
+        side: "me",
+        textKo:
+          scoreMe === scoreOpp
+            ? "연장 종료! 승부차기로 넘어갑니다."
+            : "연장 종료! 경기가 끝났습니다.",
+      });
+      finished = true;
+    }
   }
 
   // 이번 분의 볼 점유를 누적한다. lines/instructions만 보므로 결정론적이다.
@@ -715,7 +861,10 @@ export function simulateMinute(state: MatchState): MatchState {
     oppSide.instructions
   );
 
-  const remainingFraction = Math.max(0, (90 - newMinute) / 90);
+  // 잔여 시간 비율. λ는 "90분당 기대 득점"이므로 연장 중에는 종료 시각을 120분으로
+  // 두고 그대로 90으로 나눈다(90분에 연장 진입 시 30/90 = 0.333).
+  const periodEnd = extraTime ? EXTRA_TIME_END : REGULATION_END;
+  const remainingFraction = Math.max(0, (periodEnd - newMinute) / 90);
   const prob = winProbGivenScore(
     scoreMe,
     scoreOpp,
@@ -743,6 +892,8 @@ export function simulateMinute(state: MatchState): MatchState {
     possMeAccum: state.possMeAccum + possMeThisMinute,
     possMinutes: state.possMinutes + 1,
     injuryTime,
+    etInjuryTime,
+    extraTime,
   };
 }
 
@@ -770,7 +921,9 @@ export function applyIntervention(state: MatchState, iv: Intervention): MatchSta
 
   if (iv.subs) {
     for (const { out, in: inId } of iv.subs) {
-      if (subsUsedMe >= MAX_SUBS) continue; // 5명 초과 교체는 무시
+      // 연장전에는 교체 1장이 추가된다(5 -> 6).
+      const maxSubs = state.extraTime ? MAX_SUBS_EXTRA_TIME : MAX_SUBS;
+      if (subsUsedMe >= maxSubs) continue; // 한도 초과 교체는 무시
       if (subbedOff.has(inId)) continue; // 교체로 빠진 선수는 재투입 불가
       const slotId = Object.keys(me.lineup).find((k) => me.lineup[k] === out);
       if (!slotId) continue; // out 선수가 현재 라인업에 없으면 무시

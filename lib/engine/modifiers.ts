@@ -459,6 +459,17 @@ export const RULE_DEFS: RuleDef[] = [
     iconKey: (ctx) => (offsideTrapIsRisk(ctx) ? "warning" : "shield"),
   },
   {
+    id: "ck_big_men_risk",
+    // 장신 전진(ckBigMenForward)의 대가. 이득은 세트피스 해결 쪽에 있다
+    // (lib/engine/setpiece.ts — 문전 공중전 인원에 중원까지 포함된다). 코너에
+    // 센터백·중원을 올려두면 걷어낸 공에 역습을 맞는다는 비용을 여기서 부담해,
+    // 이 토글이 공짜 보너스가 되지 않게 한다.
+    when: (ctx) => ctx.me.special?.ckBigMenForward === true,
+    effect: () => ({ da: 0, dd: -0.02 }),
+    textKo: () => "코너에 장신을 올려 세트피스가 강해지지만 역습에 노출됩니다 −2%",
+    iconKey: () => "warning",
+  },
+  {
     id: "man_marking_fatigue",
     when: (ctx) => !!ctx.me.special?.manMark,
     effect: () => ({ da: 0, dd: 0.05 }),
@@ -624,6 +635,28 @@ export const RULE_DEFS: RuleDef[] = [
   },
 ];
 
+// ── 보정 포화 (A-4) ─────────────────────────────────────────────────────────
+//
+// 문제: 예전에는 Π(1+delta)로 규칙 효과를 곱해 쌓았고 상한이 없었다. 공격 가점 규칙이
+// 동시에 걸리는 조합(direct_targetman +6, focus_vs_weakflank +7, counter_style +6,
+// fast_transition_exploit +6, possession_control +5, wide_vs_narrow +3,
+// tempo_stamina +3, form +3, 상시 적합도 +5)에서는 ×1.5를 넘을 수 있었고, 그 값이
+// ^1.6 지수 밖에서 λ에 직접 곱해졌다. 게다가 recommend()는 23,328개 조합을 전수
+// 탐색하며 정확히 그 최대 중첩 지점을 찾아내도록 만들어져 있다.
+//
+// 해결: 델타를 먼저 합산하고 tanh로 포화시킨다. 개별 규칙 값은 그대로 두면서
+// 극단적 중첩만 눌린다. 합이 작을 때는 tanh(x) ≈ x이므로 보정이 하나나 둘뿐인
+// 일반적인 경우의 값은 종전(곱셈)과 거의 같다.
+//   합 +0.10 -> ×1.098 (종전 ×1.10)
+//   합 +0.30 -> ×1.249 (종전 ×1.35 수준)
+//   합 +0.60 -> ×1.383 (종전 ×1.8 이상)
+// SATURATION_SPAN은 "이 이상은 사실상 더 안 오른다"고 보는 한계폭이다.
+const SATURATION_SPAN = 0.45;
+
+export function saturate(deltaSum: number): number {
+  return 1 + SATURATION_SPAN * Math.tanh(deltaSum / SATURATION_SPAN);
+}
+
 // export: buildCtx와 짝을 이루는 규칙 평가 단계만 분리한 함수. RuleCtx를 이미 갖고 있는
 // 호출자(recommend.ts)는 이 함수만 반복 호출해 buildCtx의 파생값 재계산을 피할 수 있다.
 export function evaluateModifiers(ctx: RuleCtx): ModifierResult {
@@ -639,8 +672,8 @@ export function evaluateModifiers(ctx: RuleCtx): ModifierResult {
       iconKey: def.iconKey(ctx),
     });
   }
-  const attackMult = rules.reduce((m, r) => m * (1 + r.deltaAttack), 1);
-  const defenseMult = rules.reduce((m, r) => m * (1 + r.deltaDefense), 1);
+  const attackMult = saturate(rules.reduce((s, r) => s + r.deltaAttack, 0));
+  const defenseMult = saturate(rules.reduce((s, r) => s + r.deltaDefense, 0));
   return {
     rules,
     attackMult,

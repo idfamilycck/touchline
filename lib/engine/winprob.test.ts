@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { makeSetup } from "./__testutils__";
-import { RULE_DEFS, type RuleCtx } from "./modifiers";
+import { RULE_DEFS, applyModifiers, saturate, type RuleCtx } from "./modifiers";
 import { computeLambdas, winProbability } from "./winprob";
 import { teamById } from "@/lib/data/teams";
 import { venueById } from "@/lib/data/venues";
@@ -460,6 +460,54 @@ describe("winProbability", () => {
 
     expect(rDirect.some((r) => r.id === "direct_targetman")).toBe(true);
     expect(rShort.some((r) => r.id === "direct_targetman")).toBe(false);
+  });
+
+  it("보정 포화: 델타를 아무리 쌓아도 상한을 넘지 않는다", () => {
+    // 작은 합에서는 종전 곱셈과 거의 같고, 큰 합에서는 눌린다.
+    expect(saturate(0)).toBeCloseTo(1, 10);
+    expect(saturate(0.05)).toBeCloseTo(1.05, 3); // 단일 보정은 사실상 그대로
+    expect(saturate(0.1)).toBeGreaterThan(1.09);
+    expect(saturate(0.1)).toBeLessThan(1.1);
+
+    // 극단 중첩은 포화한다
+    expect(saturate(0.6)).toBeLessThan(1.4);
+    expect(saturate(2.0)).toBeLessThan(1.46);
+    expect(saturate(100)).toBeLessThan(1.46);
+
+    // 음수 쪽도 대칭으로 눌린다(0 이하로 내려가 λ 부호가 뒤집히지 않는다)
+    expect(saturate(-100)).toBeGreaterThan(0.54);
+    expect(saturate(-0.05)).toBeCloseTo(0.95, 3);
+
+    // 단조 증가
+    expect(saturate(0.3)).toBeGreaterThan(saturate(0.2));
+  });
+
+  it("보정 포화: 모든 매치업에서 attackMult/defenseMult가 합리적 범위에 머문다", () => {
+    // recommend()가 23,328개 조합에서 최대 중첩을 찾아내도록 만들어져 있으므로,
+    // 극단 설정을 물려도 배수가 폭주하지 않아야 한다.
+    const me = makeSetup("kor", "4-3-3", {
+      line: 3,
+      tempo: 3,
+      pressing: 3,
+      attacking: 1,
+      buildup: "direct",
+      possession: 3,
+      transitionSpeed: 3,
+      lineSpacing: 3,
+      width: "wide",
+      focus: "left",
+      marking: "man",
+      offsideTrap: true,
+    });
+    const opp = makeSetup("bra", "4-3-3", { line: 3, pressing: 3, width: "narrow" });
+    const venue = venueById("metlife")!;
+    const meTeam = teamById("kor")!;
+    const oppTeam = teamById("bra")!;
+    const mod = applyModifiers(me, opp, venue, meTeam, oppTeam);
+    expect(mod.attackMult).toBeLessThan(1.46);
+    expect(mod.attackMult).toBeGreaterThan(0.54);
+    expect(mod.defenseMult).toBeLessThan(1.46);
+    expect(mod.defenseMult).toBeGreaterThan(0.54);
   });
 
   it("수적 열세: 10인이 되면 내 λ는 내려가고 상대 λ는 올라간다", () => {

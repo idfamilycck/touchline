@@ -29,6 +29,27 @@ describe("playerContribution", () => {
   });
 });
 
+describe("ageMultiplier 비대칭 (C)", () => {
+  it("피크 이전의 하락이 피크 이후보다 완만하다", () => {
+    // ST의 피크는 26세. 같은 3년 차이라면 23세가 29세보다 유리해야 한다.
+    const younger = ageMultiplier(23, "ST");
+    const older = ageMultiplier(29, "ST");
+    expect(younger).toBeGreaterThan(older);
+  });
+
+  it("피크에서 최대치 1.0이고 하한 0.78을 넘지 않는다", () => {
+    expect(ageMultiplier(26, "ST")).toBeCloseTo(1, 10);
+    expect(ageMultiplier(31, "GK")).toBeCloseTo(1, 10);
+    expect(ageMultiplier(16, "ST")).toBeGreaterThanOrEqual(0.78);
+    expect(ageMultiplier(40, "ST")).toBeGreaterThanOrEqual(0.78);
+  });
+
+  it("피크에서 멀어질수록 단조 감소한다 (양방향)", () => {
+    expect(ageMultiplier(25, "ST")).toBeGreaterThan(ageMultiplier(22, "ST"));
+    expect(ageMultiplier(27, "ST")).toBeGreaterThan(ageMultiplier(31, "ST"));
+  });
+});
+
 describe("lineStrengths + 맨마킹", () => {
   it("브라질 공격 라인 > 한국 공격 라인 (더미 데이터 전제)", () => {
     const bra = makeSetup("bra", "4-3-3"), kor = makeSetup("kor", "4-3-3");

@@ -187,7 +187,11 @@ export function fromRealState(
   // 그 시점의 실제 라인업 기준으로 정확하다. 이후 시점 관련 필드만 덮어쓴다.
   // 경기장은 match.venueKo(ESPN 영문 경기장명)를 실제 16개 경기장 프로필 중 하나로
   // 매핑한다(wc2026VenueId) — 매핑 실패 시 wc_default로 안전 폴백.
-  const base = initMatch(meSetup, oppSetup, wc2026VenueId(match.venueKo), seed);
+  // 연장은 녹아웃에만 있다. 조별리그 경기를 다시 쓸 때 무승부가 연장으로 넘어가면
+  // 실제 대회 규칙과 어긋난다.
+  const base = initMatch(meSetup, oppSetup, wc2026VenueId(match.venueKo), seed, {
+    extraTimeEligible: match.round !== "group",
+  });
 
   // 스태미나: 전원 1로 초기화된 base.stamina에서, 온피치 22명만 경과분 기반 감쇠로
   // 덮어쓴다(브리프 근사식: 1 - minute/110, 0.3 하한).

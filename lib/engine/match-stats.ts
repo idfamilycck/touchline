@@ -177,6 +177,94 @@ export function teamStaminaPct(
   return n > 0 ? Math.round((sum / n) * 100) : 100;
 }
 
+// ── 선수 평점 ────────────────────────────────────────────────────────────────
+//
+// 결과 화면에 "누가 잘했나"가 없었다. 그런데 필요한 데이터는 이미 전부 있다 —
+// chance/shot/goal/save/corner/card/red 이벤트에 playerId가 붙어 있고, 체력도
+// 선수별로 남는다. 새로 시뮬레이션할 것 없이 집계만 하면 된다.
+//
+// 축구 중계 평점 관례에 맞춰 6.0을 기본으로 두고 기여·실책으로 가감한다.
+
+/** 평점 기본값. 특별히 잘하지도 못하지도 않은 90분. */
+const RATING_BASE = 6.0;
+const RATING_MIN = 4.0;
+const RATING_MAX = 10.0;
+
+/** 이벤트별 평점 가감. */
+const RATING_DELTA: Partial<Record<MatchEvent["type"], number>> = {
+  goal: 1.2,
+  shot: 0.15,
+  chance: 0.2,
+  corner: 0.05,
+  // 선방 이벤트의 playerId는 "슈팅한 선수"다(막은 GK가 아니다) — 엔진의 이벤트 계약
+  // 이 그렇게 되어 있다. 슈팅을 만들었으나 막힌 것이므로 작은 가점만 준다.
+  save: 0.1,
+  card: -0.4,
+  red: -2.0,
+};
+
+export interface PlayerRating {
+  playerId: string;
+  side: "me" | "opp";
+  rating: number;
+  goals: number;
+  shots: number;
+  chances: number;
+  cards: number;
+  sentOff: boolean;
+}
+
+/**
+ * 이벤트 로그에서 선수별 평점을 집계한다.
+ *
+ * 이벤트에 등장하지 않은 선수는 결과에 포함되지 않는다 — "기록이 없다"와 "평점 6.0"은
+ * 다른 정보이므로 없는 데이터를 지어내지 않는다.
+ */
+export function playerRatings(events: MatchEvent[]): PlayerRating[] {
+  const acc = new Map<string, PlayerRating>();
+
+  for (const e of events) {
+    if (!e.playerId) continue;
+    const delta = RATING_DELTA[e.type];
+    if (delta === undefined) continue;
+
+    const key = `${e.side}:${e.playerId}`;
+    const row =
+      acc.get(key) ??
+      {
+        playerId: e.playerId,
+        side: e.side,
+        rating: RATING_BASE,
+        goals: 0,
+        shots: 0,
+        chances: 0,
+        cards: 0,
+        sentOff: false,
+      };
+
+    row.rating += delta;
+    if (e.type === "goal") row.goals += 1;
+    if (e.type === "shot") row.shots += 1;
+    if (e.type === "chance") row.chances += 1;
+    if (e.type === "card") row.cards += 1;
+    if (e.type === "red") row.sentOff = true;
+    acc.set(key, row);
+  }
+
+  return [...acc.values()]
+    .map((r) => ({
+      ...r,
+      // 소수 첫째 자리까지. 중계 평점 관례와 같다.
+      rating: Math.round(Math.min(RATING_MAX, Math.max(RATING_MIN, r.rating)) * 10) / 10,
+    }))
+    .sort((a, b) => b.rating - a.rating);
+}
+
+/** 우리 팀 최우수 선수(MOM). 기록이 없으면 undefined. */
+export function manOfTheMatch(events: MatchEvent[], side: "me" | "opp" = "me"): PlayerRating | undefined {
+  return playerRatings(events).find((r) => r.side === side);
+}
+
 // ── 개입 효과 ────────────────────────────────────────────────────────────────
 // "감독이 개입했더니 승률이 어떻게 움직였나"는 이 앱에서 가장 감독 리포트다운 지표인데
 // 지금까지 어디에서도 쓰이지 않고 있었다. interventions(개입 시각)와 probTimeline

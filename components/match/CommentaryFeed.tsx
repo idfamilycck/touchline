@@ -37,6 +37,7 @@ const ICON: Record<MatchEventType, Icon> = {
   sub: ArrowsClockwise,
   tactic_change: ClipboardText,
   halftime: Timer,
+  period: Timer,
   fulltime: FlagCheckered,
 };
 
@@ -44,9 +45,11 @@ const MAX_ROWS = 40;
 
 interface CommentaryFeedProps {
   events: MatchEvent[];
+  /** 연장 진입 이후면 분 표기가 "90+n"이 아니라 실제 시각(91~120)이다. */
+  extraTime?: boolean;
 }
 
-export function CommentaryFeed({ events }: CommentaryFeedProps) {
+export function CommentaryFeed({ events, extraTime = false }: CommentaryFeedProps) {
   // 최근 MAX_ROWS개만, 최신이 위로 오도록 역순.
   const rows = events.slice(-MAX_ROWS).reverse();
 
@@ -84,7 +87,7 @@ export function CommentaryFeed({ events }: CommentaryFeedProps) {
                 className="stat-num mt-0.5 w-9 shrink-0 text-right text-[13px] text-dim"
                 aria-hidden
               >
-                {minuteLabel(e.minute)}
+                {minuteLabel(e.minute, extraTime)}
               </span>
               <span className="mt-0.5 shrink-0 leading-none" aria-hidden>
                 <EventIcon size={15} weight="bold" />

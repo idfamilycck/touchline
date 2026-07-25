@@ -18,6 +18,7 @@ import { CfCompare } from "@/components/result/CfCompare";
 import { FinalTimeline } from "@/components/result/FinalTimeline";
 import { ShareCard } from "@/components/result/ShareCard";
 import { MatchSummary } from "@/components/result/MatchSummary";
+import { PlayerRatings } from "@/components/result/PlayerRatings";
 import { heroLine } from "@/components/result/cf-labels";
 import { buildTacticsReview } from "@/components/result/tactics-review";
 import { TacticsReviewPanel } from "@/components/result/TacticsReviewPanel";
@@ -271,6 +272,9 @@ export default function ResultPage() {
         meNameKo={me?.nameKo ?? "우리"}
         oppNameKo={opp?.nameKo ?? "상대"}
       />
+
+      {/* 선수 평점. 이벤트에 이미 playerId가 다 붙어 있어 집계만으로 만들어진다. */}
+      <PlayerRatings match={match} />
 
       {/* 공유 카드 */}
       <ShareCard match={match} cf={cf} shootout={shootout} />

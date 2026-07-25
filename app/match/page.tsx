@@ -57,10 +57,12 @@ export default function MatchPage() {
 
   // 승부차기 승률: 무승부의 가치를 매기는 데 필요하다(진출 확률 = 승 + 무 × 이 값).
   // 라인업(교체·퇴장)에 따라 키커·GK가 바뀌므로 그 두 값에만 의존해 메모이즈한다.
+  // match.me/opp는 개입·퇴장 때만 교체되는 참조라 이 의존성으로 충분하다
+  // (아래 sideRules useMemo와 같은 패턴).
   const pkWinProb = useMemo(() => {
     if (!match) return undefined;
     return shootoutWinProb(match.me, match.opp);
-  }, [match?.me, match?.opp]);
+  }, [match?.me, match?.opp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [playing, setPlaying] = useState(false); // 새로고침/진입 시 항상 일시정지로 시작
   // 재생을 한 번이라도 시작했는가. 라이브 피치의 "정지 대형 vs 동적 전형"을 가른다.
@@ -258,6 +260,7 @@ export default function MatchPage() {
           minute={match.minute}
           venueId={match.venueId}
           finished={match.finished}
+          extraTime={match.extraTime}
         />
 
         {/* 컨트롤 */}
@@ -284,9 +287,9 @@ export default function MatchPage() {
               {match.finished
                 ? "경기가 종료됐습니다"
                 : scene
-                  ? `주요 장면 · ${minuteLabel(match.minute)}`
+                  ? `주요 장면 · ${minuteLabel(match.minute, match.extraTime)}`
                   : playing
-                    ? `빠르게 진행 중 · ${minuteLabel(match.minute)}`
+                    ? `빠르게 진행 중 · ${minuteLabel(match.minute, match.extraTime)}`
                     : "일시정지"}
             </span>
             <button
@@ -350,7 +353,7 @@ export default function MatchPage() {
               interventions={match.interventions}
               shootoutWinProb={pkWinProb}
             />
-            <CommentaryFeed events={match.events} />
+            <CommentaryFeed events={match.events} extraTime={match.extraTime} />
           </div>
         </div>
       </div>

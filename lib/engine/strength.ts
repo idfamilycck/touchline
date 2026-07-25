@@ -37,9 +37,19 @@ export function positionFitness(player: Player, slotPos: Position): number {
   return 0.5;
 }
 
+// 나이 곡선은 비대칭이다.
+//
+// 예전엔 |age - peak|만 써서 피크 전후를 똑같이 깎았다. 실제로는 성장기(피크 이전)의
+// 하락이 노쇠기(피크 이후)보다 완만하다 — 23세 공격수는 26세 피크 대비 조금 못하지만,
+// 29세는 그보다 확실히 더 떨어진다. 계수를 방향별로 나눠 그 차이를 표현한다.
+const AGE_DECAY_BEFORE_PEAK = 0.004;
+const AGE_DECAY_AFTER_PEAK = 0.008;
+
 export function ageMultiplier(age: number, pos: Position): number {
   const peak = PEAK_AGE[pos];
-  return Math.max(0.78, 1 - 0.006 * Math.pow(Math.abs(age - peak), 1.35));
+  const gap = Math.abs(age - peak);
+  const coef = age < peak ? AGE_DECAY_BEFORE_PEAK : AGE_DECAY_AFTER_PEAK;
+  return Math.max(0.78, 1 - coef * Math.pow(gap, 1.35));
 }
 
 function attrValue(player: Player, key: string): number {

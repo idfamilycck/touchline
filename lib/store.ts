@@ -312,7 +312,13 @@ export const useAppStore = create<AppState>()(
           set({ match: { ...match, me }, shootout: undefined });
           return;
         }
-        set({ match: initMatch(me, opp, setup.venueId, setup.seed), shootout: undefined });
+        // 자유 경기는 무승부일 때 연장 -> 승부차기로 결판낸다. 종료 오버레이가 이미
+        // 무승부에 승부차기를 제안하는 흐름이라(app/match/page.tsx) 녹아웃과 같은
+        // 규칙으로 두는 것이 일관된다.
+        set({
+          match: initMatch(me, opp, setup.venueId, setup.seed, { extraTimeEligible: true }),
+          shootout: undefined,
+        });
       },
 
       // rewrite 모드의 endMinute(전반전/후반전 프리셋)에 도달하면 정규 종료(90분)를

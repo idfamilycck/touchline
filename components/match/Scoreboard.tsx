@@ -9,7 +9,14 @@ import { FlagBadge } from "@/components/ui/FlagBadge";
 import { teamById } from "@/lib/data/teams";
 import { venueById } from "@/lib/data/venues";
 
-export function minuteLabel(minute: number): string {
+// 연장전(extraTime=true)에서는 91~120분이 실제 경기 시각 그대로다. 엔진이 연장으로
+// 가는 경기에서는 정규 추가시간 티크를 만들지 않으므로(match.ts의 종료 판정 주석)
+// 두 경우가 겹치지 않아, 이 불리언 하나로 표기를 안전하게 가를 수 있다.
+export function minuteLabel(minute: number, extraTime = false): string {
+  if (extraTime) {
+    if (minute > 120) return `120+${minute - 120}'`;
+    return `${minute}'`;
+  }
   if (minute > 90) return `90+${minute - 90}'`;
   if (minute > 45 && minute < 46) return `45+${Math.round((minute - 45) * 10)}'`;
   return `${minute}'`;
@@ -23,6 +30,8 @@ interface ScoreboardProps {
   minute: number;
   venueId: string;
   finished: boolean;
+  /** 연장 진입 이후면 분 표기 규칙이 달라진다(minuteLabel). */
+  extraTime?: boolean;
 }
 
 export function Scoreboard({
@@ -33,6 +42,7 @@ export function Scoreboard({
   minute,
   venueId,
   finished,
+  extraTime = false,
 }: ScoreboardProps) {
   const me = teamById(meTeamId);
   const opp = teamById(oppTeamId);
@@ -63,7 +73,7 @@ export function Scoreboard({
             }`}
             aria-live="off"
           >
-            {finished ? "경기 종료" : minuteLabel(minute)}
+            {finished ? "경기 종료" : minuteLabel(minute, extraTime)}
           </span>
         </div>
 

@@ -13,6 +13,7 @@
 // engine Position before generating attributes.
 
 import type { Player, PlayerAttrs, Position } from "@/lib/types";
+import { ENGINE_CONSTANTS } from "@/lib/engine/constants";
 
 export function normalizePosition(raw: string): Position {
   const p = (raw ?? "").trim().toUpperCase();
@@ -109,7 +110,10 @@ export function makeVirtualPlayer(args: {
   // unpredictably with elo, and the "higher elo -> higher average" test
   // requires a monotonic relationship between elo and the resulting stats.
   const eloFactor = clamp01((args.teamElo - 1400) / 700);
-  const eloBonus = eloFactor * 20 - 10; // -10 .. +10, applied uniformly
+  // 폭은 ENGINE_CONSTANTS.WC_ELO_ATTR_SPAN(기본 20 -> -10..+10). eloMult와 중복되는
+  // 두 번째 ELO 경로라 두 값은 함께 조정해야 한다(constants.ts 주석 참고).
+  const span = ENGINE_CONSTANTS.WC_ELO_ATTR_SPAN;
+  const eloBonus = eloFactor * span - span / 2;
 
   const rng = createRng(`${args.id}|${args.teamId}|${args.name}|${position}`);
 
