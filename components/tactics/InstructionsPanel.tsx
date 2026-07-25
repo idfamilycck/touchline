@@ -93,7 +93,9 @@ export function InstructionsPanel() {
   if (!instructions) return null;
 
   return (
-    <div data-keep-selection className="flex flex-col gap-6">
+    // 넓은 화면(xl+)에서는 네 구역(포메이션·기본전술·성향·세부지시)을 2열로 흘려
+    // 세로 길이를 절반으로 줄인다. 좁은 화면은 그대로 1열.
+    <div data-keep-selection className="flex flex-col gap-6 xl:grid xl:grid-cols-2 xl:gap-x-6 xl:gap-y-6">
       {/* 포메이션 */}
       <section>
         <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-accent">포메이션</h2>

@@ -54,25 +54,25 @@ const TACTIC_TABS: { id: TacticTab; label: string }[] = [
   { id: "special", label: "특수 지시" },
 ];
 
-// 우측 분석 열: 1층 상대 스카우팅 · 라인 매치업 · 전술 탭 · 2층 FactorCards · 추천 · 3층 상세.
+// 예전엔 위 세 덩어리(스카우팅 · 전술 탭 · 근거/추천/상세)가 오른쪽 한 열에 세로로
+// 전부 쌓여, 데스크톱에서도 4000px 모바일 스크롤이 됐다. 이제 셋을 분리해 lg 그리드가
+// 각각 다른 자리에 배치한다(상대=오른쪽 레일, 전술 지시=피치 아래 가운데, 근거/추천/
+// 상세=하단 가로 행). 모바일에서는 셋이 '분석' 탭 아래에 예전 순서 그대로 쌓인다.
 //
-// 예전 1층은 WinGauge("라이브 승률 예측")였다. 전술을 고르기도 전에 승률이 나오면
-// 감독의 판단이 사라지고 "숫자가 큰 쪽으로 슬라이더를 미는" 게임이 되므로, 그 자리를
-// 판단 재료(상대가 실제로 어떤 팀이었나 + 어느 라인에서 밀리나)로 바꿨다.
-// 승률은 경기가 시작된 뒤 /match의 ProbTimeline에서만 등장한다.
-function AnalysisPanel() {
+// 승률을 여기 두지 않는 이유는 그대로다: 전술을 고르기도 전에 승률이 나오면 감독의
+// 판단이 사라지고 "숫자가 큰 쪽으로 슬라이더를 미는" 게임이 된다. 승률은 경기가
+// 시작된 뒤 /match의 ProbTimeline에서만 등장한다.
+
+/** 상대 스카우팅 + 라인 매치업 (오른쪽 레일). */
+function ScoutRail() {
   const oppTeamId = useAppStore((s) => s.opp?.teamId);
-  const rules = useTacticRules();
   const lines = useLineMatchup();
   const scout = useOppScouting();
   const { lineup, isCurrentMatch } = useOppLineup();
-  const [tab, setTab] = useState<TacticTab>("team");
-
   const oppTeam = useMemo(() => (oppTeamId ? teamById(oppTeamId) : undefined), [oppTeamId]);
 
   return (
     <div className="flex flex-col gap-4">
-      {/* 1층: 상대를 먼저 본다 */}
       <ScoutingReport
         scout={scout}
         color1={oppTeam?.color1}
@@ -81,39 +81,49 @@ function AnalysisPanel() {
         lineupIsCurrentMatch={isCurrentMatch}
       />
       <LineMatchup lines={lines} />
+    </div>
+  );
+}
 
-      {/* 전술 패널 탭 */}
-      <div className="panel rounded-panel p-4">
-        <div role="tablist" aria-label="전술 지시 종류" className="mb-4 flex gap-1.5">
-          {TACTIC_TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.id}
-              data-keep-selection
-              onClick={() => setTab(t.id)}
-              className={`flex-1 rounded-full py-2 text-[13px] font-bold transition-colors ${
-                tab === t.id ? "bg-accent text-accent-ink" : "bg-surface-2 text-dim"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        {tab === "team" && <InstructionsPanel />}
-        {tab === "role" && <RolePicker />}
-        {tab === "special" && <SpecialPanel />}
+/** 전술 지시 탭(팀 지시 · 선수 역할 · 특수 지시) — 피치 아래 가운데. */
+function TacticTabsPanel() {
+  const [tab, setTab] = useState<TacticTab>("team");
+  return (
+    <div className="panel rounded-panel p-4">
+      <div role="tablist" aria-label="전술 지시 종류" className="mb-4 flex gap-1.5">
+        {TACTIC_TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            data-keep-selection
+            onClick={() => setTab(t.id)}
+            className={`flex-1 rounded-full py-2 text-[13px] font-bold transition-colors ${
+              tab === t.id ? "bg-accent text-accent-ink" : "bg-surface-2 text-dim"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
+      {tab === "team" && <InstructionsPanel />}
+      {tab === "role" && <RolePicker />}
+      {tab === "special" && <SpecialPanel />}
+    </div>
+  );
+}
 
-      {/* 2층 */}
+/** 전술 근거 · AI 추천 · 계산 근거 상세 — 하단 가로 행(lg에서 3열). */
+function ExtrasPanel() {
+  const rules = useTacticRules();
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <FactorCards rules={rules} />
-
-      {/* 추천 */}
       <RecommendPanel />
 
-      {/* 3층 상세 보기 — 엔진이 무엇을 보고 계산하는지. 결과 확률은 넣지 않는다. */}
-      <details className="panel rounded-panel p-5">
+      {/* 상세 보기 — 엔진이 무엇을 보고 계산하는지. 결과 확률은 넣지 않는다. */}
+      <details className="panel h-fit rounded-panel p-5">
         <summary className="cursor-pointer list-none">
           <span className="flex items-center justify-between">
             <span className="eyebrow text-dim">상세 보기 (계산 근거)</span>
@@ -331,7 +341,9 @@ export default function TacticsPage() {
               role="tab"
               id={`tab-${t.id}`}
               aria-selected={tab === t.id}
-              aria-controls={`panel-${t.id}`}
+              aria-controls={
+                t.id === "analysis" ? "panel-scout panel-tactics panel-extras" : `panel-${t.id}`
+              }
               // 탭 전환 시 탭-투-배치 선택이 유지되도록(바깥 클릭 취소 대상에서 제외).
               data-keep-selection
               onClick={() => setTab(t.id)}
@@ -351,29 +363,31 @@ export default function TacticsPage() {
       </div>
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-5 pt-5 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(0,320px)]">
-          {/* 스쿼드 열 */}
-          <div
+        <div className="tactics-grid mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-5 pt-5">
+          {/* 스쿼드 레일 (lg: 왼쪽, 스티키 + 내부 스크롤) */}
+          <section
             id="panel-squad"
             role="tabpanel"
             aria-labelledby="tab-squad"
-            className={`${tab === "squad" ? "block" : "hidden"} lg:block`}
+            className={`ta-squad ${tab === "squad" ? "block" : "hidden"} lg:block`}
           >
-            <SquadList
-              me={me}
-              teamColor={teamColor}
-              selected={selected}
-              onSelectPlayer={onSelectPlayer}
-            />
-            <AttributeGrid player={selectedPlayer} className="mt-4" />
-          </div>
+            <div className="lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:overflow-y-auto lg:pr-1">
+              <SquadList
+                me={me}
+                teamColor={teamColor}
+                selected={selected}
+                onSelectPlayer={onSelectPlayer}
+              />
+              <AttributeGrid player={selectedPlayer} className="mt-4" />
+            </div>
+          </section>
 
-          {/* 피치 열 */}
-          <div
+          {/* 피치 (lg: 가운데 위) */}
+          <section
             id="panel-pitch"
             role="tabpanel"
             aria-labelledby="tab-pitch"
-            className={`${tab === "pitch" ? "block" : "hidden"} lg:block`}
+            className={`ta-pitch ${tab === "pitch" ? "block" : "hidden"} lg:block`}
           >
             <PitchBoard
               me={me}
@@ -382,17 +396,39 @@ export default function TacticsPage() {
               onSelectPlayer={onSelectPlayer}
               onPlaceAtSlot={onPlaceAtSlot}
             />
-          </div>
+          </section>
 
-          {/* 분석 열 */}
-          <div
-            id="panel-analysis"
+          {/* 상대 스카우팅 레일 (lg: 오른쪽, 스티키) */}
+          <section
+            id="panel-scout"
             role="tabpanel"
             aria-labelledby="tab-analysis"
-            className={`${tab === "analysis" ? "block" : "hidden"} lg:block`}
+            className={`ta-scout ${tab === "analysis" ? "block" : "hidden"} lg:block`}
           >
-            <AnalysisPanel />
-          </div>
+            <div className="lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:overflow-y-auto lg:pr-1">
+              <ScoutRail />
+            </div>
+          </section>
+
+          {/* 전술 지시 (lg: 피치 아래 가운데 — 예전엔 이 자리가 통째로 비어 있었다) */}
+          <section
+            id="panel-tactics"
+            role="tabpanel"
+            aria-labelledby="tab-analysis"
+            className={`ta-tactics ${tab === "analysis" ? "block" : "hidden"} lg:block`}
+          >
+            <TacticTabsPanel />
+          </section>
+
+          {/* 근거 · 추천 · 상세 (lg: 하단 가로 행) */}
+          <section
+            id="panel-extras"
+            role="tabpanel"
+            aria-labelledby="tab-analysis"
+            className={`ta-extras ${tab === "analysis" ? "block" : "hidden"} lg:block`}
+          >
+            <ExtrasPanel />
+          </section>
         </div>
 
         <DragOverlay dropAnimation={null}>

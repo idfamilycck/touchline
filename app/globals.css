@@ -302,6 +302,32 @@ body {
   }
 }
 
+/* ────────────────────────────────────────────────────────────
+   작전실(/tactics) 데스크톱 레이아웃 — 넓은 화면을 실제로 채운다.
+   모바일(<lg)은 탭 전환(스쿼드/피치/분석)이라 이 그리드가 꺼져 있고 세로로 쌓인다.
+   lg 이상에서만 areas 배치가 켜져서:
+     · 왼쪽 레일 = 스쿼드(스티키, 내부 스크롤)
+     · 가운데 = 피치(위) + 전술 지시(아래) — 예전엔 피치 밑이 통째로 비어 있었다
+     · 오른쪽 레일 = 상대 스카우팅(스티키)
+     · 하단 가로 행 = 근거·추천·상세
+   양쪽 레일은 max-height로 뷰포트에 가두고 내부 스크롤을 줘, 긴 스쿼드 목록이
+   그리드 행 높이를 끝없이 늘려 가운데를 다시 비게 만드는 일을 막는다. */
+@media (min-width: 1024px) {
+  .tactics-grid {
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr) minmax(0, 340px);
+    grid-template-areas:
+      "squad pitch scout"
+      "squad tactics scout"
+      "extras extras extras";
+    align-items: start;
+  }
+  .ta-squad { grid-area: squad; }
+  .ta-pitch { grid-area: pitch; }
+  .ta-scout { grid-area: scout; }
+  .ta-tactics { grid-area: tactics; }
+  .ta-extras { grid-area: extras; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
