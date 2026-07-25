@@ -12,6 +12,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import { wc2026Matches } from "@/lib/wc2026/data";
 import type { Wc2026Match } from "@/lib/wc2026/types";
 import { MatchBrowser } from "@/components/rewrite/MatchBrowser";
@@ -29,6 +30,19 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const matches = wc2026Matches();
+  const reduce = useReducedMotion();
+
+  // 히어로 등장: 아이브로 -> 헤드라인 -> 설명 -> 3단계 순으로 한 번만 올라온다.
+  // 모션의 역할은 위계 전달(먼저 읽을 것부터 도착) — 장식용 루프는 두지 않는다.
+  // prefers-reduced-motion이면 전부 정적으로 즉시 표시된다.
+  const rise = (delay: number) =>
+    reduce
+      ? { initial: false as const }
+      : {
+          initial: { opacity: 0, y: 14 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.55, delay, ease: [0.16, 1, 0.3, 1] as const },
+        };
 
   const matchId = searchParams.get("match") ?? undefined;
   const selectedMatch = matchId ? matches.find((m) => m.id === matchId) : undefined;
@@ -73,21 +87,29 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
             }`}
           >
             <div>
-              <p className="eyebrow text-accent">2026 월드컵 다시 쓰기</p>
-              <h1 className="display mt-2 text-balance text-4xl text-ink sm:text-5xl">
+              <motion.p {...rise(0)} className="eyebrow text-accent">
+                2026 월드컵 다시 쓰기
+              </motion.p>
+              <motion.h1
+                {...rise(0.08)}
+                className="display mt-2 text-balance text-4xl text-ink sm:text-5xl"
+              >
                 그 순간,<br />감독이었다면.
-              </h1>
+              </motion.h1>
             </div>
-            <p className="max-w-xl text-pretty text-sm leading-relaxed text-dim sm:text-base lg:pb-1">
+            <motion.p
+              {...rise(0.16)}
+              className="max-w-xl text-pretty text-sm leading-relaxed text-dim sm:text-base lg:pb-1"
+            >
               실제 2026 월드컵 경기에서 승부를 가른 결정적 순간을 골라, 그 시점부터
               직접 전술을 지휘해 결과를 바꿔보세요.
-            </p>
+            </motion.p>
           </div>
 
           {/* 이렇게 진행돼요(3단계) + 검증 근거 — 첫 화면 이해도. */}
-          <div className="mt-6">
+          <motion.div {...rise(0.24)} className="mt-6">
             <HowItWorks />
-          </div>
+          </motion.div>
         </div>
       </section>
 
