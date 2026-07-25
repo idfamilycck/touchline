@@ -138,9 +138,13 @@ describe(
       expect(avgGoals).toBeLessThanOrEqual(3.6);
     });
 
-    it("한 경기 5골차 이상 빈도 < 4%", () => {
+    it("한 경기 5골차 이상 빈도 < 6%", () => {
+      // eloratings.net/2026 실측 ELO는 예전 압축값(1480~2100)보다 스프레드가 넓다
+      // (1411~2259). 그래서 최상위 대 최하위(예: ESP 2259 vs QAT 1411, 848차) 같은
+      // 극단 미스매치가 늘어 대량 실점 빈도가 소폭 오른다 — 실제 대회도 GER 7-1,
+      // CAN 6-0 등 blowout이 존재한다. 폭주만 잡도록 상한을 6%로 둔다(실측 ~5.4%).
       const blowouts = results.filter((r) => Math.abs(r.scoreMe - r.scoreOpp) >= 5).length;
-      expect(blowouts / results.length).toBeLessThan(0.04);
+      expect(blowouts / results.length).toBeLessThan(0.06);
     });
 
     it("무승부 비율 15%~35%", () => {
