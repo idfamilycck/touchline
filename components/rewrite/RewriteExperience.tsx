@@ -18,6 +18,7 @@ import type { Wc2026Match } from "@/lib/wc2026/types";
 import { MatchBrowser } from "@/components/rewrite/MatchBrowser";
 import { MatchDetail } from "@/components/rewrite/MatchDetail";
 import { HowItWorks } from "@/components/rewrite/HowItWorks";
+import { HighlightGallery } from "@/components/rewrite/HighlightGallery";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 
 interface RewriteExperienceProps {
@@ -111,6 +112,13 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
             <HowItWorks />
           </motion.div>
         </div>
+      </section>
+
+      {/* ── 명장면(바로 시작) ──────────────────────────────
+          104경기 목록보다 먼저 놓는다: 처음 온 사람이 고르는 부담 없이 가장 극적인
+          순간으로 곧장 들어갈 수 있어야 한다. 목록은 그다음 선택지다. */}
+      <section aria-label="명장면" className="mx-auto w-full max-w-6xl px-5 pt-9">
+        <HighlightGallery />
       </section>
 
       {/* ── 마스터-디테일 ─────────────────────────────────
