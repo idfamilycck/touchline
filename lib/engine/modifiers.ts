@@ -226,8 +226,87 @@ export function buildCtx(
   };
 }
 
+// ── 임계값 절벽 제거 ────────────────────────────────────────────────────────
+//
+// 문제: 규칙 조건이 전부 이진 임계값이었다. oppAttPaceAvg가 79.9면 보정 0, 80.1이면
+// 수비 −8%. 능력치 0.2 차이로 승률이 계단처럼 점프했고, 유저 입장에선 "선수 한 명
+// 바꿨는데 승률이 뚝 떨어짐"이 설명되지 않았다.
+//
+// 해결: 임계값을 [lo, hi] 램프로 바꿔 강도 t(0~1)를 뽑고, 효과를 t에 비례시킨다.
+// 카드(근거 문구)는 t가 CARD_MIN_INTENSITY를 넘을 때만 노출해 "거의 0인 보정"이
+// 화면을 도배하지 않게 한다. 원래 임계값은 대체로 램프 구간의 중앙에 오도록 잡아,
+// 임계값을 확실히 넘는 상황의 효과 크기는 종전과 같게 유지했다.
+//
+// 램프를 적용하지 않은 조건도 있다. venue의 고도·기온은 16개 경기장에 고정된 값이라
+// 유저가 연속적으로 움직일 수 없고(경기장 선택은 이산 선택), h2h의 승수는 정수 표본
+// 이라 램프가 오히려 의미를 흐린다. 이 둘은 의도적으로 이진 조건을 유지한다.
+function ramp(value: number, lo: number, hi: number): number {
+  if (hi <= lo) return value >= hi ? 1 : 0;
+  return Math.max(0, Math.min(1, (value - lo) / (hi - lo)));
+}
+
+/** 램프 강도가 이 값 미만이면 근거 카드를 띄우지 않는다(효과는 어차피 미미하다). */
+const CARD_MIN_INTENSITY = 0.15;
+
+/** 보정치를 사람이 읽는 퍼센트 문구로. 램프 때문에 값이 매번 다르므로 하드코딩할 수 없다. */
+function pctKo(delta: number): string {
+  const sign = delta >= 0 ? "+" : "−";
+  return `${sign}${Math.round(Math.abs(delta) * 100)}%`;
+}
+
+// 상대 공격진 스피드 램프: 74~86. 원래 임계값 80이 중앙에 온다.
+const PACE_RAMP: [number, number] = [74, 86];
+// 상대 공격진 개인기 램프: 72~84. 원래 임계값 78이 중앙.
+const DRIBBLE_RAMP: [number, number] = [72, 84];
+// 우리 공격진 스피드 램프: 72~84. 원래 임계값 78이 중앙(분산 라인 활용 조건).
+const MY_PACE_RAMP: [number, number] = [72, 84];
+
+function paceIntensity(ctx: RuleCtx): number {
+  return ramp(ctx.oppAttPaceAvg, ...PACE_RAMP);
+}
+function oppDribbleIntensity(ctx: RuleCtx): number {
+  return ramp(ctx.oppAttDribblingAvg, ...DRIBBLE_RAMP);
+}
+
+// 오프사이드 트랩은 "이득 ↔ 리스크"가 뒤집히는 규칙이라 두 극단을 강도로 보간한다.
+// t=0(느린 상대)이면 수비 +4%, t=1(빠른 상대)이면 −5%. 중간에서 자연히 0을 지난다.
+const OFFSIDE_GAIN = 0.04;
+const OFFSIDE_RISK = -0.05;
+function offsideTrapEffect(ctx: RuleCtx): number {
+  const t = ramp(ctx.oppAttPaceAvg, 76, 88); // 원래 임계값 82가 중앙
+  return OFFSIDE_GAIN * (1 - t) + OFFSIDE_RISK * t;
+}
 function offsideTrapIsRisk(ctx: RuleCtx): boolean {
-  return ctx.oppAttPaceAvg > 82;
+  return offsideTrapEffect(ctx) < 0;
+}
+
+// 공략하는 쪽 상대 풀백이 그 팀 수비 평균보다 얼마나 약한가를 0~1로.
+// 원래 조건은 "평균의 93% 미만"이라는 절벽이었다. 2%~14% 부족을 램프로 잡아
+// 93%(=7% 부족) 지점이 램프 중앙에 오게 했다.
+function flankWeakness(ctx: RuleCtx): number {
+  const focus = ctx.me.instructions.focus;
+  if (focus === "center") return 0;
+  // focus=left → 내가 공략하는 쪽은 상대의 오른쪽(fb_r), focus=right → 상대의 왼쪽(fb_l)
+  const target = focus === "left" ? ctx.oppFbRContrib : ctx.oppFbLContrib;
+  if (target === null || ctx.oppDefContribAvg <= 0) return 0;
+  const shortfall = 1 - target / ctx.oppDefContribAvg;
+  return ramp(shortfall, 0.02, 0.14);
+}
+
+// 팀 폼(1~10)을 -1~+1 강도로. 원래는 form>=8 또는 <=3에서만 ±3%가 붙어, WC 팀처럼
+// 폼이 ELO에서 파생되는 경우(register.ts의 formFromElo) ELO 1점 차이가 80점 경계를
+// 넘으면 보정이 0에서 ±3%로 튀었다. 중앙 5.5를 기준으로 선형화한다.
+function formIntensity(form: number): number {
+  return Math.max(-1, Math.min(1, (form - 5.5) / 4.5));
+}
+
+// 주장의 강심장(mental) 강도. 원래 임계값 85가 램프 중앙(78~92).
+function captainIntensity(ctx: RuleCtx): number {
+  const captainId = ctx.me.special?.captainId;
+  if (!captainId) return 0;
+  const captain = ctx.meSquad.find((p) => p.id === captainId);
+  if (!captain) return 0;
+  return ramp(captain.mental, 78, 92);
 }
 
 // 세부 지시의 "상시" 기본 효과.
@@ -310,9 +389,10 @@ export const RULE_DEFS: RuleDef[] = [
   ...BASELINE_DEFS,
   {
     id: "high_line_vs_pace",
-    when: (ctx) => ctx.me.instructions.line === 3 && ctx.oppAttPaceAvg > 80,
-    effect: () => ({ da: 0, dd: -0.08 }),
-    textKo: () => "높은 라인, 상대 스피드에 배후가 뚫릴 수 있어요 −8%",
+    when: (ctx) => ctx.me.instructions.line === 3 && paceIntensity(ctx) >= CARD_MIN_INTENSITY,
+    effect: (ctx) => ({ da: 0, dd: -0.08 * paceIntensity(ctx) }),
+    textKo: (ctx) =>
+      `높은 라인, 상대 스피드에 배후가 뚫릴 수 있어요 ${pctKo(-0.08 * paceIntensity(ctx))}`,
     iconKey: () => "warning",
   },
   {
@@ -335,18 +415,11 @@ export const RULE_DEFS: RuleDef[] = [
   },
   {
     id: "focus_vs_weakflank",
-    when: (ctx) => {
-      const focus = ctx.me.instructions.focus;
-      if (focus === "center") return false;
-      // focus=left → 내가 공략하는 쪽은 상대의 오른쪽(fb_r), focus=right → 상대의 왼쪽(fb_l)
-      const target = focus === "left" ? ctx.oppFbRContrib : ctx.oppFbLContrib;
-      if (target === null) return false;
-      return target < ctx.oppDefContribAvg * 0.93;
-    },
-    effect: () => ({ da: 0.07, dd: 0 }),
+    when: (ctx) => flankWeakness(ctx) >= CARD_MIN_INTENSITY,
+    effect: (ctx) => ({ da: 0.07 * flankWeakness(ctx), dd: 0 }),
     textKo: (ctx) => {
       const side = ctx.me.instructions.focus === "left" ? "오른쪽" : "왼쪽";
-      return `상대 ${side} 측면이 약점입니다 +7%`;
+      return `상대 ${side} 측면이 약점입니다 ${pctKo(0.07 * flankWeakness(ctx))}`;
     },
     iconKey: () => "target",
   },
@@ -378,11 +451,11 @@ export const RULE_DEFS: RuleDef[] = [
     // me 시점(자신의 deltaAttack/deltaDefense)으로 평가하므로 상대 공격력을
     // 직접 낮추는 대신 동등한 효과인 "자신의 deltaDefense +0.04"로 구현했다.
     when: (ctx) => ctx.me.instructions.offsideTrap === true,
-    effect: (ctx) => (offsideTrapIsRisk(ctx) ? { da: 0, dd: -0.05 } : { da: 0, dd: 0.04 }),
+    effect: (ctx) => ({ da: 0, dd: offsideTrapEffect(ctx) }),
     textKo: (ctx) =>
       offsideTrapIsRisk(ctx)
-        ? "오프사이드 트랩이 상대의 스피드에 무너질 위험이 있습니다 −5%"
-        : "오프사이드 트랩이 상대 공격을 무력화합니다 −4%",
+        ? `오프사이드 트랩이 상대의 스피드에 무너질 위험이 있습니다 ${pctKo(offsideTrapEffect(ctx))}`
+        : `오프사이드 트랩이 상대 공격을 무력화합니다 ${pctKo(offsideTrapEffect(ctx))}`,
     iconKey: (ctx) => (offsideTrapIsRisk(ctx) ? "warning" : "shield"),
   },
   {
@@ -399,11 +472,18 @@ export const RULE_DEFS: RuleDef[] = [
     // special.manMark(특정 1인 전담 마크 지정)를 보는 별개 메커니즘이라 서로
     // 독립적으로 발동할 수 있다.
     when: (ctx) => ctx.me.instructions.marking === "man",
-    effect: (ctx) => (ctx.oppAttDribblingAvg >= 78 ? { da: 0, dd: -0.03 } : { da: 0, dd: 0.02 }),
-    textKo: (ctx) =>
-      ctx.oppAttDribblingAvg >= 78
-        ? "맨마킹, 상대의 뛰어난 개인기에 뚫릴 위험이 있습니다 −3%"
-        : "맨마킹으로 상대 공격을 밀착 봉쇄합니다 +2%",
+    // 오프사이드 트랩과 같은 "이득 ↔ 리스크" 뒤집힘 구조라 두 극단을 보간한다.
+    effect: (ctx) => {
+      const t = oppDribbleIntensity(ctx);
+      return { da: 0, dd: 0.02 * (1 - t) - 0.03 * t };
+    },
+    textKo: (ctx) => {
+      const t = oppDribbleIntensity(ctx);
+      const dd = 0.02 * (1 - t) - 0.03 * t;
+      return dd < 0
+        ? `맨마킹, 상대의 뛰어난 개인기에 뚫릴 위험이 있습니다 ${pctKo(dd)}`
+        : `맨마킹으로 상대 공격을 밀착 봉쇄합니다 ${pctKo(dd)}`;
+    },
     iconKey: () => "magnet",
   },
   {
@@ -423,13 +503,17 @@ export const RULE_DEFS: RuleDef[] = [
   },
   {
     id: "form",
-    when: (ctx) => ctx.meTeam.form >= 8 || ctx.meTeam.form <= 3,
-    effect: (ctx) => (ctx.meTeam.form >= 8 ? { da: 0.03, dd: 0 } : { da: -0.03, dd: 0 }),
-    textKo: (ctx) =>
-      ctx.meTeam.form >= 8
-        ? "물오른 폼, 경기력이 살아납니다 +3%"
-        : "부진한 폼이 발목을 잡습니다 −3%",
-    iconKey: (ctx) => (ctx.meTeam.form >= 8 ? "flame" : "slump"),
+    // 효과는 연속이지만 카드는 여전히 "확실히 좋다/나쁘다"일 때만 띄운다 — 폼 6짜리
+    // 팀에 "+0.7%" 카드를 붙이면 근거 목록이 무의미하게 길어진다.
+    when: (ctx) => Math.abs(formIntensity(ctx.meTeam.form)) >= 0.5,
+    effect: (ctx) => ({ da: 0.03 * formIntensity(ctx.meTeam.form), dd: 0 }),
+    textKo: (ctx) => {
+      const da = 0.03 * formIntensity(ctx.meTeam.form);
+      return da >= 0
+        ? `물오른 폼, 경기력이 살아납니다 ${pctKo(da)}`
+        : `부진한 폼이 발목을 잡습니다 ${pctKo(da)}`;
+    },
+    iconKey: (ctx) => (ctx.meTeam.form >= 5.5 ? "flame" : "slump"),
   },
   {
     id: "h2h_edge",
@@ -442,14 +526,10 @@ export const RULE_DEFS: RuleDef[] = [
   },
   {
     id: "captain_mental",
-    when: (ctx) => {
-      const captainId = ctx.me.special?.captainId;
-      if (!captainId) return false;
-      const captain = ctx.meSquad.find((p) => p.id === captainId);
-      return !!captain && captain.mental >= 85;
-    },
-    effect: () => ({ da: 0, dd: 0.02 }),
-    textKo: () => "강심장 주장이 수비 라인을 안정시킵니다 +2%",
+    when: (ctx) => captainIntensity(ctx) >= CARD_MIN_INTENSITY,
+    effect: (ctx) => ({ da: 0, dd: 0.02 * captainIntensity(ctx) }),
+    textKo: (ctx) =>
+      `강심장 주장이 수비 라인을 안정시킵니다 ${pctKo(0.02 * captainIntensity(ctx))}`,
     iconKey: () => "brain",
   },
   {
@@ -485,18 +565,25 @@ export const RULE_DEFS: RuleDef[] = [
   },
   {
     id: "spread_line_gaps",
-    when: (ctx) => ctx.me.instructions.lineSpacing === 3 && ctx.oppAttDribblingAvg >= 78,
-    effect: () => ({ da: 0, dd: -0.05 }),
-    textKo: () => "벌어진 라인 사이 공간을 상대의 개인기가 파고듭니다 −5%",
+    when: (ctx) =>
+      ctx.me.instructions.lineSpacing === 3 && oppDribbleIntensity(ctx) >= CARD_MIN_INTENSITY,
+    effect: (ctx) => ({ da: 0, dd: -0.05 * oppDribbleIntensity(ctx) }),
+    textKo: (ctx) =>
+      `벌어진 라인 사이 공간을 상대의 개인기가 파고듭니다 ${pctKo(-0.05 * oppDribbleIntensity(ctx))}`,
     iconKey: () => "warning",
   },
   {
     id: "spread_line_space",
     // 분산 라인의 반대급부: 빠른 공격진을 보유했을 때만 벌어진 공간을 실제로
     // 활용할 수 있다(팀 구성에 좌우되는 상황부 보너스, 압축의 무조건 보너스와 대비).
-    when: (ctx) => ctx.me.instructions.lineSpacing === 3 && ctx.meAttPaceAvg >= 78,
-    effect: () => ({ da: 0.04, dd: 0 }),
-    textKo: () => "벌어진 라인 간격의 공간을 빠른 공격진이 파고듭니다 +4%",
+    when: (ctx) =>
+      ctx.me.instructions.lineSpacing === 3 &&
+      ramp(ctx.meAttPaceAvg, ...MY_PACE_RAMP) >= CARD_MIN_INTENSITY,
+    effect: (ctx) => ({ da: 0.04 * ramp(ctx.meAttPaceAvg, ...MY_PACE_RAMP), dd: 0 }),
+    textKo: (ctx) =>
+      `벌어진 라인 간격의 공간을 빠른 공격진이 파고듭니다 ${pctKo(
+        0.04 * ramp(ctx.meAttPaceAvg, ...MY_PACE_RAMP)
+      )}`,
     iconKey: () => "swap",
   },
   {

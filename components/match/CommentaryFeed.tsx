@@ -32,6 +32,7 @@ const ICON: Record<MatchEventType, Icon> = {
   corner: Flag,
   card: Square,
   red: Prohibit,
+  opp_tactic: ClipboardText,
   crisis: Siren,
   sub: ArrowsClockwise,
   tactic_change: ClipboardText,

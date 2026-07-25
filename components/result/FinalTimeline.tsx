@@ -4,12 +4,22 @@
 // Brain 마커)하고, 그 아래에 마커 범례와 "주요 장면"(골/개입) 라벨 목록을 붙여 복기
 // 맥락을 보강한다.
 
-import { SoccerBall, Brain, type Icon } from "@phosphor-icons/react";
+import { SoccerBall, Brain, ClipboardText, type Icon } from "@phosphor-icons/react";
 import { ProbTimeline } from "@/components/match/ProbTimeline";
 import { teamById } from "@/lib/data/teams";
 import { shootoutWinProb } from "@/lib/engine/shootout";
 import type { MatchState } from "@/lib/engine/match";
 import { interventionTypeKo } from "./cf-labels";
+
+// 상대 대응 id -> 주요 장면 목록에 쓸 짧은 라벨. 중계 문구(opponent-ai.ts의 textKo)는
+// 한 문장짜리 서술이라 타임라인 칩에는 길다.
+const OPP_MOVE_LABEL: Record<string, string> = {
+  opp_all_out: "상대 총공세",
+  opp_chase: "상대 공세 강화",
+  opp_late_gamble: "상대 막판 승부수",
+  opp_manage_lead: "상대 경기 관리",
+  opp_park_bus: "상대 잠그기",
+};
 
 interface FinalTimelineProps {
   match: MatchState;
@@ -35,7 +45,16 @@ export function FinalTimeline({ match }: FinalTimelineProps) {
     mine: true,
   }));
 
-  const moments = [...goals, ...subs].sort((a, b) => a.minute - b.minute);
+  // 상대 감독의 대응도 주요 장면에 넣는다. 우리 개입만 표시하면 "왜 70분 이후로
+  // 갑자기 승률이 떨어졌는가"의 절반(상대가 손을 썼다)이 리포트에서 사라진다.
+  const oppMoves = (match.oppReactions ?? []).map((r) => ({
+    minute: r.minute,
+    label: OPP_MOVE_LABEL[r.id] ?? "상대 전술 변경",
+    Icon: ClipboardText as Icon,
+    mine: false,
+  }));
+
+  const moments = [...goals, ...subs, ...oppMoves].sort((a, b) => a.minute - b.minute);
 
   return (
     <section className="flex flex-col gap-3">
@@ -53,6 +72,9 @@ export function FinalTimeline({ match }: FinalTimelineProps) {
         </span>
         <span className="flex items-center gap-1">
           <Brain size={13} weight="bold" aria-hidden /> 나의 개입
+        </span>
+        <span className="flex items-center gap-1">
+          <ClipboardText size={13} weight="bold" aria-hidden /> 상대 대응
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--color-gain)" }} aria-hidden />

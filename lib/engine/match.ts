@@ -3,6 +3,7 @@ import { computeLambdas } from "./winprob";
 import { ENGINE_CONSTANTS } from "./constants";
 import { playerContribution, type LineStrengths } from "./strength";
 import { possessionShare } from "./possession";
+import { nextOpponentReaction } from "./opponent-ai";
 import { poissonPmf } from "./poisson";
 import { playersOf } from "@/lib/data/players";
 import { FORMATIONS } from "@/lib/data/formations";
@@ -28,6 +29,7 @@ export type MatchEventType =
   | "corner"
   | "card"
   | "red"
+  | "opp_tactic"
   | "crisis"
   | "sub"
   | "tactic_change"
@@ -88,6 +90,10 @@ export interface MatchState {
   // "다음 파울에 퇴장당할 수 있는 선수"이기도 하다. 경고 자체도 페널티가 있다:
   // 조심스러운 태클로 수비 기여가 떨어진다(recomputeLambdas의 BOOKED_LAMBDA_PENALTY).
   booked: { me: string[]; opp: string[] };
+  // 상대 감독이 이미 실행한 대응 id + 시각. 같은 대응이 매 분 재발동하지 않도록
+  // 하는 중복 방지 키이자, 결과 화면에서 "상대는 언제 무엇을 바꿨나"를 재구성하는
+  // 근거다(lib/engine/opponent-ai.ts).
+  oppReactions: Array<{ id: string; minute: number }>;
   // --- Task 9 확장 필드 (브리프 명세 외, 추가적 변경) ---
   // me/opp는 개입(교체·전술 변경) 적용 후의 "현재" 라인업/전술이라 카운터팩추얼
   // (lib/engine/counterfactual.ts)이 "개입이 없었다면?"을 재현하려는 baseline
@@ -458,6 +464,7 @@ export function initMatch(me: SideSetup, opp: SideSetup, venueId: string, seed: 
     possMinutes: 0,
     injuryTime: 0,
     booked: { me: [], opp: [] },
+    oppReactions: [],
     initialMe: me,
     initialOpp: opp,
   };
@@ -504,11 +511,37 @@ export function simulateMinute(state: MatchState): MatchState {
     lines = rec.lines;
   }
 
-  const staminaFlagsMe = computeStaminaFlags(state.me.instructions, venue);
-  const staminaFlagsOpp = computeStaminaFlags(state.opp.instructions, venue);
+  // ---- 상대 감독의 대응 -----------------------------------------------------
+  // 이번 분의 찬스 판정보다 먼저 적용한다 — 상대가 총공세로 나온 그 분부터 우리
+  // 역습 규칙(counter_style 등)과 상대 λ가 함께 움직여야 인과가 맞다. RNG를 쓰지
+  // 않으므로 같은 시드의 스트림은 그대로다.
+  const oppReactions = [...(state.oppReactions ?? [])];
+  const reaction = nextOpponentReaction({
+    minute: newMinute,
+    oppLead: state.scoreOpp - state.scoreMe,
+    instructions: oppSide.instructions,
+    applied: oppReactions.map((r) => r.id),
+  });
+  if (reaction) {
+    oppSide = { ...oppSide, instructions: reaction.instructions };
+    oppReactions.push({ id: reaction.id, minute: newMinute });
+    additions.push({
+      minute: newMinute,
+      type: "opp_tactic",
+      side: "opp",
+      textKo: reaction.textKo,
+    });
+    const rec = recomputeLambdas({ ...state, me: meSide, opp: oppSide, booked });
+    lambdaMe = rec.lambdaMe;
+    lambdaOpp = rec.lambdaOpp;
+    lines = rec.lines;
+  }
+
+  const staminaFlagsMe = computeStaminaFlags(meSide.instructions, venue);
+  const staminaFlagsOpp = computeStaminaFlags(oppSide.instructions, venue);
 
   function processChance(side: "me" | "opp"): void {
-    const setup = side === "me" ? state.me : state.opp;
+    const setup = sideOf(side);
     const lambda = side === "me" ? lambdaMe : lambdaOpp;
     const p = clamp(
       (lambda / 90) * tempoFactor(setup.instructions.tempo) * ENGINE_CONSTANTS.CHANCE_RATE_SCALE,
@@ -678,8 +711,8 @@ export function simulateMinute(state: MatchState): MatchState {
   const possMeThisMinute = possessionShare(
     lines.me,
     lines.opp,
-    state.me.instructions,
-    state.opp.instructions
+    meSide.instructions,
+    oppSide.instructions
   );
 
   const remainingFraction = Math.max(0, (90 - newMinute) / 90);
@@ -699,6 +732,7 @@ export function simulateMinute(state: MatchState): MatchState {
     me: meSide,
     opp: oppSide,
     booked,
+    oppReactions,
     rngState: rng.state(),
     events: [...state.events, ...additions],
     finished,
