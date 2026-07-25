@@ -25,6 +25,7 @@ import {
 } from "@/lib/store";
 import { playersOf } from "@/lib/data/players";
 import { teamById } from "@/lib/data/teams";
+import { oppTacticProfile } from "@/lib/wc2026/opponent-tactics";
 import { FORMATIONS } from "@/lib/data/formations";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
@@ -66,10 +67,24 @@ const TACTIC_TABS: { id: TacticTab; label: string }[] = [
 /** 상대 스카우팅 + 라인 매치업 (오른쪽 레일). */
 function ScoutRail() {
   const oppTeamId = useAppStore((s) => s.opp?.teamId);
+  const oppFormation = useAppStore((s) => s.opp?.instructions.formation);
   const lines = useLineMatchup();
   const scout = useOppScouting();
   const { lineup, isCurrentMatch } = useOppLineup();
   const oppTeam = useMemo(() => (oppTeamId ? teamById(oppTeamId) : undefined), [oppTeamId]);
+  // 상대 시작 전술(고정) — 이 나라 감독을 지정한 순간 붙는 성향. 포메이션은 실측 우선,
+  // 성향은 국가 정체성/ELO 산정.
+  const startTactics = useMemo(
+    () =>
+      oppTeamId
+        ? {
+            // 포메이션은 실제 대형 우선(다시 쓰기는 실측 선발), 없으면 프로파일 대형.
+            formation: lineup?.shapeKo ?? oppFormation ?? "",
+            styleKo: oppTacticProfile(oppTeamId).styleKo,
+          }
+        : undefined,
+    [oppTeamId, oppFormation, lineup],
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -79,6 +94,7 @@ function ScoutRail() {
         color2={oppTeam?.color2}
         lineup={lineup}
         lineupIsCurrentMatch={isCurrentMatch}
+        startTactics={startTactics}
       />
       <LineMatchup lines={lines} />
     </div>

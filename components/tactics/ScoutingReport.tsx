@@ -27,6 +27,8 @@ interface ScoutingReportProps {
   lineup?: OppLineup;
   /** lineup이 지금 다시 쓰는 그 경기의 것인가(아니면 대회 마지막 경기). */
   lineupIsCurrentMatch?: boolean;
+  /** 상대 시작 전술(고정) — 포메이션(실측 우선) + 성향 한 줄(국가 정체성/ELO 산정). */
+  startTactics?: { formation: string; styleKo: string };
 }
 
 const TONE_STYLE: Record<ScoutTrait["tone"], { chip: string; label: string }> = {
@@ -58,6 +60,7 @@ export function ScoutingReport({
   color2,
   lineup,
   lineupIsCurrentMatch = false,
+  startTactics,
 }: ScoutingReportProps) {
   const [squadOpen, setSquadOpen] = useState(false);
 
@@ -112,6 +115,20 @@ export function ScoutingReport({
           </div>
         )}
       </div>
+
+      {/* 상대 시작 전술(고정): 이 나라 감독을 지정한 순간 붙는 성향. 포메이션은 실측
+          우선, 성향은 국가 축구 정체성/ELO 산정 — 우리가 어디에 맞서는지의 기준점. */}
+      {startTactics && (
+        <div className="flex items-center gap-2.5 rounded-panel border border-line bg-surface-2/40 px-3 py-2">
+          <span className="stat-num shrink-0 rounded-control bg-surface px-2 py-1 text-sm font-black text-ink">
+            {startTactics.formation}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-black uppercase tracking-wide text-dim">상대 시작 전술 · 고정</p>
+            <p className="truncate text-[13px] font-bold text-ink">{startTactics.styleKo}</p>
+          </div>
+        </div>
+      )}
 
       {/* 선수명단 상세: 포메이션 숫자만으로는 "누가 어디에 서는지"를 알 수 없다.
           좁은 분석 열에 피치를 욱여넣는 대신 오버레이로 연다. */}

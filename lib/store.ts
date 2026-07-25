@@ -24,6 +24,7 @@ import type {
 import { registerWc2026 } from "@/lib/wc2026/register";
 import { wc2026MatchById } from "@/lib/wc2026/data";
 import { fromRealState } from "@/lib/engine/rewrite";
+import { oppTacticProfile } from "@/lib/wc2026/opponent-tactics";
 
 // 콜드 리로드(F5) 대응: rewrite 상태(mode:"rewrite", rewriteContext, wc_kor/wc_default를
 // 참조하는 match)는 sessionStorage에 persist되어 새로고침 후에도 살아남지만,
@@ -67,6 +68,32 @@ function buildSideSetup(teamId: string, formation: FormationId): SideSetup {
     roles,
     instructions: { ...DEFAULT_INSTRUCTIONS, formation },
     special: { ...DEFAULT_SPECIAL },
+  };
+}
+
+// 상대(우리가 지정한 감독) 시작 전술을 그 나라의 프로파일로 고정한다 — 실제 대형(진짜)
+// + 국가 축구 정체성 매핑(산정). 유저가 편집하는 우리(me) 쪽과 달리 상대는 여기서
+// 못 박히므로, 매치업이 "밸런스 4-3-3 vs 밸런스 4-3-3"이 아니라 각국의 색으로 붙는다.
+function buildOppSetup(teamId: string): SideSetup {
+  const prof = oppTacticProfile(teamId, oppLineup(teamId)?.shapeKo);
+  const { lineup, roles } = autoPlace(teamId, prof.instructions.formation);
+  return {
+    teamId,
+    lineup,
+    roles,
+    instructions: prof.instructions,
+    special: { ...DEFAULT_SPECIAL },
+  };
+}
+
+// rewrite 모드: fromRealState가 만든 상대(실제 선발·실제 대형)에 성향 축만 얹는다.
+// 대형·라인업은 실측이므로 건드리지 않고, pressing/line/possession 등 축만 프로파일로
+// 고정한다.
+function applyOppProfile(opp: SideSetup): SideSetup {
+  const prof = oppTacticProfile(opp.teamId);
+  return {
+    ...opp,
+    instructions: { ...opp.instructions, ...prof.axes },
   };
 }
 
@@ -154,7 +181,7 @@ export const useAppStore = create<AppState>()(
         set({
           setup: { myTeamId: "wc_kor", oppTeamId: "wc_bra", venueId: "metlife", seed },
           me: buildSideSetup("wc_kor", "4-3-3"),
-          opp: buildSideSetup("wc_bra", "4-3-3"),
+          opp: buildOppSetup("wc_bra"),
           match: undefined,
           shootout: undefined,
           mode: "free",
@@ -169,7 +196,7 @@ export const useAppStore = create<AppState>()(
           // opp 쪽은 유저가 편집하지 않으므로 autoPlace + 기본 지시사항으로 고정한다
           // (브리프의 "opp side gets autoPlace lineup + default instructions" 설계).
           me: buildSideSetup(my, "4-3-3"),
-          opp: buildSideSetup(opp, "4-3-3"),
+          opp: buildOppSetup(opp),
           match: undefined,
           shootout: undefined,
           mode: "free",
@@ -189,6 +216,10 @@ export const useAppStore = create<AppState>()(
         if (!match) return;
         const seed = Date.now() % 1e9;
         const st = fromRealState(match, side, { takeoverMinute: entry.takeoverMinute }, seed);
+        // 상대 시작 전술을 그 나라 프로파일로 고정 — 화면(store.opp)과 라이브 시뮬
+        // (match.opp)이 같은 상대를 보도록 둘 다에 프로파일을 얹는다. lines(선수 전력)는
+        // 전술과 무관하므로 그대로 두고, lambda는 엔진이 주기적으로 재계산한다.
+        const oppProfiled = applyOppProfile(st.opp);
         set({
           mode: "rewrite",
           rewriteContext: {
@@ -199,8 +230,8 @@ export const useAppStore = create<AppState>()(
             endMinute: entry.endMinute,
           },
           me: st.me,
-          opp: st.opp,
-          match: st,
+          opp: oppProfiled,
+          match: { ...st, opp: oppProfiled },
           shootout: undefined,
           setup: {
             myTeamId: st.me.teamId,
@@ -338,7 +369,7 @@ export const useAppStore = create<AppState>()(
         set({
           setup: { ...setup, seed: setup.seed + 1 },
           me: buildSideSetup(setup.myTeamId, "4-3-3"),
-          opp: buildSideSetup(setup.oppTeamId, "4-3-3"),
+          opp: buildOppSetup(setup.oppTeamId),
           match: undefined,
           shootout: undefined,
         });
