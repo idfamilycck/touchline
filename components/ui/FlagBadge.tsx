@@ -1,75 +1,87 @@
-// 실제 국기를 모사하지 않는다. 팀의 color1/color2를 사선으로 조합한 자체 배지 +
-// 3글자 코드 텍스트만 사용한다(라이선스/엠블럼 이슈 회피, 브리프 지침).
+// 실제 국가 국기 배지.
+//
+// 예전에는 팀 color1/color2를 사선으로 조합한 자체 배지에 3글자 코드를 얹었다(국기를
+// 모사하지 않는다는 초기 지침). 실제 국기로 바꾼다 — 국기 도안은 저작권 대상이 아니고,
+// 48개국이 나열되는 화면에서 색 배지는 서로 구분이 안 돼 "어느 나라인지"를 코드 텍스트로
+// 다시 읽어야 했다. 국기는 그 자체로 즉시 식별된다.
+//
+// SVG는 public/flags/ 에 있고 scripts/sync-flags.mjs가 flag-icons에서 필요한 것만
+// 뽑아 넣는다(런타임 의존 없음). <img>로 불러오므로 각 SVG 내부의 id가 서로 충돌하지
+// 않는다 — 인라인으로 넣었다면 48개 국기의 clipPath id가 한 문서에서 부딪힌다.
+//
+// 비율은 국기 원본 그대로 4:3을 쓴다. 정사각형에 object-cover로 채우면 좌우가 잘려
+// 튀르키예 초승달처럼 중앙에서 벗어난 도안이 훼손된다.
 
-import { useId } from "react";
+import { flagSrc } from "@/lib/data/flag-codes";
 
 interface FlagBadgeProps {
   code: string;
+  /** 국기 매핑이 없는 팀의 폴백 배지 색. */
   color1: string;
   color2: string;
+  /** 배지 가로 길이(px). 세로는 4:3 비율로 정해진다. */
   size?: number;
   className?: string;
 }
 
-// hex(#rrggbb) → 상대 휘도. 텍스트 대비색(검정/흰색) 선택에 사용.
-function luminance(hex: string): number {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.slice(0, 2), 16) / 255;
-  const g = parseInt(h.slice(2, 4), 16) / 255;
-  const b = parseInt(h.slice(4, 6), 16) / 255;
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+/** 크기에 비례한 모서리 반경. 작은 배지에 큰 반경을 주면 도안이 뭉개진다. */
+function radiusOf(size: number): number {
+  return Math.max(2, Math.round(size * 0.14));
 }
 
 export function FlagBadge({ code, color1, color2, size = 44, className }: FlagBadgeProps) {
-  // 같은 팀 배지가 한 화면에 두 번 렌더될 때(팀 그리드 + 하단 스코어보드) clipPath id가
-  // 충돌하지 않도록 useId로 인스턴스별 고유 접두사를 만든다.
-  const id = `fb-${code.toLowerCase()}-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
-  // 코드 텍스트는 배지 하단(color1 영역) 위에 올린다 → color1 밝기로 대비색 결정
-  const textColor = luminance(color1) > 0.6 ? "#08160a" : "#f4fff2";
+  const src = flagSrc(code);
+  const height = Math.round((size * 3) / 4);
+  const borderRadius = radiusOf(size);
+
+  // 국기가 없는 팀(가상 팀 등)은 기존 색 배지로 폴백한다. 화면이 비어 보이는 것보다
+  // 낫고, 팀 색은 항상 존재한다.
+  if (!src) {
+    return (
+      <span
+        role="img"
+        aria-label={`${code} 팀 배지`}
+        className={className}
+        style={{
+          display: "inline-block",
+          width: size,
+          height,
+          borderRadius,
+          background: `linear-gradient(160deg, ${color2} 0%, ${color2} 45%, ${color1} 45%, ${color1} 100%)`,
+          boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22)",
+          flexShrink: 0,
+        }}
+      />
+    );
+  }
 
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 44 44"
-      role="img"
-      aria-label={`${code} 팀 배지`}
+    <span
       className={className}
+      style={{
+        display: "inline-block",
+        width: size,
+        height,
+        borderRadius,
+        overflow: "hidden",
+        // 흰색이 들어간 국기(일본·캐나다 등)가 어두운 배경에 녹지 않도록 테두리를 준다.
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22)",
+        flexShrink: 0,
+      }}
     >
-      <defs>
-        <clipPath id={`${id}-clip`}>
-          <rect x="1" y="1" width="42" height="42" rx="10" />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${id}-clip)`}>
-        <rect x="0" y="0" width="44" height="44" fill={color1} />
-        {/* 상단 사선 밴드 = color2 */}
-        <polygon points="0,0 44,0 44,20 0,32" fill={color2} />
-        {/* color1 영역 위 대각선 하이라이트 */}
-        <polygon points="0,32 44,20 44,24 0,36" fill="rgba(0,0,0,0.18)" />
-      </g>
-      <rect
-        x="1"
-        y="1"
-        width="42"
-        height="42"
-        rx="10"
-        fill="none"
-        stroke="rgba(255,255,255,0.22)"
-        strokeWidth="1.5"
+      {/* next/image가 아니라 <img>: 정적 내보내기라 이미지 최적화가 없고, 원본이
+          이미 수 KB SVG라 최적화할 것도 없다. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={`${code} 국기`}
+        width={size}
+        height={height}
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }}
       />
-      <text
-        x="22"
-        y="35"
-        textAnchor="middle"
-        fontSize="12.5"
-        fontWeight="900"
-        letterSpacing="0.5"
-        fill={textColor}
-        style={{ fontFamily: "var(--font-sans)" }}
-      >
-        {code}
-      </text>
-    </svg>
+    </span>
   );
 }
