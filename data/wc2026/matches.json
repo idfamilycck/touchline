@@ -41316,5 +41316,438 @@
         ]
       }
     ]
+  },
+  {
+    "id": "760517",
+    "round": "final",
+    "home": "ESP",
+    "away": "ARG",
+    "scoreHome": 1,
+    "scoreAway": 0,
+    "venueKo": "MetLife Stadium",
+    "kickoffISO": "2026-07-19T19:00Z",
+    "events": [
+      {
+        "minute": 41,
+        "type": "yellow",
+        "teamCode": "ARG",
+        "playerId": "233937",
+        "playerName": "Lisandro Martínez"
+      },
+      {
+        "minute": 44,
+        "type": "sub",
+        "teamCode": "ARG",
+        "playerId": "119289",
+        "playerName": "Nicolás Otamendi",
+        "relatedPlayerId": "233937"
+      },
+      {
+        "minute": 45,
+        "type": "sub",
+        "teamCode": "ARG",
+        "playerId": "153115",
+        "playerName": "Leandro Paredes",
+        "relatedPlayerId": "76017"
+      },
+      {
+        "minute": 52,
+        "type": "yellow",
+        "teamCode": "ARG",
+        "playerId": "153115",
+        "playerName": "Leandro Paredes"
+      },
+      {
+        "minute": 58,
+        "type": "sub",
+        "teamCode": "ARG",
+        "playerId": "164826",
+        "playerName": "Nahuel Molina",
+        "relatedPlayerId": "228262"
+      },
+      {
+        "minute": 62,
+        "type": "sub",
+        "teamCode": "ESP",
+        "playerId": "265869",
+        "playerName": "Ferran Torres",
+        "relatedPlayerId": "229018"
+      },
+      {
+        "minute": 62,
+        "type": "sub",
+        "teamCode": "ESP",
+        "playerId": "250465",
+        "playerName": "Pedri",
+        "relatedPlayerId": "214596"
+      },
+      {
+        "minute": 70,
+        "type": "sub",
+        "teamCode": "ARG",
+        "playerId": "249663",
+        "playerName": "Facundo Medina",
+        "relatedPlayerId": "96970"
+      },
+      {
+        "minute": 70,
+        "type": "sub",
+        "teamCode": "ARG",
+        "playerId": "323838",
+        "playerName": "Giuliano Simeone",
+        "relatedPlayerId": "174466"
+      },
+      {
+        "minute": 75,
+        "type": "sub",
+        "teamCode": "ESP",
+        "playerId": "312146",
+        "playerName": "Nico Williams",
+        "relatedPlayerId": "297373"
+      },
+      {
+        "minute": 75,
+        "type": "sub",
+        "teamCode": "ESP",
+        "playerId": "209581",
+        "playerName": "Mikel Merino",
+        "relatedPlayerId": "227765"
+      },
+      {
+        "minute": 82,
+        "type": "yellow",
+        "teamCode": "ARG",
+        "playerId": "285450",
+        "playerName": "Enzo Fernández"
+      },
+      {
+        "minute": 90,
+        "type": "yellow",
+        "teamCode": "ARG",
+        "playerId": "96970",
+        "playerName": "Cristian Romero"
+      },
+      {
+        "minute": 90,
+        "type": "red",
+        "teamCode": "ARG",
+        "playerId": "285450",
+        "playerName": "Enzo Fernández"
+      },
+      {
+        "minute": 99,
+        "type": "sub",
+        "teamCode": "ESP",
+        "playerId": "287266",
+        "playerName": "Martín Zubimendi",
+        "relatedPlayerId": "231828"
+      },
+      {
+        "minute": 99,
+        "type": "sub",
+        "teamCode": "ESP",
+        "playerId": "128714",
+        "playerName": "Eric García",
+        "relatedPlayerId": "159317"
+      },
+      {
+        "minute": 102,
+        "type": "sub",
+        "teamCode": "ARG",
+        "playerId": "233945",
+        "playerName": "Marcos Senesi",
+        "relatedPlayerId": "277206"
+      },
+      {
+        "minute": 106,
+        "type": "goal",
+        "teamCode": "ESP",
+        "playerId": "265869",
+        "playerName": "Ferran Torres"
+      },
+      {
+        "minute": 111,
+        "type": "yellow",
+        "teamCode": "ARG",
+        "playerId": "249299",
+        "playerName": "Alexis Mac Allister"
+      }
+    ],
+    "lineups": [
+      {
+        "teamCode": "ESP",
+        "starters": [
+          {
+            "playerId": "222375",
+            "name": "Unai Simón",
+            "position": "G"
+          },
+          {
+            "playerId": "159317",
+            "name": "Aymeric Laporte",
+            "position": "CD-L"
+          },
+          {
+            "playerId": "368992",
+            "name": "Pau Cubarsí",
+            "position": "CD-R"
+          },
+          {
+            "playerId": "259910",
+            "name": "Marc Cucurella",
+            "position": "LB"
+          },
+          {
+            "playerId": "268533",
+            "name": "Pedro Porro",
+            "position": "RB"
+          },
+          {
+            "playerId": "227765",
+            "name": "Dani Olmo",
+            "position": "AM"
+          },
+          {
+            "playerId": "214596",
+            "name": "Fabián Ruiz",
+            "position": "LM"
+          },
+          {
+            "playerId": "231828",
+            "name": "Rodri",
+            "position": "RM"
+          },
+          {
+            "playerId": "229018",
+            "name": "Mikel Oyarzabal",
+            "position": "F"
+          },
+          {
+            "playerId": "297373",
+            "name": "Álex Baena",
+            "position": "AM-L"
+          },
+          {
+            "playerId": "362150",
+            "name": "Lamine Yamal",
+            "position": "AM-R"
+          }
+        ],
+        "bench": [
+          {
+            "playerId": "166396",
+            "name": "Alejandro Grimaldo",
+            "position": "SUB"
+          },
+          {
+            "playerId": "287266",
+            "name": "Martín Zubimendi",
+            "position": "SUB"
+          },
+          {
+            "playerId": "312146",
+            "name": "Nico Williams",
+            "position": "SUB"
+          },
+          {
+            "playerId": "214995",
+            "name": "Borja Iglesias",
+            "position": "SUB"
+          },
+          {
+            "playerId": "265869",
+            "name": "Ferran Torres",
+            "position": "SUB"
+          },
+          {
+            "playerId": "397545",
+            "name": "Víctor Muñoz",
+            "position": "SUB"
+          },
+          {
+            "playerId": "250465",
+            "name": "Pedri",
+            "position": "SUB"
+          },
+          {
+            "playerId": "209581",
+            "name": "Mikel Merino",
+            "position": "SUB"
+          },
+          {
+            "playerId": "332613",
+            "name": "Marc Pubill",
+            "position": "SUB"
+          },
+          {
+            "playerId": "323702",
+            "name": "Gavi",
+            "position": "SUB"
+          },
+          {
+            "playerId": "196176",
+            "name": "David Raya",
+            "position": "SUB"
+          },
+          {
+            "playerId": "206474",
+            "name": "Marcos Llorente",
+            "position": "SUB"
+          },
+          {
+            "playerId": "297370",
+            "name": "Yéremy Pino",
+            "position": "SUB"
+          },
+          {
+            "playerId": "297362",
+            "name": "Joan García",
+            "position": "SUB"
+          },
+          {
+            "playerId": "128714",
+            "name": "Eric García",
+            "position": "SUB"
+          }
+        ]
+      },
+      {
+        "teamCode": "ARG",
+        "starters": [
+          {
+            "playerId": "158626",
+            "name": "Emiliano Martínez",
+            "position": "G"
+          },
+          {
+            "playerId": "233937",
+            "name": "Lisandro Martínez",
+            "position": "CD-L"
+          },
+          {
+            "playerId": "96970",
+            "name": "Cristian Romero",
+            "position": "CD-R"
+          },
+          {
+            "playerId": "145190",
+            "name": "Nicolás Tagliafico",
+            "position": "LB"
+          },
+          {
+            "playerId": "228262",
+            "name": "Gonzalo Montiel",
+            "position": "RB"
+          },
+          {
+            "playerId": "249299",
+            "name": "Alexis Mac Allister",
+            "position": "CM-L"
+          },
+          {
+            "playerId": "285450",
+            "name": "Enzo Fernández",
+            "position": "CM-R"
+          },
+          {
+            "playerId": "76017",
+            "name": "Nico González",
+            "position": "LM"
+          },
+          {
+            "playerId": "174466",
+            "name": "Rodrigo De Paul",
+            "position": "RM"
+          },
+          {
+            "playerId": "277206",
+            "name": "Julián Álvarez",
+            "position": "CF-L"
+          },
+          {
+            "playerId": "45843",
+            "name": "Lionel Messi",
+            "position": "CF-R"
+          }
+        ],
+        "bench": [
+          {
+            "playerId": "228393",
+            "name": "Exequiel Palacios",
+            "position": "SUB"
+          },
+          {
+            "playerId": "153115",
+            "name": "Leandro Paredes",
+            "position": "SUB"
+          },
+          {
+            "playerId": "320760",
+            "name": "Valentín Barco",
+            "position": "SUB"
+          },
+          {
+            "playerId": "167192",
+            "name": "Gerónimo Rulli",
+            "position": "SUB"
+          },
+          {
+            "playerId": "119289",
+            "name": "Nicolás Otamendi",
+            "position": "SUB"
+          },
+          {
+            "playerId": "164826",
+            "name": "Nahuel Molina",
+            "position": "SUB"
+          },
+          {
+            "playerId": "207343",
+            "name": "Giovani Lo Celso",
+            "position": "SUB"
+          },
+          {
+            "playerId": "323838",
+            "name": "Giuliano Simeone",
+            "position": "SUB"
+          },
+          {
+            "playerId": "311743",
+            "name": "José Manuel López",
+            "position": "SUB"
+          },
+          {
+            "playerId": "277208",
+            "name": "Thiago Almada",
+            "position": "SUB"
+          },
+          {
+            "playerId": "233945",
+            "name": "Marcos Senesi",
+            "position": "SUB"
+          },
+          {
+            "playerId": "219713",
+            "name": "Lautaro Martínez",
+            "position": "SUB"
+          },
+          {
+            "playerId": "177927",
+            "name": "Juan Musso",
+            "position": "SUB"
+          },
+          {
+            "playerId": "249663",
+            "name": "Facundo Medina",
+            "position": "SUB"
+          },
+          {
+            "playerId": "337970",
+            "name": "Nico Paz",
+            "position": "SUB"
+          }
+        ]
+      }
+    ]
   }
 ]

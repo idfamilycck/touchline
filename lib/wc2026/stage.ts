@@ -16,8 +16,10 @@ export interface StageStyle {
 
 /** finishRound 코드 -> 한글 라벨 + 색 등급. */
 export const STAGE: Record<string, StageStyle> = {
-  // "final"은 데이터가 우승/준우승을 구분하지 못해(같은 elo로 동률 저장) "결승 진출"로 통합한다.
-  final: { labelKo: "결승 진출", tone: "gold" },
+  // 결승전이 데이터에 들어오기 전에는 두 결승 진출팀을 구분할 수 없어 둘 다 "결승 진출"
+  // 이었다. 이제 결승 결과가 있으므로 우승과 준우승을 나눈다.
+  champion: { labelKo: "우승", tone: "gold" },
+  final: { labelKo: "준우승", tone: "gold" },
   third: { labelKo: "4강", tone: "gold-soft" },
   qf: { labelKo: "8강", tone: "neutral" },
   r16: { labelKo: "16강", tone: "neutral" },

@@ -129,9 +129,11 @@ describe("knockoutBracket — 실데이터", () => {
     expect(bracket.third).toHaveLength(1);
   });
 
-  it("결승 데이터가 없어도 throw하지 않고 빈 배열을 반환한다", () => {
-    expect(() => knockoutBracket(wc2026Matches())).not.toThrow();
-    expect(bracket.final).toEqual([]);
+  // 예전에는 결승이 데이터에 없어(수집 시점에 미개최) 빈 배열을 기대하는 테스트가
+  // 여기 있었다. 결승이 들어온 뒤로는 대진표가 우승팀까지 닿는지를 검증한다.
+  it("결승 1경기가 있고 승자(우승팀)가 정해진다", () => {
+    expect(bracket.final).toHaveLength(1);
+    expect(bracket.final[0].winner).toBeDefined();
   });
 
   it("각 라운드는 kickoffISO 오름차순으로 정렬된다", () => {

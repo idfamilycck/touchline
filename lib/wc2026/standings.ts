@@ -120,7 +120,7 @@ function decideWinner(m: Wc2026Match): string | undefined {
 }
 
 // 토너먼트 대진표: r32/r16/qf/sf/third/final을 각각 kickoffISO 오름차순으로 묶는다.
-// 데이터에 없는 라운드(예: 결승이 아직 안 치러짐)는 빈 배열로 채워, 호출부가 매
+// 데이터에 없는 라운드는 빈 배열로 채워, 호출부가 매
 // 라운드 키를 항상 안전하게 인덱싱할 수 있게 한다(throw 없음).
 export function knockoutBracket(matches: Wc2026Match[]): Record<Wc2026Round, BracketMatch[]> {
   const result = {

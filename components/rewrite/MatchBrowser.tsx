@@ -17,7 +17,7 @@ function parseRound(v: string | null): Wc2026Round | undefined {
 }
 
 // 렌더 예산: 카드 그리드에서 조밀한 행 리스트로 바뀌며 한 항목의 DOM 비용이 크게
-// 줄었으므로 초기 노출을 40행으로 올린다(103경기 전부를 한 번에 그리지는 않는다).
+// 줄었으므로 초기 노출을 40행으로 올린다(104경기 전부를 한 번에 그리지는 않는다).
 // 나머지는 "더 보기"로 이어붙이고, 필터가 바뀌면 다시 40행부터 시작한다.
 const PAGE_SIZE = 40;
 
@@ -65,7 +65,7 @@ export function MatchBrowser({
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
-  // 실제 데이터에 존재하는 라운드만 탭으로 노출한다(예: 결승이 아직 데이터에
+  // 실제 데이터에 존재하는 라운드만 탭으로 노출한다(수집 시점에 따라 특정 라운드가
   // 없으면 "결승" 탭은 숨김).
   const availableRounds = useMemo(() => {
     const present = new Set(matches.map((m) => m.round));

@@ -11,7 +11,7 @@ const STEPS: Array<{ n: number; Icon: Icon; title: string; body: string }> = [
     n: 1,
     Icon: ListChecks,
     title: "실제 경기 선택",
-    body: "2026 월드컵 103경기 중 다시 쓰고 싶은 한 경기를 고릅니다.",
+    body: "2026 월드컵 104경기 중 다시 쓰고 싶은 한 경기를 고릅니다.",
   },
   {
     n: 2,

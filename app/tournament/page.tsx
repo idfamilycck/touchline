@@ -1,7 +1,7 @@
 "use client";
 
 // /tournament — 2026 월드컵을 "경기 목록"이 아니라 "대회"로 보여주는 엔트리.
-// 조별리그 순위표(A~L)와 토너먼트 대진표를 실제 103경기 데이터에서 렌더 시점에
+// 조별리그 순위표(A~L)와 토너먼트 대진표를 실제 104경기 데이터에서 렌더 시점에
 // 계산한다(lib/wc2026/standings.ts). 별도 저장 데이터는 없음 — data/wc2026/*.json은
 // 손대지 않는다.
 //
@@ -81,7 +81,7 @@ function TournamentContent() {
               </h1>
             </div>
             <p className="max-w-xl text-pretty text-sm leading-relaxed text-dim sm:text-base lg:pb-1">
-              실제 2026 월드컵 103경기 데이터로 계산한 조별리그 순위와 토너먼트 대진표입니다.
+              실제 2026 월드컵 104경기 데이터로 계산한 조별리그 순위와 토너먼트 대진표입니다.
               경기를 고르면 그 순간부터 직접 다시 지휘할 수 있습니다.
             </p>
           </div>

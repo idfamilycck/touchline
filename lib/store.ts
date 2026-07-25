@@ -8,6 +8,7 @@ import { teamById } from "./data/teams";
 import { venueById } from "./data/venues";
 import { h2hOf } from "./data/h2h";
 import { scoutTeam, type OppScouting } from "@/lib/wc2026/scouting";
+import { oppLineup, type OppLineup } from "@/lib/wc2026/lineup";
 import { applyIntervention, initMatch, simulateMinute } from "./engine/match";
 import type { Intervention, MatchState } from "./engine/match";
 import { simulateShootout } from "./engine/shootout";
@@ -401,6 +402,26 @@ export function useLineMatchup(): { me: LineStrengths; opp: LineStrengths } | un
     if (!me || !opp) return undefined;
     return { me: lineStrengths(me, opp), opp: lineStrengths(opp, me) };
   }, [me, opp]);
+}
+
+/**
+ * 상대의 실제 선발 명단 + 포메이션 배치.
+ *
+ * rewrite 모드면 지금 다시 쓰는 바로 그 경기의 명단을, free 모드면 그 팀이 대회에서
+ * 마지막으로 치른 경기의 명단을 준다(어느 쪽인지는 isCurrentMatch로 구분해 화면에서
+ * 밝힌다 — "이 경기 선발"과 "마지막 경기 선발"은 다른 정보다).
+ */
+export function useOppLineup(): { lineup?: OppLineup; isCurrentMatch: boolean } {
+  const opp = useAppStore((s) => s.opp);
+  const rewriteContext = useAppStore((s) => s.rewriteContext);
+  return useMemo(() => {
+    if (!opp) return { lineup: undefined, isCurrentMatch: false };
+    const matchId = rewriteContext?.matchId;
+    return {
+      lineup: oppLineup(opp.teamId, matchId),
+      isCurrentMatch: Boolean(matchId),
+    };
+  }, [opp, rewriteContext]);
 }
 
 /**

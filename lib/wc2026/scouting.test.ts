@@ -136,7 +136,7 @@ describe("scoutTeam (실제 WC2026 기록 집계)", () => {
     expect(sum).toBeLessThanOrEqual(10);
   });
 
-  it("실제 103경기 전부에서 양 팀 포메이션이 역산된다", () => {
+  it("실제 대회 전 경기에서 양 팀 포메이션이 역산된다", () => {
     for (const m of wc2026Matches()) {
       for (const lineup of m.lineups) {
         const shape = shapeFromStarters(lineup.starters.map((s) => s.position));

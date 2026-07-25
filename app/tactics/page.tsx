@@ -16,7 +16,13 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { useAppStore, useTacticRules, useLineMatchup, useOppScouting } from "@/lib/store";
+import {
+  useAppStore,
+  useTacticRules,
+  useLineMatchup,
+  useOppScouting,
+  useOppLineup,
+} from "@/lib/store";
 import { playersOf } from "@/lib/data/players";
 import { teamById } from "@/lib/data/teams";
 import { FORMATIONS } from "@/lib/data/formations";
@@ -59,6 +65,7 @@ function AnalysisPanel() {
   const rules = useTacticRules();
   const lines = useLineMatchup();
   const scout = useOppScouting();
+  const { lineup, isCurrentMatch } = useOppLineup();
   const [tab, setTab] = useState<TacticTab>("team");
 
   const oppTeam = useMemo(() => (oppTeamId ? teamById(oppTeamId) : undefined), [oppTeamId]);
@@ -66,7 +73,13 @@ function AnalysisPanel() {
   return (
     <div className="flex flex-col gap-4">
       {/* 1층: 상대를 먼저 본다 */}
-      <ScoutingReport scout={scout} color1={oppTeam?.color1} color2={oppTeam?.color2} />
+      <ScoutingReport
+        scout={scout}
+        color1={oppTeam?.color1}
+        color2={oppTeam?.color2}
+        lineup={lineup}
+        lineupIsCurrentMatch={isCurrentMatch}
+      />
       <LineMatchup lines={lines} />
 
       {/* 전술 패널 탭 */}

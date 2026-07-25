@@ -15,7 +15,7 @@ export const ENGINE_CONSTANTS = {
   LAMBDA_MAX: 4.0,
 
   // eloMult(myElo, oppElo) = 1 + clamp(myElo-oppElo, -ELO_DIFF_CAP, ELO_DIFF_CAP) / ELO_DIFF_CAP × ELO_MULT_COEF
-  // 0.15 -> 0.40: 실제 103경기 재현율을 최대화하는 값. 격자 스윕(base×elasticity×coef)에서
+  // 0.15 -> 0.40: 실제 대회 전 경기 재현율을 최대화하는 값. 격자 스윕(base×elasticity×coef)에서
   // 0.40이 승자 재현 정점(승부 갈린 81.3%)이고 평균 득점이 실제(2.91)와 정확히 일치한다.
   // 0.50까지 올려도 승자 재현은 그대로라 0.40이 상한. elasticity(1.6)·base(1.35)는 이미
   // 최적이라 그대로 둔다. balance.test.ts(과열 승률/블로아웃/무승부)는 0.40에서도 통과.

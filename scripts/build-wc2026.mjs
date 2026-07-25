@@ -64,15 +64,15 @@ const EVENT_TYPE_MAP = {
   "var---red-card-upgrade": "red",
 };
 
-// --- Team ELO derivation (Task A4) ----------------------------------------
+// --- Team finish round ----------------------------------------------------
 // A team's "finish round" is the deepest round it is seen playing in across
-// matches.json. Rounds ladder from group stage (weakest) to final
-// (strongest); ELO is linearly interpolated across that ladder so a deeper
-// run always yields a higher rating. The Final itself is never present in
-// the raw data (it hasn't been played yet at data-collection time), so the
-// two semifinal WINNERS are promoted to the "final" tier by hand — both
-// finalists sit at the top since the champion isn't known yet.
-const ROUND_ORDER = ["group", "r32", "r16", "qf", "sf", "third", "final"];
+// matches.json, laddering from group stage (weakest) upward.
+//
+// "champion"은 라운드가 아니라 결과다. 결승전이 데이터에 들어오기 전까지는 두
+// 결승 진출팀을 구분할 방법이 없어 둘 다 "final"에 두고 준우승/우승을 뭉뚱그렸는데,
+// 결승 결과가 수집된 뒤로는 승자를 champion으로 올린다. 결승이 아직 없는 데이터로
+// 다시 돌려도 동작하도록(승자 없음 -> 승격 없음) 방어적으로 짠다.
+const ROUND_ORDER = ["group", "r32", "r16", "qf", "sf", "third", "final", "champion"];
 
 // 팀 ELO는 "실제 국제 축구 랭킹(경기 전, 2026 결과와 무관)"에서 온다.
 // 과거에는 finishRound(대회에서 얼마나 깊이 갔는가)로 ELO를 역산했는데, 그러면
@@ -131,8 +131,9 @@ function buildTeams(matches) {
     }
   }
 
-  // Promote the two semifinal winners to the "final" tier: the Final hasn't
-  // been played, but both finalists have already reached it.
+  // 결승 진출: 4강 승자 둘은 결승을 치렀으므로 "final" 등급으로 올린다.
+  // (결승 경기 자체가 데이터에 있으면 위 루프에서 이미 올라가지만, 결승이 아직
+  //  수집되지 않은 데이터로 돌릴 때를 위해 남겨둔다.)
   const finalIdx = ROUND_ORDER.indexOf("final");
   for (const m of matches) {
     if (m.round !== "sf") continue;
@@ -140,6 +141,16 @@ function buildTeams(matches) {
     if (!winner) continue;
     const prev = bestRoundIdx.get(winner) ?? -1;
     if (finalIdx > prev) bestRoundIdx.set(winner, finalIdx);
+  }
+
+  // 우승: 결승 승자만 champion. 결승이 데이터에 없으면 아무도 승격되지 않아
+  // 예전과 동일하게 두 결승 진출팀이 "final"로 남는다.
+  const championIdx = ROUND_ORDER.indexOf("champion");
+  for (const m of matches) {
+    if (m.round !== "final") continue;
+    const winner = matchWinner(m);
+    if (!winner) continue;
+    bestRoundIdx.set(winner, championIdx);
   }
 
   const teams = [...bestRoundIdx.entries()]

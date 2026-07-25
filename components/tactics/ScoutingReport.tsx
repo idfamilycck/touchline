@@ -10,15 +10,23 @@
 //   · 그래서 무엇을 조심하고 무엇을 파고들 것인가(근거를 인용한 대응책)
 // 승률은 경기가 시작된 뒤 ProbTimeline에서만 등장한다.
 
-import { Binoculars, Warning, Target, ArrowDown, ArrowUp, Minus } from "@phosphor-icons/react";
+import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { Binoculars, Warning, Target, ArrowDown, ArrowUp, Minus, Users } from "@phosphor-icons/react";
 import type { OppScouting, CounterTip, ScoutTrait } from "@/lib/wc2026/scouting";
+import type { OppLineup } from "@/lib/wc2026/lineup";
 import { FlagBadge } from "@/components/ui/FlagBadge";
+import { OppSquadSheet } from "@/components/tactics/OppSquadSheet";
 
 interface ScoutingReportProps {
   scout?: OppScouting;
   /** 상대 배지 색(팀 데이터에서). 없으면 회색. */
   color1?: string;
   color2?: string;
+  /** 상대의 실제 선발 명단. 있으면 "선수명단 보기"가 열린다. */
+  lineup?: OppLineup;
+  /** lineup이 지금 다시 쓰는 그 경기의 것인가(아니면 대회 마지막 경기). */
+  lineupIsCurrentMatch?: boolean;
 }
 
 const TONE_STYLE: Record<ScoutTrait["tone"], { chip: string; label: string }> = {
@@ -44,7 +52,15 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
   );
 }
 
-export function ScoutingReport({ scout, color1, color2 }: ScoutingReportProps) {
+export function ScoutingReport({
+  scout,
+  color1,
+  color2,
+  lineup,
+  lineupIsCurrentMatch = false,
+}: ScoutingReportProps) {
+  const [squadOpen, setSquadOpen] = useState(false);
+
   if (!scout) {
     return (
       <div className="panel rounded-panel p-5">
@@ -87,13 +103,28 @@ export function ScoutingReport({ scout, color1, color2 }: ScoutingReportProps) {
             </div>
           </div>
         </div>
-        {scout.shapeKo && (
+        {(lineup?.shapeKo ?? scout.shapeKo) && (
           <div className="shrink-0 rounded-control border border-line bg-surface-2/60 px-2.5 py-1.5 text-center">
             <p className="text-[12px] leading-tight text-dim">실제 선발</p>
-            <p className="stat-num text-sm font-black leading-tight text-ink">{scout.shapeKo}</p>
+            <p className="stat-num text-sm font-black leading-tight text-ink">
+              {lineup?.shapeKo ?? scout.shapeKo}
+            </p>
           </div>
         )}
       </div>
+
+      {/* 선수명단 상세: 포메이션 숫자만으로는 "누가 어디에 서는지"를 알 수 없다.
+          좁은 분석 열에 피치를 욱여넣는 대신 오버레이로 연다. */}
+      {lineup && (
+        <button
+          type="button"
+          onClick={() => setSquadOpen(true)}
+          className="flex w-full items-center justify-center gap-1.5 rounded-control border border-accent/40 bg-accent/10 py-2 text-[13px] font-bold text-accent transition-colors hover:bg-accent/20"
+        >
+          <Users size={14} weight="bold" aria-hidden />
+          실제 선수명단 · 포메이션 보기
+        </button>
+      )}
 
       {/* 대회 실적(실측) */}
       <div>
@@ -202,6 +233,19 @@ export function ScoutingReport({ scout, color1, color2 }: ScoutingReportProps) {
         위 수치는 이 팀이 2026 월드컵에서 실제로 기록한 값입니다. 승부 예측이 아니라,
         전술을 정할 근거예요.
       </p>
+
+      <AnimatePresence>
+        {squadOpen && lineup && (
+          <OppSquadSheet
+            lineup={lineup}
+            nameKo={scout.nameKo}
+            color1={color1}
+            color2={color2}
+            isCurrentMatch={lineupIsCurrentMatch}
+            onClose={() => setSquadOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
