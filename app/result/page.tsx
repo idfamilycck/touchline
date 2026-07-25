@@ -23,6 +23,7 @@ import { buildTacticsReview } from "@/components/result/tactics-review";
 import { TacticsReviewPanel } from "@/components/result/TacticsReviewPanel";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { RealVsParallel } from "@/components/rewrite/RealVsParallel";
+import { BranchingHistory } from "@/components/rewrite/BranchingHistory";
 import { buildCompare, resultRank } from "@/components/rewrite/compare";
 import { buildGoalTimeline } from "@/components/rewrite/goal-timeline";
 import { wc2026MatchById } from "@/lib/wc2026/data";
@@ -102,6 +103,33 @@ export default function ResultPage() {
       rewriteContext.endMinute ?? 90
     );
   }, [mode, rewriteContext, match]);
+
+  // 분기하는 역사: 인수 시점에서 실제 역사선과 평행세계선이 득실차 계단으로 갈라진다.
+  // realGoals = 실제 인수 이후 골(분), myGoals = 내 시뮬 인수 이후 골(match.events).
+  const branching = useMemo(() => {
+    if (!rewriteCompare || !goalTimeline || !match) return null;
+    const takeover = goalTimeline.fromMinute;
+    const end = goalTimeline.toMinute;
+    const realGoals = [
+      ...goalTimeline.realScored.map((g) => ({ minute: g.minute, side: "me" as const })),
+      ...goalTimeline.realConceded.map((g) => ({ minute: g.minute, side: "opp" as const })),
+    ];
+    const myGoals = match.events
+      .filter((e) => e.type === "goal" && e.minute > takeover && e.minute <= end)
+      .map((e) => ({ minute: e.minute, side: e.side }));
+    return {
+      takeover,
+      end,
+      startMe: rewriteCompare.realFor - goalTimeline.realScored.length,
+      startOpp: rewriteCompare.realAgainst - goalTimeline.realConceded.length,
+      realGoals,
+      myGoals,
+      realFor: rewriteCompare.realFor,
+      realAgainst: rewriteCompare.realAgainst,
+      myFor: rewriteCompare.myFor,
+      myAgainst: rewriteCompare.myAgainst,
+    };
+  }, [rewriteCompare, goalTimeline, match]);
 
   // 전술 평가: 최종(개입 반영) 세팅 기준 발동 규칙 + 경기 이벤트로 코멘트 생성.
   const review = useMemo(() => {
@@ -226,6 +254,9 @@ export default function ResultPage() {
       ) : (
         <CfCompare cf={cf} match={match} />
       )}
+
+      {/* 분기하는 역사 (rewrite 모드 전용) */}
+      {branching && <BranchingHistory {...branching} meCode={me?.code ?? "ME"} oppCode={opp?.code ?? "OPP"} />}
 
       {/* 승률 타임라인 */}
       <FinalTimeline match={match} />
