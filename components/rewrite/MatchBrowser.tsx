@@ -161,14 +161,18 @@ export function MatchBrowser({
       {/* 경기 행 리스트 — 카드 그리드가 아니라 헤어라인으로만 나뉘는 조밀한 행.
           한 줄에 라운드 · 홈 국기/팀명 · 스코어 · 원정 팀명/국기 · 이벤트 수가 들어간다.
           구분선은 .data-row(border-bottom 하나)만 쓴다 — 행마다 위아래 선을 겹치지 않게. */}
-      <div className="overflow-hidden rounded-panel border border-line bg-surface/60">
+      <div className="flex flex-col overflow-hidden rounded-panel border border-line bg-surface/60 lg:max-h-[calc(100vh-13rem)]">
         {/* 열 이름 — FM식 데이터 표의 머리. 좁은 폭에서는 스코어 열만 남긴다. */}
-        <div className="data-head flex items-center gap-2 px-3 py-1.5 sm:gap-3">
+        <div className="data-head flex shrink-0 items-center gap-2 px-3 py-1.5 sm:gap-3">
           <span className="w-14 shrink-0 sm:w-20">라운드</span>
           <span className="min-w-0 flex-1 text-center">경기</span>
           <span className="hidden w-16 shrink-0 text-right sm:block">이벤트</span>
         </div>
 
+        {/* lg에서는 이 목록만 내부 스크롤 → 페이지가 모바일처럼 길게 흐르지 않고,
+            우측 상세는 sticky로 함께 보인다. 모바일은 max-h가 없어 자연히 늘어나며
+            선택 행 아래 인라인 상세가 그대로 펼쳐진다. */}
+        <div className="min-h-0 overflow-y-auto lg:flex-1">
         <ul>
           {shown.map((m) => {
             const home = teamDisplay(m.home);
@@ -234,21 +238,24 @@ export function MatchBrowser({
             );
           })}
         </ul>
+
+        {visible.length > visibleCount && (
+          <div className="flex justify-center p-3">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="flex min-h-[44px] items-center rounded-full border border-line bg-surface-2/60 px-6 text-xs font-bold text-ink transition-colors hover:border-white/25"
+            >
+              더 보기 · {visible.length - visibleCount}경기 남음
+            </button>
+          </div>
+        )}
+
+        {visible.length === 0 && (
+          <p className="py-8 text-center text-sm text-dim">이 라운드에는 경기가 없습니다.</p>
+        )}
+        </div>
       </div>
-
-      {visible.length > visibleCount && (
-        <button
-          type="button"
-          onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-          className="mx-auto min-h-[44px] rounded-full border border-line bg-surface-2/60 px-6 text-xs font-bold text-ink transition-colors hover:border-white/25"
-        >
-          더 보기 · {visible.length - visibleCount}경기 남음
-        </button>
-      )}
-
-      {visible.length === 0 && (
-        <p className="py-8 text-center text-sm text-dim">이 라운드에는 경기가 없습니다.</p>
-      )}
     </div>
   );
 }
