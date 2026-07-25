@@ -12,6 +12,7 @@ import {
   Flag,
   Square,
   Siren,
+  Prohibit,
   ArrowsClockwise,
   ClipboardText,
   Timer,
@@ -30,6 +31,7 @@ const ICON: Record<MatchEventType, Icon> = {
   save: HandPalm,
   corner: Flag,
   card: Square,
+  red: Prohibit,
   crisis: Siren,
   sub: ArrowsClockwise,
   tactic_change: ClipboardText,
@@ -61,7 +63,9 @@ export function CommentaryFeed({ events }: CommentaryFeedProps) {
       >
         {rows.map((e, i) => {
           const isGoal = e.type === "goal";
-          const isCrisis = e.type === "crisis";
+          // 퇴장은 위기와 동급으로 강조한다 — 수적 열세는 남은 시간 전체의 승률을
+          // 바꾸는 사건이라 중계에서 흘려보내면 안 된다.
+          const isCrisis = e.type === "crisis" || e.type === "red";
           const isOurs = e.side === "me";
           const EventIcon = ICON[e.type];
           return (

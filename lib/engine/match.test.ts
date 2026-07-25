@@ -1,6 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { makeSetup } from "./__testutils__";
-import { initMatch, simulateMinute, applyIntervention, runFullMatch, type MatchState } from "./match";
+import {
+  initMatch,
+  simulateMinute,
+  applyIntervention,
+  runFullMatch,
+  winProbGivenScore,
+  advanceProb,
+  type MatchState,
+} from "./match";
 import { playersOf } from "@/lib/data/players";
 
 function runMinutes(state: MatchState, n: number): MatchState {
@@ -187,5 +195,98 @@ describe("match simulation", () => {
     const azteca = runMinutes(initMatch(kor, bra, "azteca", 99), 80);
     const metlife = runMinutes(initMatch(kor, bra, "metlife", 99), 80);
     expect(avgStaminaOnPitch(azteca)).toBeLessThan(avgStaminaOnPitch(metlife));
+  });
+});
+
+describe("winProbGivenScore / advanceProb", () => {
+  it("승·무·패 합이 1이다", () => {
+    for (const [sm, so, lm, lo] of [
+      [0, 0, 1.4, 1.2],
+      [2, 0, 0.5, 0.9],
+      [0, 3, 1.1, 0.2],
+    ] as const) {
+      const p = winProbGivenScore(sm, so, lm, lo);
+      expect(p.win + p.draw + p.loss).toBeCloseTo(1, 6);
+    }
+  });
+
+  it("잔여 λ가 0이면 현재 스코어가 그대로 확정된다", () => {
+    expect(winProbGivenScore(1, 0, 0, 0)).toEqual({ win: 1, draw: 0, loss: 0 });
+    expect(winProbGivenScore(0, 0, 0, 0)).toEqual({ win: 0, draw: 1, loss: 0 });
+    expect(winProbGivenScore(0, 2, 0, 0)).toEqual({ win: 0, draw: 0, loss: 1 });
+  });
+
+  it("무승부 확률이 승부차기 승률만큼 진출 확률에 더해진다", () => {
+    const p = winProbGivenScore(0, 0, 1.0, 1.0);
+    expect(p.draw).toBeGreaterThan(0);
+    // 대칭 매치업 + 승부차기 50% → 진출 확률은 정확히 50%
+    expect(advanceProb(p, 0.5)).toBeCloseTo(0.5, 6);
+    // 승부차기에 강하면 진출 확률이 순수 승률보다 높다
+    expect(advanceProb(p, 0.8)).toBeGreaterThan(p.win);
+    // 승부차기 승률 0이면 진출 확률 = 순수 승률
+    expect(advanceProb(p, 0)).toBeCloseTo(p.win, 6);
+  });
+
+  it("0:0 팽팽한 경기는 열세 경기보다 무승부 확률이 높다", () => {
+    const even = winProbGivenScore(0, 0, 1.2, 1.2);
+    const behind = winProbGivenScore(0, 2, 1.2, 1.2);
+    expect(even.draw).toBeGreaterThan(behind.draw);
+  });
+});
+
+describe("경고·퇴장", () => {
+  it("경고를 받은 선수는 booked에 쌓이고, 같은 선수가 다시 지목되면 퇴장한다", () => {
+    // 압박 최대(카드 확률 최대)로 여러 시드를 돌려 실제로 퇴장이 나오는 경기를 찾는다.
+    const me = makeSetup("kor", "4-3-3", { pressing: 3 });
+    const opp = makeSetup("bra", "4-3-3", { pressing: 3 });
+
+    let found: MatchState | undefined;
+    for (let seed = 1; seed <= 400 && !found; seed++) {
+      const s = runFullMatch(me, opp, "metlife", seed);
+      if (s.events.some((e) => e.type === "red")) found = s;
+    }
+    expect(found, "400개 시드 안에 퇴장 경기가 하나도 없다면 카드 확률 설정을 확인해야 한다").toBeDefined();
+
+    const red = found!.events.find((e) => e.type === "red")!;
+    // 퇴장 선수는 그 전에 경고를 받은 적이 있어야 한다(2차 경고 퇴장).
+    const earlierCard = found!.events.find(
+      (e) => e.type === "card" && e.playerId === red.playerId && e.minute <= red.minute
+    );
+    expect(earlierCard).toBeDefined();
+
+    // 퇴장 후 그 선수는 라인업에서 빠져 10인 체제가 된다.
+    const lineup = red.side === "me" ? found!.me.lineup : found!.opp.lineup;
+    expect(Object.values(lineup)).not.toContain(red.playerId);
+    expect(Object.keys(lineup).length).toBeLessThan(11);
+  });
+
+  it("퇴장한 팀의 λ는 내려가고 상대 λ는 올라간다 (같은 경기 내 전후 비교)", () => {
+    const me = makeSetup("kor", "4-3-3", { pressing: 3 });
+    const opp = makeSetup("bra", "4-3-3", { pressing: 3 });
+
+    for (let seed = 1; seed <= 400; seed++) {
+      let state = initMatch(me, opp, "metlife", seed);
+      let before: { me: number; opp: number } | undefined;
+      while (!state.finished) {
+        const prev = { me: state.lambdaMe, opp: state.lambdaOpp };
+        state = simulateMinute(state);
+        const red = state.events.filter((e) => e.minute === state.minute && e.type === "red")[0];
+        if (red && red.side === "opp") {
+          before = prev;
+          expect(state.lambdaOpp).toBeLessThan(before.opp);
+          expect(state.lambdaMe).toBeGreaterThan(before.me);
+          return;
+        }
+      }
+    }
+    throw new Error("400개 시드 안에 상대 퇴장이 발생하지 않았다");
+  });
+
+  it("경고 누적은 재현 가능하다 (같은 시드 → 같은 booked)", () => {
+    const me = makeSetup("kor", "4-3-3", { pressing: 3 });
+    const opp = makeSetup("bra", "4-3-3", { pressing: 3 });
+    const a = runFullMatch(me, opp, "metlife", 7);
+    const b = runFullMatch(me, opp, "metlife", 7);
+    expect(a.booked).toEqual(b.booked);
   });
 });

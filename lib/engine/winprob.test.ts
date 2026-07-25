@@ -411,6 +411,35 @@ describe("winProbability", () => {
     expect(rShort.some((r) => r.id === "direct_targetman")).toBe(false);
   });
 
+  it("수적 열세: 10인이 되면 내 λ는 내려가고 상대 λ는 올라간다", () => {
+    const me = makeSetup("kor", "4-3-3");
+    const opp = makeSetup("jpn", "4-3-3");
+    const even = computeLambdas(me, opp, "metlife");
+
+    // 센터백 1명 퇴장(가장 방어적인 위치를 골라, 공격 라인 손실이 아닌 순수
+    // 수적 열세 효과만 남긴다).
+    const lineup = { ...me.lineup };
+    delete lineup["cb1"];
+    const short = computeLambdas({ ...me, lineup }, opp, "metlife");
+
+    expect(short.lambdaMe).toBeLessThan(even.lambdaMe);
+    expect(short.lambdaOpp).toBeGreaterThan(even.lambdaOpp);
+  });
+
+  it("수적 열세: 공격수 퇴장이 수비수 퇴장보다 내 λ를 더 깎는다", () => {
+    const me = makeSetup("kor", "4-3-3");
+    const opp = makeSetup("jpn", "4-3-3");
+    const loseCb = { ...me.lineup };
+    delete loseCb["cb1"];
+    const loseSt = { ...me.lineup };
+    delete loseSt["st"];
+
+    const withoutCb = computeLambdas({ ...me, lineup: loseCb }, opp, "metlife");
+    const withoutSt = computeLambdas({ ...me, lineup: loseSt }, opp, "metlife");
+
+    expect(withoutSt.lambdaMe).toBeLessThan(withoutCb.lambdaMe);
+  });
+
   it("모든 AppliedRule의 textKo는 비어있지 않고 delta는 ±0.15 이내", () => {
     const matchups: [string, string, string][] = [
       ["kor", "jpn", "metlife"],

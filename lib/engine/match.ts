@@ -27,6 +27,7 @@ export type MatchEventType =
   | "save"
   | "corner"
   | "card"
+  | "red"
   | "crisis"
   | "sub"
   | "tactic_change"
@@ -70,7 +71,9 @@ export interface MatchState {
   seed: number;
   subsUsedMe: number;
   finished: boolean;
-  probTimeline: Array<{ minute: number; win: number }>;
+  // 분당 승/무/패 확률. draw가 있어야 결과 화면·중계에서 "무승부면 승부차기"라는
+  // 녹아웃 맥락을 표현할 수 있다(advanceProb). 예전엔 win만 들고 있었다.
+  probTimeline: Array<{ minute: number; win: number; draw: number }>;
   // --- 내부 캐시 확장 필드 (브리프 명세 외) ---
   lambdaMe: number;
   lambdaOpp: number;
@@ -81,6 +84,10 @@ export interface MatchState {
   possMeAccum: number;
   possMinutes: number;
   injuryTime: number; // 0 = 아직 미계산, 계산 후 1~5
+  // 경고 보유 선수(팀별 playerId). 두 번째 경고를 받으면 퇴장하므로 이 목록이
+  // "다음 파울에 퇴장당할 수 있는 선수"이기도 하다. 경고 자체도 페널티가 있다:
+  // 조심스러운 태클로 수비 기여가 떨어진다(recomputeLambdas의 BOOKED_LAMBDA_PENALTY).
+  booked: { me: string[]; opp: string[] };
   // --- Task 9 확장 필드 (브리프 명세 외, 추가적 변경) ---
   // me/opp는 개입(교체·전술 변경) 적용 후의 "현재" 라인업/전술이라 카운터팩추얼
   // (lib/engine/counterfactual.ts)이 "개입이 없었다면?"을 재현하려는 baseline
@@ -128,6 +135,11 @@ function computeStaminaFlags(
 // 라인업별 개별 스태미나를 주입하려면 lineStrengths를 이 파일에서 다시 구현해야
 // 한다. 대신 computeLambdas가 반환한 "만체력 기준" λ에 온피치 11명 평균 스태미나의
 // 제곱근을 곱해 팀 전체의 체력 저하를 근사한다. 일관되게 이 방식만 사용한다.
+// 경고 1장당 상대 λ에 붙는 가산. 경고를 받은 선수는 두 번째 카드를 피하려 태클을
+// 자제하므로 그 팀의 수비가 실질적으로 약해진다 — 이 페널티가 없으면 pressing을
+// 최대로 올리는 데 아무 대가가 없다(카드 발생률만 오르고 카드는 무해했다).
+const BOOKED_LAMBDA_PENALTY = 0.03;
+
 function recomputeLambdas(state: MatchState): {
   lambdaMe: number;
   lambdaOpp: number;
@@ -136,9 +148,19 @@ function recomputeLambdas(state: MatchState): {
   const base = computeLambdas(state.me, state.opp, state.venueId);
   const meStaminaAvg = average(Object.values(state.me.lineup).map((id) => state.stamina[id] ?? 1));
   const oppStaminaAvg = average(Object.values(state.opp.lineup).map((id) => state.stamina[id] ?? 1));
+  // 경고 보유자는 아직 그라운드에 있는 선수만 센다(교체로 빠졌으면 페널티 소멸).
+  const onPitchBooked = (side: SideSetup, booked: string[]): number => {
+    const ids = new Set(Object.values(side.lineup));
+    return booked.filter((id) => ids.has(id)).length;
+  };
+  const bookedMe = onPitchBooked(state.me, state.booked?.me ?? []);
+  const bookedOpp = onPitchBooked(state.opp, state.booked?.opp ?? []);
   return {
-    lambdaMe: base.lambdaMe * Math.sqrt(Math.max(0, meStaminaAvg)),
-    lambdaOpp: base.lambdaOpp * Math.sqrt(Math.max(0, oppStaminaAvg)),
+    // 내 경고 보유자 수는 "상대의" λ를 올린다(내 수비가 무른다).
+    lambdaMe:
+      base.lambdaMe * Math.sqrt(Math.max(0, meStaminaAvg)) * (1 + BOOKED_LAMBDA_PENALTY * bookedOpp),
+    lambdaOpp:
+      base.lambdaOpp * Math.sqrt(Math.max(0, oppStaminaAvg)) * (1 + BOOKED_LAMBDA_PENALTY * bookedMe),
     lines: base.lines,
   };
 }
@@ -293,6 +315,13 @@ function eventText(type: keyof typeof TEXT_TEMPLATES, rng: Rng, name: string): s
   return pickVariant(rng, TEXT_TEMPLATES[type](name));
 }
 
+// 퇴장 문구는 RNG를 소비하지 않는다 — 퇴장은 이미 카드 판정에서 RNG를 쓴 뒤의
+// 결정론적 귀결이고, 변형을 뽑느라 RNG를 한 번 더 소비하면 같은 시드의 이후 전개가
+// "퇴장이 있었는지"에 따라 갈라져 카운터팩추얼 재현이 어려워진다.
+function redText(name: string): string {
+  return `${name}, 두 번째 경고로 퇴장당합니다! 수적 열세에 놓입니다.`;
+}
+
 function crisisText(rng: Rng, conceded: boolean): string {
   const variants = conceded
     ? [
@@ -345,12 +374,18 @@ function safePoissonPmf(lambda: number, k: number): number {
   return poissonPmf(lambda, k);
 }
 
+// 승/무/패를 모두 돌려준다.
+//
+// 예전에는 승리 확률 하나만 반환했다. 그러면 무승부가 패배 쪽에 흡수돼 0:0 상황에서도
+// 화면 숫자가 항상 50% 밑에 깔렸고, 무엇보다 **녹아웃에서 무승부는 패배가 아니다** —
+// 승부차기 진입이다. 진출 확률을 계산하려면 무승부 확률이 따로 있어야 한다
+// (advanceProb 참고).
 export function winProbGivenScore(
   scoreMe: number,
   scoreOpp: number,
   remLambdaMe: number,
   remLambdaOpp: number
-): number {
+): { win: number; draw: number; loss: number } {
   const pMe: number[] = [];
   const pOpp: number[] = [];
   for (let k = 0; k <= 10; k++) {
@@ -358,12 +393,33 @@ export function winProbGivenScore(
     pOpp.push(safePoissonPmf(remLambdaOpp, k));
   }
   let win = 0;
+  let draw = 0;
+  let loss = 0;
   for (let i = 0; i <= 10; i++) {
     for (let j = 0; j <= 10; j++) {
-      if (scoreMe + i > scoreOpp + j) win += pMe[i] * pOpp[j];
+      const prob = pMe[i] * pOpp[j];
+      const a = scoreMe + i;
+      const b = scoreOpp + j;
+      if (a > b) win += prob;
+      else if (a === b) draw += prob;
+      else loss += prob;
     }
   }
-  return win;
+  return { win, draw, loss };
+}
+
+/**
+ * 녹아웃 진출 확률. 무승부는 연장·승부차기로 이어지므로 패배가 아니라
+ * "승부차기 승률만큼의 승리"로 환산한다.
+ *
+ * 연장전(B-2)이 있어도 이 식은 그대로다 — 연장에서 승부가 나면 그건 win/loss로
+ * 잡히고, 연장까지 무승부면 승부차기로 가므로 draw × pk가 정확히 그 몫이다.
+ */
+export function advanceProb(
+  outcome: { win: number; draw: number },
+  shootoutWin: number
+): number {
+  return outcome.win + outcome.draw * shootoutWin;
 }
 
 // =============================================================================
@@ -373,7 +429,7 @@ export function initMatch(me: SideSetup, opp: SideSetup, venueId: string, seed: 
   for (const p of playersOf(opp.teamId)) stamina[p.id] = 1;
 
   const base = computeLambdas(me, opp, venueId);
-  const win = winProbGivenScore(
+  const p0 = winProbGivenScore(
     0,
     0,
     base.lambdaMe * ENGINE_CONSTANTS.REALIZED_GOAL_CALIBRATION,
@@ -394,13 +450,14 @@ export function initMatch(me: SideSetup, opp: SideSetup, venueId: string, seed: 
     seed,
     subsUsedMe: 0,
     finished: false,
-    probTimeline: [{ minute: 0, win }],
+    probTimeline: [{ minute: 0, win: p0.win, draw: p0.draw }],
     lambdaMe: base.lambdaMe,
     lambdaOpp: base.lambdaOpp,
     lines: base.lines,
     possMeAccum: 0,
     possMinutes: 0,
     injuryTime: 0,
+    booked: { me: [], opp: [] },
     initialMe: me,
     initialOpp: opp,
   };
@@ -420,6 +477,18 @@ export function simulateMinute(state: MatchState): MatchState {
 
   let scoreMe = state.scoreMe;
   let scoreOpp = state.scoreOpp;
+
+  // 퇴장으로 라인업이 바뀔 수 있으므로 이번 분 동안의 "현재" 셋업을 지역 변수로 든다.
+  // 퇴장이 없으면 state.me/state.opp와 같은 참조가 그대로 반환된다.
+  let meSide = state.me;
+  let oppSide = state.opp;
+  let sentOff = false;
+  const booked = {
+    // persist v2 세션에서 복원된 상태에는 booked가 없을 수 있어 방어한다.
+    me: state.booked?.me ?? [],
+    opp: state.booked?.opp ?? [],
+  };
+  const sideOf = (s: "me" | "opp"): SideSetup => (s === "me" ? meSide : oppSide);
 
   // λ/lineStrengths 재계산: 5분마다 또는 이번 상태가 만들어지기 직전(현재 minute)에
   // 개입이 적용됐을 때만. interventions 배열은 이미 MatchState 계약에 있는 필드이므로
@@ -517,25 +586,60 @@ export function simulateMinute(state: MatchState): MatchState {
   processChance("me");
   processChance("opp");
 
+  // 파울/카드. 경고를 이미 갖고 있던 선수가 다시 지목되면 두 번째 경고로 퇴장한다.
+  // 퇴장 시 해당 슬롯을 라인업에서 지워 이후 λ·슈터 선택·점유율이 10인 체제를
+  // 반영하게 한다(lineStrengths가 정원을 분모로 쓰므로 라인 전력이 실제로 떨어지고,
+  // winprob.ts의 manpowerAttMult가 팀 단위 공격 감소를 더한다).
   function processCard(side: "me" | "opp"): void {
-    const setup = side === "me" ? state.me : state.opp;
+    const setup = sideOf(side);
     const p = 0.008 * (setup.instructions.pressing / 2);
     if (rng.next() >= p) return;
     const formation = FORMATIONS[setup.instructions.formation];
     const squad = playersOf(setup.teamId);
     const player = selectRandomOnPitch(rng, setup, formation, squad);
     if (!player) return;
+
+    const alreadyBooked = booked[side].includes(player.id);
+    if (!alreadyBooked) {
+      booked[side] = [...booked[side], player.id];
+      additions.push({
+        minute: newMinute,
+        type: "card",
+        side,
+        playerId: player.id,
+        textKo: eventText("card", rng, player.name),
+      });
+      return;
+    }
+
+    // 두 번째 경고 → 퇴장.
+    const nextLineup = { ...setup.lineup };
+    const slotId = Object.keys(nextLineup).find((k) => nextLineup[k] === player.id);
+    if (slotId) delete nextLineup[slotId];
+    const nextSide: SideSetup = { ...setup, lineup: nextLineup };
+    if (side === "me") meSide = nextSide;
+    else oppSide = nextSide;
+    sentOff = true;
     additions.push({
       minute: newMinute,
-      type: "card",
+      type: "red",
       side,
       playerId: player.id,
-      textKo: eventText("card", rng, player.name),
+      textKo: redText(player.name),
     });
   }
 
   processCard("me");
   processCard("opp");
+
+  // 퇴장이 나온 분에는 5분 경계를 기다리지 않고 즉시 λ를 재계산한다 — 수적 열세는
+  // 다음 분부터 바로 승률에 반영돼야 한다(개입과 같은 취급).
+  if (sentOff) {
+    const rec = recomputeLambdas({ ...state, me: meSide, opp: oppSide, booked });
+    lambdaMe = rec.lambdaMe;
+    lambdaOpp = rec.lambdaOpp;
+    lines = rec.lines;
+  }
 
   // 위기 감지 (me 시점): 실점 직후 또는 최근 10분 상대 chance>=3. 10분 창 안에 이미
   // crisis가 있으면 스팸 방지를 위해 재발동하지 않는다.
@@ -552,8 +656,8 @@ export function simulateMinute(state: MatchState): MatchState {
 
   // 스태미나 감소: 온피치 선수만, 벤치는 감소하지 않는다.
   const stamina: Record<string, number> = { ...state.stamina };
-  decayOnPitch(stamina, state.me, staminaFlagsMe);
-  decayOnPitch(stamina, state.opp, staminaFlagsOpp);
+  decayOnPitch(stamina, meSide, staminaFlagsMe);
+  decayOnPitch(stamina, oppSide, staminaFlagsOpp);
 
   if (newMinute === 45) {
     additions.push({ minute: 45, type: "halftime", side: "me", textKo: "⏱ 전반전이 종료되었습니다." });
@@ -579,7 +683,7 @@ export function simulateMinute(state: MatchState): MatchState {
   );
 
   const remainingFraction = Math.max(0, (90 - newMinute) / 90);
-  const win = winProbGivenScore(
+  const prob = winProbGivenScore(
     scoreMe,
     scoreOpp,
     lambdaMe * remainingFraction * ENGINE_CONSTANTS.REALIZED_GOAL_CALIBRATION,
@@ -592,10 +696,13 @@ export function simulateMinute(state: MatchState): MatchState {
     scoreMe,
     scoreOpp,
     stamina,
+    me: meSide,
+    opp: oppSide,
+    booked,
     rngState: rng.state(),
     events: [...state.events, ...additions],
     finished,
-    probTimeline: [...state.probTimeline, { minute: newMinute, win }],
+    probTimeline: [...state.probTimeline, { minute: newMinute, win: prob.win, draw: prob.draw }],
     lambdaMe,
     lambdaOpp,
     lines,

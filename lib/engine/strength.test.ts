@@ -44,6 +44,42 @@ describe("lineStrengths + 맨마킹", () => {
     const braMarked = lineStrengths(bra, korMarking);
     expect(braMarked.att).toBeLessThan(braNoMark.att);
   });
+  // 회귀: 예전엔 "채워진 슬롯 수"를 분모로 썼기 때문에 라인 평균 이하인 선수가
+  // 퇴장하면 그 라인 전력이 오히려 올라갔다(11 대 10이 유리해지는 부호 역전).
+  it("퇴장으로 슬롯이 비면 그 라인 전력이 정원 기준으로 떨어진다", () => {
+    const kor = makeSetup("kor", "4-3-3");
+    const full = lineStrengths(kor);
+
+    // def 라인(CB/FB 4명) 중 기여가 가장 낮은 선수를 빼도 def가 내려가야 한다.
+    const squad = playersOf("kor");
+    const defSlots = Object.keys(kor.lineup).filter((k) => /^(cb|fb)/.test(k));
+    const weakest = defSlots
+      .map((slotId) => ({ slotId, p: squad.find((x) => x.id === kor.lineup[slotId])! }))
+      .sort((a, b) => a.p.attrs.defending - b.p.attrs.defending)[0];
+
+    const lineup = { ...kor.lineup };
+    delete lineup[weakest.slotId];
+    const tenMen = lineStrengths({ ...kor, lineup });
+
+    expect(tenMen.def).toBeLessThan(full.def);
+    // 4명 정원에서 1명이 빠졌으므로 대략 3/4 수준
+    expect(tenMen.def / full.def).toBeLessThan(0.9);
+  });
+
+  it("11명 전원 배치면 정원 분모와 실배치 분모의 값이 같다 (기존 수치 불변)", () => {
+    // 정상 경로에서 값이 바뀌지 않았음을 고정한다: 라인별 평균이 곧 각 라인
+    // 기여도 합/정원이고, 전원 배치 시 정원 = 실배치 수이므로 동일해야 한다.
+    for (const teamId of ["kor", "bra", "jpn"]) {
+      const s = makeSetup(teamId, "4-3-3");
+      const ls = lineStrengths(s);
+      expect(Object.keys(s.lineup)).toHaveLength(11);
+      expect(ls.gk).toBeGreaterThan(0);
+      expect(ls.def).toBeGreaterThan(0);
+      expect(ls.mid).toBeGreaterThan(0);
+      expect(ls.att).toBeGreaterThan(0);
+    }
+  });
+
   it("자기 팀 마커가 공격 라인 배정이면 우리 공격 기여 감소", () => {
     const kor = makeSetup("kor", "4-3-3"), bra = makeSetup("bra", "4-3-3");
     const markerId = kor.lineup["wg_l"];

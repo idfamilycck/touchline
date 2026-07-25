@@ -129,6 +129,11 @@ export function fromRealState(
   let scoreMe = 0;
   let scoreOpp = 0;
   let subsUsedMe = 0;
+  // 인수 시점까지 실제로 나온 경고를 그대로 물려받는다. 이 목록에 있는 선수는 엔진의
+  // 카드 판정에서 다시 지목되면 두 번째 경고로 퇴장한다(match.ts의 processCard) —
+  // 즉 "이미 경고를 받은 선수를 안고 후반을 지휘하는" 실제 상황이 재현된다.
+  const bookedMe: string[] = [];
+  const bookedOpp: string[] = [];
 
   // side/opponent 양쪽 모두 takeoverMinute 이전 교체·퇴장을 반영한다. 과거엔 우리(me)
   // 쪽만 반영해 상대는 항상 원래 선발 11명으로 시작했다 — 상대가 인수 시점 이전에
@@ -159,6 +164,11 @@ export function fromRealState(
         // out 선수가 현재 라인업에 없어도(데이터 이상 등) 교체 횟수는 그대로 센다.
       }
       if (ev.teamCode === side) subsUsedMe += 1;
+    } else if (ev.type === "yellow") {
+      if (ev.playerId) {
+        if (ev.teamCode === side) bookedMe.push(ev.playerId);
+        else if (ev.teamCode === opponent) bookedOpp.push(ev.playerId);
+      }
     } else if (ev.type === "red") {
       const lineup = ev.teamCode === side ? meLineup : ev.teamCode === opponent ? oppLineupSlots : undefined;
       if (lineup) {
@@ -187,7 +197,7 @@ export function fromRealState(
   for (const pid of Object.values(oppSetup.lineup)) stamina[pid] = decay;
 
   const remainingFraction = Math.max(0, (90 - takeoverMinute) / 90);
-  const win = winProbGivenScore(
+  const prob = winProbGivenScore(
     scoreMe,
     scoreOpp,
     base.lambdaMe * remainingFraction * ENGINE_CONSTANTS.REALIZED_GOAL_CALIBRATION,
@@ -202,6 +212,7 @@ export function fromRealState(
     stamina,
     subsUsedMe,
     finished: false,
-    probTimeline: [{ minute: takeoverMinute, win }],
+    booked: { me: bookedMe, opp: bookedOpp },
+    probTimeline: [{ minute: takeoverMinute, win: prob.win, draw: prob.draw }],
   };
 }

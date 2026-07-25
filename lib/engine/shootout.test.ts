@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { simulateShootout } from "./shootout";
+import { simulateShootout, shootoutWinProb } from "./shootout";
 import { makeSetup } from "./__testutils__";
 import { FORMATIONS } from "@/lib/data/formations";
 import { DEFAULT_ROLE } from "@/lib/data/roles";
@@ -149,5 +149,48 @@ describe("simulateShootout", () => {
       if (result.winner === "me") strongWins++;
     }
     expect(strongWins).toBeGreaterThan(60);
+  });
+});
+
+describe("shootoutWinProb (분석적 승부차기 승률)", () => {
+  it("양팀 대칭이면 정확히 50%", () => {
+    const a = buildTestTeam("test_pk_hi", 75, 75);
+    // 같은 수치의 다른 팀 id로 완전 대칭 매치업을 만든다.
+    const b = buildTestTeam("test_pk_lo", 75, 75);
+    expect(shootoutWinProb(a, b)).toBeCloseTo(0.5, 6);
+  });
+
+  it("확률은 항상 0~1이고 양쪽 관점의 합이 1이다", () => {
+    const strong = buildTestTeam("test_pk_hi", 90, 90);
+    const weak = buildTestTeam("test_pk_lo", 55, 55);
+    const p = shootoutWinProb(strong, weak);
+    const q = shootoutWinProb(weak, strong);
+    expect(p).toBeGreaterThan(0);
+    expect(p).toBeLessThan(1);
+    expect(p + q).toBeCloseTo(1, 6);
+    expect(p).toBeGreaterThan(0.6);
+  });
+
+  it("분석적 승률이 시뮬레이션 실측 승률과 일치한다 (500회, ±6%p)", () => {
+    // 같은 모델을 두 경로로 계산하므로 근접해야 한다. 어긋나면 successDistribution의
+    // 키커 선정(autoKickers)이나 서든데스 근사가 시뮬과 갈렸다는 신호다.
+    const strong = buildTestTeam("test_pk_hi", 88, 80);
+    const weak = buildTestTeam("test_pk_lo", 62, 60);
+    const analytic = shootoutWinProb(strong, weak);
+
+    // 시뮬은 유저 지정 키커를 받으므로 autoKickers와 같은 규칙(pk 내림차순 5명)으로 맞춘다.
+    const gkId = strong.lineup["gk"];
+    const meKickers = Object.entries(strong.lineup)
+      .filter(([slotId]) => slotId !== "gk")
+      .map(([, id]) => id)
+      .filter((id) => id !== gkId)
+      .slice(0, 5);
+
+    let wins = 0;
+    const N = 500;
+    for (let seed = 1; seed <= N; seed++) {
+      if (simulateShootout(meKickers, strong, weak, seed).winner === "me") wins++;
+    }
+    expect(Math.abs(wins / N - analytic)).toBeLessThan(0.06);
   });
 });

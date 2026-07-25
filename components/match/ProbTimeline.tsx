@@ -21,9 +21,17 @@ const PAD_B = 22;
 const MAX_MIN = 95;
 
 interface ProbTimelineProps {
-  timeline: Array<{ minute: number; win: number }>;
+  timeline: Array<{ minute: number; win: number; draw: number }>;
   events: MatchEvent[];
   interventions: Intervention[];
+  /**
+   * 이 매치업이 승부차기로 갈 경우 우리가 이길 확률(0~1).
+   *
+   * 무승부는 패배가 아니라 승부차기 진입이므로, 이 값이 있으면
+   * "진출 확률 = 승 + 무 × 승부차기승률"을 함께 보여준다. 그래프의 라인 자체는
+   * 그대로 순수 승리 확률이다(두 숫자를 한 축에 섞지 않는다).
+   */
+  shootoutWinProb?: number;
 }
 
 function xOf(minute: number): number {
@@ -34,12 +42,23 @@ function yOf(win01: number): number {
   return PAD_T + (1 - clamped) * (H - PAD_T - PAD_B);
 }
 
-export function ProbTimeline({ timeline, events, interventions }: ProbTimelineProps) {
-  const pts = timeline.length > 0 ? timeline : [{ minute: 0, win: 0.5 }];
+export function ProbTimeline({
+  timeline,
+  events,
+  interventions,
+  shootoutWinProb,
+}: ProbTimelineProps) {
+  const pts = timeline.length > 0 ? timeline : [{ minute: 0, win: 0.5, draw: 0.25 }];
   const last = pts[pts.length - 1];
   const favored = last.win >= 0.5;
   const lineColor = favored ? "var(--color-gain)" : "var(--color-danger)";
   const winPct = Math.round(last.win * 100);
+  // 예전 세션(persist)에서 복원된 타임라인엔 draw가 없을 수 있어 방어한다.
+  const drawProb = last.draw ?? 0;
+  const drawPct = Math.round(drawProb * 100);
+  const lossPct = Math.max(0, 100 - winPct - drawPct);
+  const advancePct =
+    shootoutWinProb != null ? Math.round((last.win + drawProb * shootoutWinProb) * 100) : null;
 
   const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${xOf(p.minute).toFixed(1)} ${yOf(p.win).toFixed(1)}`).join(" ");
   const areaPath = `${linePath} L ${xOf(last.minute).toFixed(1)} ${yOf(0)} L ${xOf(pts[0].minute).toFixed(1)} ${yOf(0)} Z`;
@@ -171,6 +190,36 @@ export function ProbTimeline({ timeline, events, interventions }: ProbTimelinePr
           균형
         </text>
       </svg>
+
+      {/* 승/무/패 3분할 + 진출 확률.
+          그래프 라인은 순수 승리 확률이라 그것만 보면 "무승부 쪽으로 기울었는지"를
+          알 수 없다(0:0 팽팽한 경기와 열세 경기가 같은 40%로 보인다). 세 값을 함께
+          적어 그 구분을 만든다. */}
+      <div className="mt-1 flex items-center gap-1.5">
+        <div className="flex h-1.5 flex-1 overflow-hidden rounded-full bg-line/40">
+          <div style={{ width: `${winPct}%`, background: "var(--color-gain)" }} />
+          <div style={{ width: `${drawPct}%`, background: "var(--color-dim)" }} />
+          <div style={{ width: `${lossPct}%`, background: "var(--color-danger)" }} />
+        </div>
+      </div>
+      <div className="mt-1.5 flex items-center justify-between text-[11px]">
+        <span className="stat-num" style={{ color: "var(--color-gain)" }}>
+          승 {winPct}%
+        </span>
+        <span className="stat-num text-dim">무 {drawPct}%</span>
+        <span className="stat-num" style={{ color: "var(--color-danger)" }}>
+          패 {lossPct}%
+        </span>
+      </div>
+      {advancePct != null && (
+        <p className="mt-2 border-t border-line pt-2 text-[11px] text-dim">
+          무승부 시 승부차기까지 계산한 <span className="font-bold text-ink">진출 확률 {advancePct}%</span>
+          {" "}
+          <span className="text-dim">
+            (승부차기 승률 {Math.round(shootoutWinProb! * 100)}%)
+          </span>
+        </p>
+      )}
     </div>
   );
 }

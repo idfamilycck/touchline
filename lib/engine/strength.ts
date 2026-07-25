@@ -85,7 +85,19 @@ export function lineStrengths(side: SideSetup, opp?: SideSetup): LineStrengths {
   const formation = FORMATIONS[side.instructions.formation];
   const squad = playersOf(side.teamId);
   const sums: LineStrengths = { gk: 0, def: 0, mid: 0, att: 0 };
+  // 분모는 "채워진 슬롯 수"가 아니라 "포메이션이 요구하는 슬롯 수"다.
+  //
+  // 왜: 이전엔 선수를 찾은 슬롯만 counts에 넣어 평균을 냈다. 그러면 퇴장으로 슬롯이
+  // 비었을 때(rewrite.ts가 레드카드 슬롯을 delete한다) 남은 선수들끼리의 평균이 나와
+  // 라인 전력이 그대로거나, 퇴장한 선수가 그 라인 평균 이하였으면 오히려 **올라갔다**.
+  // 11 대 10이 유리해지는 부호 역전이었다. 정원을 분모로 고정하면 빈 슬롯이 그 라인의
+  // 평균을 정확히 자기 몫만큼 끌어내린다(4백 중 1명 이탈 → def −25%).
+  // 정상 경로(11명 전원 배치)에서는 두 방식의 값이 완전히 동일하므로 기존 밸런스·
+  // 검증 수치에는 영향이 없다.
   const counts: LineStrengths = { gk: 0, def: 0, mid: 0, att: 0 };
+  for (const slot of formation.slots) {
+    counts[lineOf(slot.position)]++;
+  }
 
   for (const slot of formation.slots) {
     const playerId = side.lineup[slot.id];
@@ -101,7 +113,7 @@ export function lineStrengths(side: SideSetup, opp?: SideSetup): LineStrengths {
       contribution *= 0.69;
     }
 
-    const own = lineOf(slot.position);
+    const own: keyof LineStrengths = lineOf(slot.position);
     let toOwn = contribution;
     let toAtt = 0;
     let toMid = 0;
@@ -128,7 +140,6 @@ export function lineStrengths(side: SideSetup, opp?: SideSetup): LineStrengths {
     }
 
     sums[own] += toOwn;
-    counts[own]++;
     if (toAtt > 0) sums.att += toAtt;
     if (toMid > 0) sums.mid += toMid;
   }

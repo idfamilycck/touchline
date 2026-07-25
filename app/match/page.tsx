@@ -20,6 +20,7 @@ import { LiveMetrics } from "@/components/match/LiveMetrics";
 import { CrisisBanner } from "@/components/match/CrisisBanner";
 import { InterventionSheetPortal } from "@/components/match/InterventionSheet";
 import { RewriteContextBadge } from "@/components/rewrite/RewriteContextBadge";
+import { shootoutWinProb } from "@/lib/engine/shootout";
 import { SceneOverlay } from "@/components/match/SceneOverlay";
 import { useBallArrival } from "@/components/match/use-ball-arrival";
 import { GOAL_BALL_DUR_SEC } from "@/components/match/livepitch-choreo";
@@ -53,6 +54,13 @@ export default function MatchPage() {
 
   const hasMatch = useAppStore((s) => Boolean(s.match));
   const finished = useAppStore((s) => s.match?.finished ?? false);
+
+  // 승부차기 승률: 무승부의 가치를 매기는 데 필요하다(진출 확률 = 승 + 무 × 이 값).
+  // 라인업(교체·퇴장)에 따라 키커·GK가 바뀌므로 그 두 값에만 의존해 메모이즈한다.
+  const pkWinProb = useMemo(() => {
+    if (!match) return undefined;
+    return shootoutWinProb(match.me, match.opp);
+  }, [match?.me, match?.opp]);
 
   const [playing, setPlaying] = useState(false); // 새로고침/진입 시 항상 일시정지로 시작
   // 재생을 한 번이라도 시작했는가. 라이브 피치의 "정지 대형 vs 동적 전형"을 가른다.
@@ -340,6 +348,7 @@ export default function MatchPage() {
               timeline={match.probTimeline}
               events={match.events}
               interventions={match.interventions}
+              shootoutWinProb={pkWinProb}
             />
             <CommentaryFeed events={match.events} />
           </div>

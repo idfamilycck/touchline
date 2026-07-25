@@ -196,6 +196,8 @@ export interface InterventionImpact {
 export const IMPACT_WINDOW_MIN = 10;
 
 function winPctAt(timeline: Array<{ minute: number; win: number }>, minute: number): number | null {
+  // draw는 여기서 보지 않는다: 개입 효과는 "승률이 몇 %p 움직였나"라는 단일 축으로
+  // 재는 게 리포트 문장으로 읽히기 때문이다(무승부 확률까지 섞으면 부호 해석이 모호해진다).
   if (timeline.length === 0) return null;
   let val: number | null = null;
   for (const p of timeline) {

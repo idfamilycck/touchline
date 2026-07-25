@@ -7,6 +7,7 @@
 import { SoccerBall, Brain, type Icon } from "@phosphor-icons/react";
 import { ProbTimeline } from "@/components/match/ProbTimeline";
 import { teamById } from "@/lib/data/teams";
+import { shootoutWinProb } from "@/lib/engine/shootout";
 import type { MatchState } from "@/lib/engine/match";
 import { interventionTypeKo } from "./cf-labels";
 
@@ -42,6 +43,7 @@ export function FinalTimeline({ match }: FinalTimelineProps) {
         timeline={match.probTimeline}
         events={match.events}
         interventions={match.interventions}
+        shootoutWinProb={shootoutWinProb(match.me, match.opp)}
       />
 
       {/* 범례 */}
