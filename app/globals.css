@@ -269,6 +269,39 @@ body {
   border-radius: 4px;
 }
 
+/* ────────────────────────────────────────────────────────────
+   전역 버튼 프레스 — 누르는 순간 살짝 눌렸다가(scale↓) 떼면 돌아온다.
+   무엇에: 진짜 <button>, role=button/tab, <summary>(details 토글), 그리고 버튼
+   형태의 링크(rounded-control = 이 디자인 시스템의 버튼 반경, 또는 bg-accent CTA).
+   왜 텍스트/내비 링크는 빼나: 글자 링크가 출렁이면 "눌림"이 아니라 버그로 읽힌다.
+   어떻게 어디서나 일관되게: 이 파일의 커스텀 규칙은 언레이어드라 Tailwind 유틸
+   (active:scale-*, hover:-translate-y-* 등)보다 우선한다 — 개별 버튼이 뭘 걸었든
+   같은 눌림을 준다. transition은 색·모양까지 아우르는 상위집합으로 통일해 버튼마다
+   제각각이던 반응 속도도 한 박자로 맞춘다. prefers-reduced-motion에서는 통째로 꺼진다
+   (아래 reduce 블록이 duration을 무력화). */
+@media (prefers-reduced-motion: no-preference) {
+  button,
+  [role="button"],
+  [role="tab"],
+  summary,
+  a[class*="rounded-control"],
+  a[class*="bg-accent"] {
+    transition-property: scale, transform, translate, color, background-color,
+      border-color, box-shadow, opacity, filter;
+    transition-duration: 130ms;
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  button:not(:disabled):not([aria-disabled="true"]):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  [role="tab"]:not([aria-disabled="true"]):active,
+  summary:active,
+  a[class*="rounded-control"]:active,
+  a[class*="bg-accent"]:active {
+    scale: 0.96;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
