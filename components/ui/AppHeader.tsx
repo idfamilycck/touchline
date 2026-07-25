@@ -12,6 +12,7 @@ const NAV = [
   { href: "/", label: "월드컵 다시 쓰기", short: "다시 쓰기" },
   { href: "/free", label: "자유 매치업", short: "자유" },
   { href: "/tournament", label: "대회", short: "대회" },
+  { href: "/engine", label: "엔진 검증", short: "검증" },
 ] as const;
 
 export function AppHeader() {
