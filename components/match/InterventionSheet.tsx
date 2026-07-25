@@ -62,19 +62,15 @@ function startersOf(side: SideSetup, squad: Player[]): Player[] {
     .filter((p): p is Player => Boolean(p));
 }
 
+// 키를 열거하지 않고 전부 비교한다. 열거식으로 두면 TeamInstructions에 축이 추가될
+// 때마다 여기를 같이 고쳐야 하는데, 빠뜨려도 타입 검사에 걸리지 않고 "지시를 바꿨는데
+// 전달 버튼이 안 열린다"는 조용한 유실로만 드러난다(실제로 lineSpacing/possession/
+// transitionSpeed가 추가됐을 때 이 함수가 그대로 남아 있었다).
+// 값은 전부 원시 타입(문자열·숫자·불리언)이라 얕은 비교로 충분하다.
 function instructionsEqual(a: TeamInstructions, b: TeamInstructions): boolean {
-  return (
-    a.formation === b.formation &&
-    a.pressing === b.pressing &&
-    a.line === b.line &&
-    a.attacking === b.attacking &&
-    a.tempo === b.tempo &&
-    a.buildup === b.buildup &&
-    a.focus === b.focus &&
-    a.width === b.width &&
-    a.marking === b.marking &&
-    a.offsideTrap === b.offsideTrap
-  );
+  const keys = Object.keys(a) as Array<keyof TeamInstructions>;
+  if (keys.length !== Object.keys(b).length) return false;
+  return keys.every((k) => a[k] === b[k]);
 }
 
 function manMarkEqual(a: SpecialInstructions["manMark"], b: SpecialInstructions["manMark"]): boolean {
