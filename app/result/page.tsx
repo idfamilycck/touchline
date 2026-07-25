@@ -26,6 +26,7 @@ import { RealVsParallel } from "@/components/rewrite/RealVsParallel";
 import { buildCompare, resultRank } from "@/components/rewrite/compare";
 import { buildGoalTimeline } from "@/components/rewrite/goal-timeline";
 import { wc2026MatchById } from "@/lib/wc2026/data";
+import { scoutTeam } from "@/lib/wc2026/scouting";
 
 const HERO_TONE: Record<"gain" | "danger" | "neutral", { color: string; bg: string; Icon: Icon }> = {
   gain: { color: "var(--color-gain)", bg: "rgba(59,227,138,0.12)", Icon: TrendUp },
@@ -111,8 +112,14 @@ export default function ResultPage() {
     if (!venue || !meTeam || !oppTeam) return null;
     const meMod = applyModifiers(match.me, match.opp, venue, meTeam, oppTeam, h2hOf(match.me.teamId, match.opp.teamId));
     const oppMod = applyModifiers(match.opp, match.me, venue, oppTeam, meTeam, h2hOf(match.opp.teamId, match.me.teamId));
-    return buildTacticsReview(match, meMod, oppMod);
-  }, [match]);
+    // 경기 전 작전실에서 본 것과 같은 스카우팅 프로필을 넘겨, 그 경고/기회가 실제로
+    // 어떻게 됐는지 대조하게 한다(같은 실측 자료로 브리핑과 회고가 이어진다).
+    const scout = scoutTeam(match.opp.teamId, {
+      myElo: meTeam.elo,
+      matchId: rewriteContext?.matchId,
+    });
+    return buildTacticsReview(match, meMod, oppMod, scout);
+  }, [match, rewriteContext]);
 
   if (!hydrated || !match || !cf) {
     return (

@@ -4,7 +4,7 @@
 // 건너뛰기/다음/시작 버튼. 딤 배경 + 스포트라이트 톤의 카드.
 
 import { useEffect, useState } from "react";
-import { Hand, TrendUp, FlagCheckered, type Icon } from "@phosphor-icons/react";
+import { Hand, Binoculars, FlagCheckered, type Icon } from "@phosphor-icons/react";
 
 const STORAGE_KEY = "touchline-onboarding";
 
@@ -15,14 +15,14 @@ const STEPS: { Icon: Icon; title: string; body: string }[] = [
     body: "스쿼드에서 선수를 피치로 드래그하거나, 탭해서 자리를 골라 배치할 수 있어요.",
   },
   {
-    Icon: TrendUp,
-    title: "승률 변동을 확인하세요",
-    body: "라인업·전술을 바꿀 때마다 오른쪽 '분석'에서 승률과 그 근거가 실시간으로 움직여요.",
+    Icon: Binoculars,
+    title: "상대를 먼저 읽으세요",
+    body: "오른쪽 '분석'에 상대가 이번 월드컵에서 실제로 어떤 팀이었는지가 있어요. 그 약점에 맞춰 전술을 고르는 게 감독의 일입니다.",
   },
   {
     Icon: FlagCheckered,
     title: "준비되면 경기 시작",
-    body: "11명을 모두 배치하면 하단의 '경기 시작' 버튼이 열립니다. 감독석에서 지휘해 보세요.",
+    body: "결과가 어떻게 될지는 알려주지 않아요. 판단은 감독의 몫이고, 답은 경기가 합니다.",
   },
 ];
 

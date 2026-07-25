@@ -16,6 +16,7 @@ import { Scoreboard, minuteLabel } from "@/components/match/Scoreboard";
 import { LivePitch } from "@/components/match/LivePitch";
 import { CommentaryFeed } from "@/components/match/CommentaryFeed";
 import { ProbTimeline } from "@/components/match/ProbTimeline";
+import { LiveMetrics } from "@/components/match/LiveMetrics";
 import { CrisisBanner } from "@/components/match/CrisisBanner";
 import { InterventionSheetPortal } from "@/components/match/InterventionSheet";
 import { RewriteContextBadge } from "@/components/rewrite/RewriteContextBadge";
@@ -325,14 +326,23 @@ export default function MatchPage() {
           />
         </div>
 
-        {/* 중계 + 승률 타임라인 */}
+        {/* 지표판 + 승률 타임라인 + 중계.
+            지표판이 먼저다 — 승률 그래프는 "결과가 어디로 가는가"만 말하고,
+            무엇을 바꿔야 하는지는 지표가 말한다. */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <CommentaryFeed events={match.events} />
-          <ProbTimeline
-            timeline={match.probTimeline}
-            events={match.events}
-            interventions={match.interventions}
+          <LiveMetrics
+            match={match}
+            meCode={teamById(match.me.teamId)?.code ?? "ME"}
+            oppCode={teamById(match.opp.teamId)?.code ?? "OPP"}
           />
+          <div className="flex flex-col gap-4">
+            <ProbTimeline
+              timeline={match.probTimeline}
+              events={match.events}
+              interventions={match.interventions}
+            />
+            <CommentaryFeed events={match.events} />
+          </div>
         </div>
       </div>
 

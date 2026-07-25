@@ -5,7 +5,7 @@
 // 방금 치른 이 경기의 지표를 근거로 한 회고이며, 그렇게 프레이밍한다.
 // 내용은 buildTacticsReview(순수 로직)가 엔진 데이터로 생성한다.
 
-import { CheckCircle, Warning, ClipboardText } from "@phosphor-icons/react";
+import { CheckCircle, Warning, ClipboardText, Binoculars } from "@phosphor-icons/react";
 import type { TacticsReview } from "./tactics-review";
 import type { AppliedRule } from "@/lib/engine/modifiers";
 import { RuleIcon } from "@/components/ui/RuleIcon";
@@ -76,6 +76,40 @@ export function TacticsReviewPanel({ review }: { review: TacticsReview }) {
           )}
         </div>
       </div>
+
+      {/* 스카우팅 대조: 경기 전 브리핑에서 본 상대의 실제 대회 기록이 이번 경기에서
+          어떻게 나타났는가. 브리핑과 회고가 같은 실측 자료로 이어지는 지점이다. */}
+      {review.scoutingRetro.length > 0 && (
+        <div className="mt-4 rounded-panel border border-line bg-surface-2/60 p-4">
+          <h3 className="flex items-center gap-1.5 text-sm font-bold text-ink">
+            <Binoculars size={16} weight="bold" aria-hidden /> 경기 전 분석은 맞았을까
+          </h3>
+          <p className="mt-1 text-xs text-dim">
+            작전실에서 본 상대의 실제 대회 기록과 이번 경기 결과를 맞대어 봤어요.
+          </p>
+          <ul className="mt-2.5 flex flex-col gap-2">
+            {review.scoutingRetro.map((line) => (
+              <li
+                key={line.id}
+                className="flex items-start gap-2 rounded-panel border border-line bg-surface/40 px-3 py-2"
+              >
+                <span
+                  className="mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-black"
+                  style={{
+                    color: line.favorable ? "var(--color-gain)" : "var(--color-danger)",
+                    background: line.favorable
+                      ? "rgba(59,227,138,0.14)"
+                      : "rgba(255,92,122,0.14)",
+                  }}
+                >
+                  {line.favorable ? "살렸다" : "놓쳤다"}
+                </span>
+                <span className="text-sm leading-relaxed text-ink">{line.textKo}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-4 rounded-panel border border-line bg-surface-2/60 p-4">
         <h3 className="flex items-center gap-1.5 text-sm font-bold text-ink">

@@ -16,11 +16,10 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { useAppStore, useWinProb } from "@/lib/store";
+import { useAppStore, useTacticRules, useLineMatchup, useOppScouting } from "@/lib/store";
 import { playersOf } from "@/lib/data/players";
 import { teamById } from "@/lib/data/teams";
 import { FORMATIONS } from "@/lib/data/formations";
-import { lineStrengths } from "@/lib/engine/strength";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { RewriteContextBadge } from "@/components/rewrite/RewriteContextBadge";
@@ -29,13 +28,14 @@ import { AnimatePresence } from "framer-motion";
 import { SquadList } from "@/components/tactics/SquadList";
 import { AttributeGrid } from "@/components/tactics/AttributeGrid";
 import { PitchBoard } from "@/components/tactics/PitchBoard";
-import { WinGauge } from "@/components/tactics/WinGauge";
+import { ScoutingReport } from "@/components/tactics/ScoutingReport";
+import { LineMatchup } from "@/components/tactics/LineMatchup";
 import { FactorCards } from "@/components/tactics/FactorCards";
 import { InstructionsPanel } from "@/components/tactics/InstructionsPanel";
 import { RolePicker } from "@/components/tactics/RolePicker";
 import { SpecialPanel } from "@/components/tactics/SpecialPanel";
 import { RecommendPanel } from "@/components/tactics/RecommendPanel";
-import { MobileWinStrip } from "@/components/tactics/MobileWinStrip";
+import { MobileScoutStrip } from "@/components/tactics/MobileScoutStrip";
 import { Coachmarks } from "@/components/tactics/Coachmarks";
 import { jerseyOf, type Selection } from "@/components/tactics/tactics-labels";
 
@@ -48,22 +48,26 @@ const TACTIC_TABS: { id: TacticTab; label: string }[] = [
   { id: "special", label: "특수 지시" },
 ];
 
-// 우측 분석 열: 1층 WinGauge · 전술 탭 · 2층 FactorCards · 추천 · 3층 상세보기.
+// 우측 분석 열: 1층 상대 스카우팅 · 라인 매치업 · 전술 탭 · 2층 FactorCards · 추천 · 3층 상세.
+//
+// 예전 1층은 WinGauge("라이브 승률 예측")였다. 전술을 고르기도 전에 승률이 나오면
+// 감독의 판단이 사라지고 "숫자가 큰 쪽으로 슬라이더를 미는" 게임이 되므로, 그 자리를
+// 판단 재료(상대가 실제로 어떤 팀이었나 + 어느 라인에서 밀리나)로 바꿨다.
+// 승률은 경기가 시작된 뒤 /match의 ProbTimeline에서만 등장한다.
 function AnalysisPanel() {
-  const me = useAppStore((s) => s.me);
-  const opp = useAppStore((s) => s.opp);
-  const wp = useWinProb();
+  const oppTeamId = useAppStore((s) => s.opp?.teamId);
+  const rules = useTacticRules();
+  const lines = useLineMatchup();
+  const scout = useOppScouting();
   const [tab, setTab] = useState<TacticTab>("team");
 
-  const lines = useMemo(() => {
-    if (!me || !opp) return undefined;
-    return { me: lineStrengths(me, opp), opp: lineStrengths(opp, me) };
-  }, [me, opp]);
+  const oppTeam = useMemo(() => (oppTeamId ? teamById(oppTeamId) : undefined), [oppTeamId]);
 
   return (
     <div className="flex flex-col gap-4">
-      {/* 1층 */}
-      <WinGauge wp={wp} lines={lines} />
+      {/* 1층: 상대를 먼저 본다 */}
+      <ScoutingReport scout={scout} color1={oppTeam?.color1} color2={oppTeam?.color2} />
+      <LineMatchup lines={lines} />
 
       {/* 전술 패널 탭 */}
       <div className="panel rounded-panel p-4">
@@ -90,65 +94,30 @@ function AnalysisPanel() {
       </div>
 
       {/* 2층 */}
-      <FactorCards rules={wp?.rules ?? []} />
+      <FactorCards rules={rules} />
 
       {/* 추천 */}
-      <RecommendPanel currentWin={wp?.win} />
+      <RecommendPanel />
 
-      {/* 3층 상세 보기 */}
-      {wp && lines && (
-        <details className="panel rounded-panel p-5">
-          <summary className="cursor-pointer list-none">
-            <span className="flex items-center justify-between">
-              <span className="eyebrow text-dim">상세 보기 (계산 근거)</span>
-              <span className="text-[13px] text-dim">펼치기 ▾</span>
-            </span>
-          </summary>
-          <div className="mt-4 flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-panel border border-line bg-surface/40 p-3">
-                <p className="text-[13px] text-dim">우리 기대 득점 (λ)</p>
-                <p className="stat-num text-2xl text-gain">{wp.lambdaMe.toFixed(2)}</p>
-              </div>
-              <div className="rounded-panel border border-line bg-surface/40 p-3">
-                <p className="text-[13px] text-dim">상대 기대 득점 (λ)</p>
-                <p className="stat-num text-2xl text-danger">{wp.lambdaOpp.toFixed(2)}</p>
-              </div>
-            </div>
-
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="text-dim">
-                  <th className="py-1 text-left font-bold">라인</th>
-                  <th className="py-1 text-right font-bold text-accent">우리</th>
-                  <th className="py-1 text-right font-bold text-danger">상대</th>
-                </tr>
-              </thead>
-              <tbody className="stat-num">
-                {(
-                  [
-                    ["골키퍼", lines.me.gk, lines.opp.gk],
-                    ["수비", lines.me.def, lines.opp.def],
-                    ["중원", lines.me.mid, lines.opp.mid],
-                    ["공격", lines.me.att, lines.opp.att],
-                  ] as const
-                ).map(([label, m, o]) => (
-                  <tr key={label} className="border-t border-line">
-                    <td className="py-1.5 text-left font-sans text-ink">{label}</td>
-                    <td className="py-1.5 text-right text-ink">{Math.round(m)}</td>
-                    <td className="py-1.5 text-right text-dim">{Math.round(o)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <p className="rounded-panel border border-line bg-surface/50 p-3 text-[13px] leading-relaxed text-dim">
-              라인별 전력으로 양 팀의 기대 득점(λ)을 구하고, 전술 근거가 이를 보정합니다.
-              두 팀의 λ를 포아송 분포에 넣어 승·무·패 확률을 계산해요.
-            </p>
-          </div>
-        </details>
-      )}
+      {/* 3층 상세 보기 — 엔진이 무엇을 보고 계산하는지. 결과 확률은 넣지 않는다. */}
+      <details className="panel rounded-panel p-5">
+        <summary className="cursor-pointer list-none">
+          <span className="flex items-center justify-between">
+            <span className="eyebrow text-dim">상세 보기 (계산 근거)</span>
+            <span className="text-[13px] text-dim">펼치기 ▾</span>
+          </span>
+        </summary>
+        <div className="mt-4 flex flex-col gap-4">
+          <p className="rounded-panel border border-line bg-surface/50 p-3 text-[13px] leading-relaxed text-dim">
+            엔진은 라인별 전력으로 양 팀의 기대 득점을 구하고, 위 전술 근거 카드가 그
+            값을 올리거나 내립니다. 그 결과가 어떻게 나오는지는 경기를 치러 봐야
+            알 수 있어요 — 킥오프 전에는 확률을 보여주지 않습니다.
+          </p>
+          <p className="rounded-panel border border-line bg-surface/50 p-3 text-[13px] leading-relaxed text-dim">
+            경기가 시작되면 상단 지표판과 승률 그래프에서 흐름이 실시간으로 갱신됩니다.
+          </p>
+        </div>
+      </details>
     </div>
   );
 }
@@ -165,7 +134,7 @@ export default function TacticsPage() {
   // 오버레이가 그 순간의 스코어·분을 읽는다(free 모드에선 beginMatch 전까지 undefined).
   const match = useAppStore((s) => s.match);
 
-  const wp = useWinProb();
+  const scout = useOppScouting();
   const [tab, setTab] = useState<Tab>("pitch");
   const [selected, setSelected] = useState<Selection | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -363,8 +332,9 @@ export default function TacticsPage() {
             </button>
           ))}
         </div>
-        {/* 승률 스트립: 탭과 함께 고정돼, 어느 탭에서 조작해도 반응이 보인다. */}
-        <MobileWinStrip wp={wp} />
+        {/* 상대 요약 스트립: 탭과 함께 고정돼, 스쿼드/피치 탭에서 라인업을 만지는
+            동안에도 "누구를 상대하는가"가 계속 보인다(예전에는 승률이 이 자리였다). */}
+        <MobileScoutStrip scout={scout} />
       </div>
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { MatchEvent, MatchState } from "@/lib/engine/match";
 import type { AppliedRule, ModifierResult } from "@/lib/engine/modifiers";
-import { buildTacticsReview } from "./tactics-review";
+import { buildTacticsReview, buildScoutingRetro } from "./tactics-review";
+import type { OppScouting } from "@/lib/wc2026/scouting";
 
 const rule = (id: string, da: number, dd = 0): AppliedRule => ({
   id,
@@ -186,5 +187,139 @@ describe("buildTacticsReview", () => {
       );
       expect(review.tips.some((t) => t.includes("작전 변경"))).toBe(true);
     });
+  });
+});
+
+// ── 스카우팅 대조 ────────────────────────────────────────────────────────────
+
+const goalAt = (minute: number, side: "me" | "opp"): MatchEvent => ({
+  minute,
+  type: "goal",
+  side,
+  textKo: "goal",
+});
+
+const scoutWith = (traits: OppScouting["traits"]): OppScouting =>
+  ({ nameKo: "상대팀", traits, counters: [] }) as unknown as OppScouting;
+
+const trait = (id: string, tone: OppScouting["traits"][number]["tone"] = "threat") => ({
+  id,
+  labelKo: id,
+  evidenceKo: `근거-${id}`,
+  tone,
+});
+
+describe("buildScoutingRetro (경기 전 분석 vs 실제 결과)", () => {
+  it("스카우팅이 없으면 빈 배열 (free 모드 등)", () => {
+    expect(buildScoutingRetro(matchOf({}), undefined)).toEqual([]);
+  });
+
+  it("성향 태그가 없으면 대조할 것도 없다", () => {
+    expect(buildScoutingRetro(matchOf({}), scoutWith([]))).toEqual([]);
+  });
+
+  it("막판 취약 상대에게 막판 득점하면 살린 것으로 잡고 분까지 인용한다", () => {
+    const [line] = buildScoutingRetro(
+      matchOf({ events: [goalAt(82, "me")], scoreMe: 1 }),
+      scoutWith([trait("late_collapse", "weakness")])
+    );
+    expect(line.favorable).toBe(true);
+    expect(line.textKo).toContain("82분");
+  });
+
+  it("막판 취약 상대인데 막판 득점이 없으면 놓친 것으로 잡는다", () => {
+    // 60분 득점은 막판(75분+)이 아니다.
+    const [line] = buildScoutingRetro(
+      matchOf({ events: [goalAt(60, "me")], scoreMe: 1 }),
+      scoutWith([trait("late_collapse", "weakness")])
+    );
+    expect(line.favorable).toBe(false);
+  });
+
+  it("화력형 경고가 적중하면(2실점 이상) 우리에게 불리한 것으로 잡는다", () => {
+    const [line] = buildScoutingRetro(
+      matchOf({ scoreOpp: 3 }),
+      scoutWith([trait("firepower")])
+    );
+    expect(line.favorable).toBe(false);
+    expect(line.textKo).toContain("3실점");
+  });
+
+  it("화력형 상대를 묶으면 유리한 것으로 잡는다", () => {
+    const [line] = buildScoutingRetro(matchOf({ scoreOpp: 1 }), scoutWith([trait("firepower")]));
+    expect(line.favorable).toBe(true);
+  });
+
+  it("후반 강세 경고: 후반 실점 여부로 갈린다 (전반 실점은 해당 없음)", () => {
+    const firstHalfOnly = buildScoutingRetro(
+      matchOf({ events: [goalAt(20, "opp")], scoreOpp: 1 }),
+      scoutWith([trait("second_half")])
+    );
+    expect(firstHalfOnly[0].favorable).toBe(true);
+
+    const secondHalf = buildScoutingRetro(
+      matchOf({ events: [goalAt(70, "opp")], scoreOpp: 1 }),
+      scoutWith([trait("second_half")])
+    );
+    expect(secondHalf[0].favorable).toBe(false);
+  });
+
+  it("수비 불안 상대는 다득점했을 때만 살린 것으로 잡는다", () => {
+    expect(
+      buildScoutingRetro(matchOf({ scoreMe: 2 }), scoutWith([trait("leaky", "weakness")]))[0]
+        .favorable
+    ).toBe(true);
+    expect(
+      buildScoutingRetro(matchOf({ scoreMe: 1 }), scoutWith([trait("leaky", "weakness")]))[0]
+        .favorable
+    ).toBe(false);
+  });
+
+  it("수비 불안과 저실점 조직이 동시에 잡히면 모순이므로 한 줄만 낸다", () => {
+    const lines = buildScoutingRetro(
+      matchOf({ scoreMe: 2 }),
+      scoutWith([trait("leaky", "weakness"), trait("solid")])
+    );
+    expect(lines.map((l) => l.id)).toEqual(["leaky"]);
+  });
+
+  it("단단한 상대의 골문을 열면 살린 것으로 잡는다", () => {
+    expect(buildScoutingRetro(matchOf({ scoreMe: 1 }), scoutWith([trait("solid")]))[0].favorable).toBe(true);
+    expect(buildScoutingRetro(matchOf({ scoreMe: 0 }), scoutWith([trait("solid")]))[0].favorable).toBe(false);
+  });
+
+  it("최대 4줄까지만 낸다 (리포트지 목록이 아니다)", () => {
+    const lines = buildScoutingRetro(
+      matchOf({ events: [goalAt(80, "me"), goalAt(70, "opp")], scoreMe: 2, scoreOpp: 2 }),
+      scoutWith([
+        trait("late_collapse", "weakness"),
+        trait("firepower"),
+        trait("second_half"),
+        trait("leaky", "weakness"),
+        trait("solid"),
+      ])
+    );
+    expect(lines.length).toBeLessThanOrEqual(4);
+  });
+
+  it("모든 줄에 실측 근거가 인용된다", () => {
+    const lines = buildScoutingRetro(
+      matchOf({ events: [goalAt(80, "me")], scoreMe: 1, scoreOpp: 2 }),
+      scoutWith([trait("late_collapse", "weakness"), trait("firepower")])
+    );
+    expect(lines.length).toBeGreaterThan(0);
+    for (const l of lines) expect(l.textKo).toContain("근거-");
+  });
+
+  it("buildTacticsReview가 스카우팅을 받으면 리뷰에 함께 실린다", () => {
+    const review = buildTacticsReview(
+      matchOf({ scoreOpp: 2 }),
+      mod([]),
+      mod([]),
+      scoutWith([trait("firepower")])
+    );
+    expect(review.scoutingRetro).toHaveLength(1);
+    // 스카우팅을 안 넘기면 빈 배열 (기존 호출부 호환).
+    expect(buildTacticsReview(matchOf({}), mod([]), mod([])).scoutingRetro).toEqual([]);
   });
 });

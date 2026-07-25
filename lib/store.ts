@@ -2,7 +2,12 @@ import { useMemo } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { autoPlace } from "./engine/autoplace";
-import { winProbability } from "./engine/winprob";
+import { applyModifiers, type AppliedRule } from "./engine/modifiers";
+import { lineStrengths, type LineStrengths } from "./engine/strength";
+import { teamById } from "./data/teams";
+import { venueById } from "./data/venues";
+import { h2hOf } from "./data/h2h";
+import { scoutTeam, type OppScouting } from "@/lib/wc2026/scouting";
 import { applyIntervention, initMatch, simulateMinute } from "./engine/match";
 import type { Intervention, MatchState } from "./engine/match";
 import { simulateShootout } from "./engine/shootout";
@@ -365,14 +370,52 @@ export const useAppStore = create<AppState>()(
   )
 );
 
-// 파생 셀렉터: me/opp/venue가 모두 준비된 뒤에만 winProbability를 계산한다.
-// [me, opp, venueId] 참조가 바뀔 때만 재계산되도록 useMemo로 메모이즈한다.
-export function useWinProb(): ReturnType<typeof winProbability> | undefined {
+// 작전실용 파생 셀렉터 ─────────────────────────────────────────────────────────
+//
+// 여기에는 킥오프 전 승률을 주는 셀렉터가 없다(예전 useWinProb은 제거됐다).
+// 전술을 고르기 전에 결과 확률이 보이면 감독의 판단이 사라지고 "숫자가 큰 쪽으로
+// 슬라이더를 미는" 최적화 게임이 되기 때문이다(자세한 이유는 ScoutingReport.tsx
+// 상단 주석). 승률은 경기가 시작된 뒤 MatchState.probTimeline에서만 나온다.
+// 승률을 계산하지 않고 "지금 내 세팅이 어떤 전술 효과를 발동시키고 있는가"만 준다.
+// winProbability()는 내부적으로 이 applyModifiers()를 부른 뒤 포아송으로 승/무/패를
+// 뽑는데, 작전실에는 그 앞단(발동 규칙)까지만 필요하다.
+export function useTacticRules(): AppliedRule[] {
   const me = useAppStore((s) => s.me);
   const opp = useAppStore((s) => s.opp);
   const venueId = useAppStore((s) => s.setup.venueId);
   return useMemo(() => {
-    if (!me || !opp || !venueId) return undefined;
-    return winProbability(me, opp, venueId);
+    if (!me || !opp || !venueId) return [];
+    const venue = venueById(venueId);
+    const meTeam = teamById(me.teamId);
+    const oppTeam = teamById(opp.teamId);
+    if (!venue || !meTeam || !oppTeam) return [];
+    return applyModifiers(me, opp, venue, meTeam, oppTeam, h2hOf(me.teamId, opp.teamId)).rules;
   }, [me, opp, venueId]);
+}
+
+/** 라인별(GK/수비/중원/공격) 전력 비교. 결과 확률이 아니라 전력 구조다. */
+export function useLineMatchup(): { me: LineStrengths; opp: LineStrengths } | undefined {
+  const me = useAppStore((s) => s.me);
+  const opp = useAppStore((s) => s.opp);
+  return useMemo(() => {
+    if (!me || !opp) return undefined;
+    return { me: lineStrengths(me, opp), opp: lineStrengths(opp, me) };
+  }, [me, opp]);
+}
+
+/**
+ * 상대 스카우팅 리포트(실제 2026 월드컵 기록 기반).
+ * rewrite 모드면 그 경기의 실제 선발 포메이션까지 포함된다.
+ */
+export function useOppScouting(): OppScouting | undefined {
+  const me = useAppStore((s) => s.me);
+  const opp = useAppStore((s) => s.opp);
+  const rewriteContext = useAppStore((s) => s.rewriteContext);
+  return useMemo(() => {
+    if (!opp) return undefined;
+    return scoutTeam(opp.teamId, {
+      myElo: me ? teamById(me.teamId)?.elo : undefined,
+      matchId: rewriteContext?.matchId,
+    });
+  }, [me, opp, rewriteContext]);
 }

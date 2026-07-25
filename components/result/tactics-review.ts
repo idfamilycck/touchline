@@ -5,6 +5,7 @@
 import type { MatchState } from "@/lib/engine/match";
 import type { AppliedRule, ModifierResult } from "@/lib/engine/modifiers";
 import { matchStats, interventionImpacts } from "@/lib/engine/match-stats";
+import { LATE_MINUTE, type OppScouting } from "@/lib/wc2026/scouting";
 
 export interface TacticsReview {
   worked: AppliedRule[]; // 종합효과(공격+수비) 양수 — 통한 전술
@@ -18,6 +19,28 @@ export interface TacticsReview {
    */
   oppEdge: AppliedRule[];
   tips: string[]; // 이번 경기에서 짚어볼 점 (회고 · 최대 4, 최소 1)
+  /**
+   * 경기 전 스카우팅과 실제 결과의 대조.
+   *
+   * 작전실에서 "상대는 대회 실점의 절반을 75분 이후에 내줬다"고 알려주고 끝내면
+   * 그 정보가 판단에 쓸모 있었는지 확인할 길이 없다. 여기서 같은 실측 프로필을 결과와
+   * 맞대어 "경고가 맞았는가 / 약점을 파고들었는가"를 문장으로 닫는다.
+   */
+  scoutingRetro: ScoutRetroLine[];
+}
+
+export interface ScoutRetroLine {
+  id: string;
+  /**
+   * 이번 경기에서 그 항목이 우리에게 유리하게 끝났는가.
+   *
+   * "스카우팅이 맞았는가"가 아니라 "우리에게 좋았는가"로 잡는다. 둘은 다르다 —
+   * "막판 실점 취약"이라는 예측이 적중하면 그건 우리에게 좋은 일이지만,
+   * "화력형"이 적중하면 나쁜 일이다. 적중 여부로 색을 칠하면 두 경우가 같은
+   * 빨강이 되어 화면이 거짓말을 한다.
+   */
+  favorable: boolean;
+  textKo: string;
 }
 
 const impact = (r: AppliedRule) => r.deltaAttack + r.deltaDefense;
@@ -34,10 +57,118 @@ const MEANINGFUL = 0.005;
 // 상대가 확실히 앞선 것(≥1.5%p)만 담는다.
 const OPP_EDGE_MIN = 0.015;
 
+// ── 스카우팅 대조 ────────────────────────────────────────────────────────────
+// 경기 전 브리핑에 실린 성향 태그(전부 실제 대회 기록에서 나온 것)를 이번 경기의
+// 실제 전개와 맞대어 본다. 각 줄은 "무엇을 알고 있었는가 -> 실제로 어떻게 됐는가"
+// 형태라, 감독의 판단이 유효했는지 스스로 검증할 수 있다.
+export function buildScoutingRetro(match: MatchState, scout?: OppScouting): ScoutRetroLine[] {
+  if (!scout) return [];
+
+  const goals = match.events.filter((e) => e.type === "goal");
+  const myGoals = goals.filter((e) => e.side === "me");
+  const oppGoals = goals.filter((e) => e.side === "opp");
+  const myLateGoals = myGoals.filter((e) => e.minute >= LATE_MINUTE);
+  const oppSecondHalfGoals = oppGoals.filter((e) => e.minute > 45);
+
+  const trait = (id: string) => scout.traits.find((t) => t.id === id);
+  const out: ScoutRetroLine[] = [];
+
+  const lateCollapse = trait("late_collapse");
+  if (lateCollapse) {
+    out.push(
+      myLateGoals.length > 0
+        ? {
+            id: "late_collapse",
+            favorable: true,
+            textKo: `${scout.nameKo}는 대회 실점의 상당수를 ${LATE_MINUTE}분 이후에 내줬습니다(${lateCollapse.evidenceKo}). 이번에도 ${myLateGoals
+              .map((g) => `${g.minute}분`)
+              .join(", ")}에 그 구간을 파고들었어요.`,
+          }
+        : {
+            id: "late_collapse",
+            favorable: false,
+            textKo: `${lateCollapse.evidenceKo} — 상대의 가장 약한 시간대였는데 이번엔 그 구간에서 득점하지 못했습니다. 막판에 교체와 템포를 몰아줬다면 달랐을 지점이에요.`,
+          }
+    );
+  }
+
+  const firepower = trait("firepower");
+  if (firepower) {
+    out.push(
+      match.scoreOpp >= 2
+        ? {
+            id: "firepower",
+            favorable: false,
+            textKo: `경고했던 화력이 살아났습니다(${firepower.evidenceKo}). ${match.scoreOpp}실점 — 수비 라인을 더 내리거나 맨마킹으로 묶었어야 했어요.`,
+          }
+        : {
+            id: "firepower",
+            favorable: true,
+            textKo: `${firepower.evidenceKo}인 상대를 ${match.scoreOpp}실점으로 막았습니다. 수비 조직이 통했어요.`,
+          }
+    );
+  }
+
+  const secondHalf = trait("second_half");
+  if (secondHalf) {
+    out.push(
+      oppSecondHalfGoals.length > 0
+        ? {
+            id: "second_half",
+            favorable: false,
+            textKo: `후반에 강한 팀이라는 경고대로(${secondHalf.evidenceKo}) 후반에 ${oppSecondHalfGoals.length}실점했습니다.`,
+          }
+        : {
+            id: "second_half",
+            favorable: true,
+            textKo: `${secondHalf.evidenceKo}인 상대의 후반을 무실점으로 넘겼습니다. 체력 관리가 통했어요.`,
+          }
+    );
+  }
+
+  const leaky = trait("leaky");
+  if (leaky) {
+    out.push(
+      match.scoreMe >= 2
+        ? {
+            id: "leaky",
+            favorable: true,
+            textKo: `수비가 흔들리는 상대(${leaky.evidenceKo})를 상대로 ${match.scoreMe}골을 넣었습니다. 약점을 제대로 공략했어요.`,
+          }
+        : {
+            id: "leaky",
+            favorable: false,
+            textKo: `${leaky.evidenceKo}인 상대인데 ${match.scoreMe}골에 그쳤습니다. 더 공격적으로 나갔어야 할 상대였어요.`,
+          }
+    );
+  }
+
+  const solid = trait("solid") ?? trait("cleansheet");
+  if (solid && !leaky) {
+    out.push(
+      match.scoreMe > 0
+        ? {
+            id: "solid",
+            favorable: true,
+            textKo: `${solid.evidenceKo}인 단단한 상대의 골문을 열었습니다(${match.scoreMe}골).`,
+          }
+        : {
+            id: "solid",
+            favorable: false,
+            textKo: `${solid.evidenceKo} — 원래 뚫기 어려운 상대였고 이번에도 득점하지 못했습니다. 공격 가담을 더 늘려볼 만했어요.`,
+          }
+    );
+  }
+
+  // 4줄이 넘어가면 회고가 아니라 목록이 된다.
+  return out.slice(0, 4);
+}
+
 export function buildTacticsReview(
   match: MatchState,
   meMod: ModifierResult,
-  oppMod: ModifierResult
+  oppMod: ModifierResult,
+  scout?: OppScouting
 ): TacticsReview {
   const worked = meMod.rules
     .filter((r) => impact(r) >= MEANINGFUL)
@@ -162,5 +293,11 @@ export function buildTacticsReview(
 
   // 상한 6: "너무 부족하다"는 지적을 받아 4에서 올렸다. 그 이상은 리포트가 아니라
   // 목록이 되어 오히려 안 읽힌다.
-  return { worked, hurt, oppEdge, tips: tips.slice(0, 6) };
+  return {
+    worked,
+    hurt,
+    oppEdge,
+    tips: tips.slice(0, 6),
+    scoutingRetro: buildScoutingRetro(match, scout),
+  };
 }

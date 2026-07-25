@@ -1,8 +1,12 @@
 ﻿"use client";
 
 // "추천 전술 보기" — 온디맨드로 recommend()(약 100ms, 전술 조합 전수 탐색)를 돌려
-// 추천 승률·현재 대비 델타·핵심 근거 3개를 보여주고, "적용" 시 instructions/lineup/roles를
+// 추천 포메이션과 핵심 근거 3개를 보여주고, "적용" 시 instructions/lineup/roles를
 // 일괄 반영한다. 동기 CPU 작업이라 스피너가 먼저 그려지도록 다음 프레임에 실행한다.
+//
+// 예전에는 "추천 세팅 예상 승률 62% (▲ +7%p)"를 함께 띄웠다. 지웠다 — 킥오프 전에
+// 확률이 보이면 감독이 판단할 게 없어지고, 이 패널은 "정답 버튼"이 된다. 수석코치는
+// 무엇을 권하는지와 그 이유를 말하지, 이기는 확률을 말하지 않는다.
 
 import { useState } from "react";
 import { Lightning, CheckCircle } from "@phosphor-icons/react";
@@ -10,11 +14,7 @@ import { useAppStore } from "@/lib/store";
 import { recommend, type Recommendation } from "@/lib/engine/recommend";
 import { RuleIcon } from "@/components/ui/RuleIcon";
 
-interface RecommendPanelProps {
-  currentWin?: number; // 0~1
-}
-
-export function RecommendPanel({ currentWin }: RecommendPanelProps) {
+export function RecommendPanel() {
   const me = useAppStore((s) => s.me);
   const opp = useAppStore((s) => s.opp);
   const venueId = useAppStore((s) => s.setup.venueId);
@@ -41,12 +41,6 @@ export function RecommendPanel({ currentWin }: RecommendPanelProps) {
     applyRecommendation(rec);
     setApplied(true);
   };
-
-  const recWinPct = rec ? Math.round(rec.winProb * 100) : undefined;
-  // 현재 대비 델타(%p). rec.winDelta는 추천 시점의 현재값 기준이라, 표시 시점의
-  // currentWin과 재계산해 표기 일관성을 맞춘다.
-  const deltaPct =
-    rec && currentWin !== undefined ? Math.round(rec.winProb * 100) - Math.round(currentWin * 100) : undefined;
 
   return (
     <div className="panel flex flex-col gap-4 rounded-panel p-5">
@@ -78,26 +72,12 @@ export function RecommendPanel({ currentWin }: RecommendPanelProps) {
 
       {rec && !loading && (
         <div className="flex flex-col gap-3">
-          <div className="flex items-end justify-between rounded-panel border border-line bg-surface/50 p-3">
-            <div>
-              <p className="text-[13px] text-dim">추천 세팅 예상 승률</p>
-              <p className="stat-num text-3xl text-gain">{recWinPct}%</p>
-              <p className="stat-num text-[13px] text-dim">
-                포메이션 {rec.instructions.formation} · {rec.evaluated.toLocaleString()}개 조합 검토
-              </p>
-            </div>
-            {deltaPct !== undefined && (
-              <span
-                className="stat-num rounded-full px-2.5 py-1 text-xs"
-                style={{
-                  color: deltaPct >= 0 ? "var(--color-gain)" : "var(--color-danger)",
-                  background: deltaPct >= 0 ? "rgba(59,227,138,0.14)" : "rgba(255,92,122,0.14)",
-                }}
-              >
-                {deltaPct >= 0 ? "▲ +" : "▼ −"}
-                {Math.abs(deltaPct)}%p
-              </span>
-            )}
+          <div className="rounded-panel border border-line bg-surface/50 p-3">
+            <p className="text-[13px] text-dim">추천 포메이션</p>
+            <p className="stat-num text-3xl text-ink">{rec.instructions.formation}</p>
+            <p className="stat-num mt-0.5 text-[13px] text-dim">
+              {rec.evaluated.toLocaleString()}개 전술 조합을 검토했습니다
+            </p>
           </div>
 
           {rec.topFactors.length > 0 && (
@@ -133,11 +113,9 @@ export function RecommendPanel({ currentWin }: RecommendPanelProps) {
               "이 전술 적용하기"
             )}
           </button>
-          {deltaPct !== undefined && deltaPct === 0 && (
-            <p className="text-center text-[13px] text-dim">
-              지금 세팅이 이미 최적에 가까워요. 그대로 두어도 좋아요.
-            </p>
-          )}
+          <p className="text-center text-[13px] leading-relaxed text-dim">
+            제안일 뿐입니다. 상대 분석을 보고 직접 판단하셔도 좋아요.
+          </p>
         </div>
       )}
     </div>

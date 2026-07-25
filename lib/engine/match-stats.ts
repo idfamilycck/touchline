@@ -101,6 +101,82 @@ export function matchStats(
   return { me, opp, possessionMe, attackShareMe, totalChances };
 }
 
+// ── 최근 흐름(모멘텀) ────────────────────────────────────────────────────────
+// 누적 스탯(점유율·슈팅)은 "경기 전체가 어땠나"를 말하지 "지금 누가 밀어붙이고
+// 있나"를 말하지 못한다. 60분에 0-0인데 우리가 최근 10분 내내 두들기고 있는지
+// 반대로 몰리고 있는지는 감독이 개입을 결정하는 데 가장 중요한 신호인데, 지금까지
+// 화면 어디에도 없었다.
+//
+// 측정 방식: 최근 MOMENTUM_WINDOW_MIN분의 공격 이벤트에 위협도 가중치를 매겨
+// 양 팀을 비교한다. 추정이 아니라 시뮬레이션이 실제로 낸 이벤트만 센다.
+
+/** 모멘텀을 재는 최근 구간(분). */
+export const MOMENTUM_WINDOW_MIN = 10;
+
+/** 이벤트별 위협 가중치. 골에 가까울수록 크다. */
+const THREAT_WEIGHT: Partial<Record<MatchEvent["type"], number>> = {
+  goal: 5,
+  save: 3,
+  shot: 2,
+  corner: 1.5,
+  chance: 1,
+};
+
+export interface Momentum {
+  /** 0~100. 50이면 대등, 100에 가까울수록 우리가 몰아치는 중. */
+  meShare: number;
+  /** 구간 내 양 팀 위협 총량(0이면 조용한 구간). */
+  totalWeight: number;
+  /** 측정 구간의 시작 분. */
+  fromMinute: number;
+}
+
+export function recentMomentum(
+  events: MatchEvent[],
+  minute: number,
+  windowMin: number = MOMENTUM_WINDOW_MIN
+): Momentum {
+  const fromMinute = Math.max(0, minute - windowMin);
+  let me = 0;
+  let opp = 0;
+  for (const e of events) {
+    if (e.minute <= fromMinute || e.minute > minute) continue;
+    const w = THREAT_WEIGHT[e.type];
+    if (!w) continue;
+    if (e.side === "me") me += w;
+    else if (e.side === "opp") opp += w;
+  }
+  const total = me + opp;
+  return {
+    // 조용한 구간에서 0/0을 100%로 튀게 두면 안 된다 — 대등(50)으로 본다.
+    meShare: total > 0 ? Math.round((me / total) * 100) : 50,
+    totalWeight: total,
+    fromMinute,
+  };
+}
+
+// ── 팀 평균 체력 ─────────────────────────────────────────────────────────────
+// stamina는 선수별(0~1)로만 있어서 "우리 팀이 지금 얼마나 지쳐 있나"를 한눈에 볼
+// 방법이 없었다. 교체 타이밍 판단에 필요한 값이라 팀 평균으로 접어 준다.
+
+/**
+ * 온피치 선발 11명의 평균 체력(0~100).
+ * lineup에 배치된 선수만 세므로 벤치는 평균을 끌어올리지 않는다.
+ */
+export function teamStaminaPct(
+  lineup: Record<string, string | undefined>,
+  stamina: Record<string, number>
+): number {
+  let sum = 0;
+  let n = 0;
+  for (const playerId of Object.values(lineup)) {
+    if (!playerId) continue;
+    sum += stamina[playerId] ?? 1;
+    n += 1;
+  }
+  return n > 0 ? Math.round((sum / n) * 100) : 100;
+}
+
 // ── 개입 효과 ────────────────────────────────────────────────────────────────
 // "감독이 개입했더니 승률이 어떻게 움직였나"는 이 앱에서 가장 감독 리포트다운 지표인데
 // 지금까지 어디에서도 쓰이지 않고 있었다. interventions(개입 시각)와 probTimeline

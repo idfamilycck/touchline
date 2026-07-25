@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { matchStats, interventionImpacts, IMPACT_WINDOW_MIN } from "./match-stats";
+import {
+  matchStats,
+  interventionImpacts,
+  IMPACT_WINDOW_MIN,
+  recentMomentum,
+  teamStaminaPct,
+  MOMENTUM_WINDOW_MIN,
+} from "./match-stats";
 import type { MatchEvent, Intervention } from "./match";
 
 const ev = (type: MatchEvent["type"], side: "me" | "opp", minute = 10): MatchEvent => ({
@@ -101,5 +108,76 @@ describe("interventionImpacts", () => {
     const [impact] = interventionImpacts([iv(88)], timeline);
     expect(impact.after).toBe(30);
     expect(IMPACT_WINDOW_MIN).toBe(10);
+  });
+});
+
+describe("recentMomentum (최근 흐름)", () => {
+  it("구간 밖 이벤트는 무시한다", () => {
+    // 60분 기준 창은 (50, 60]. 40분의 폭격은 흐름에 들어오면 안 된다.
+    const events = [
+      ev("goal", "me", 40),
+      ev("shot", "me", 40),
+      ev("shot", "opp", 55),
+    ];
+    const m = recentMomentum(events, 60);
+    expect(m.fromMinute).toBe(60 - MOMENTUM_WINDOW_MIN);
+    expect(m.meShare).toBe(0); // 구간 안에는 상대 슈팅만 있다
+  });
+
+  it("현재 분보다 미래의 이벤트는 세지 않는다", () => {
+    const m = recentMomentum([ev("goal", "me", 70)], 60);
+    expect(m.totalWeight).toBe(0);
+  });
+
+  it("조용한 구간은 50%(대등)으로 본다 — 0/0이 100%로 튀지 않는다", () => {
+    const m = recentMomentum([], 60);
+    expect(m.meShare).toBe(50);
+    expect(m.totalWeight).toBe(0);
+  });
+
+  it("골이 슈팅보다 무겁게 반영된다", () => {
+    // 우리 골 1 vs 상대 슈팅 2 -> 가중치 5 vs 4 이므로 우리가 앞선다.
+    const m = recentMomentum([ev("goal", "me", 58), ev("shot", "opp", 58), ev("shot", "opp", 59)], 60);
+    expect(m.meShare).toBeGreaterThan(50);
+  });
+
+  it("한쪽이 독점하면 100/0으로 간다", () => {
+    const m = recentMomentum([ev("shot", "opp", 58), ev("chance", "opp", 59)], 60);
+    expect(m.meShare).toBe(0);
+  });
+
+  it("득점과 무관한 이벤트(휘슬 등)는 흐름에 영향이 없다", () => {
+    const withCard = recentMomentum([ev("shot", "me", 58), ev("card", "opp", 59)], 60);
+    const without = recentMomentum([ev("shot", "me", 58)], 60);
+    expect(withCard.meShare).toBe(without.meShare);
+    expect(withCard.totalWeight).toBe(without.totalWeight);
+  });
+
+  it("창 크기를 넓히면 더 오래된 장면까지 들어온다", () => {
+    const events = [ev("goal", "me", 30), ev("shot", "opp", 58)];
+    expect(recentMomentum(events, 60, 10).meShare).toBe(0);
+    expect(recentMomentum(events, 60, 40).meShare).toBeGreaterThan(50);
+  });
+});
+
+describe("teamStaminaPct (선발 평균 체력)", () => {
+  it("배치된 선수만 평균에 넣는다 (벤치가 평균을 올리지 않는다)", () => {
+    const lineup = { gk: "a", cb_1: "b" };
+    const stamina = { a: 0.5, b: 0.7, bench1: 1.0 };
+    expect(teamStaminaPct(lineup, stamina)).toBe(60);
+  });
+
+  it("빈 슬롯(퇴장 등)은 건너뛴다", () => {
+    const lineup = { gk: "a", cb_1: undefined, cb_2: "b" };
+    const stamina = { a: 0.4, b: 0.6 };
+    expect(teamStaminaPct(lineup, stamina)).toBe(50);
+  });
+
+  it("체력 기록이 없는 선수는 만땅으로 본다", () => {
+    expect(teamStaminaPct({ gk: "a" }, {})).toBe(100);
+  });
+
+  it("아무도 없으면 100", () => {
+    expect(teamStaminaPct({}, {})).toBe(100);
   });
 });

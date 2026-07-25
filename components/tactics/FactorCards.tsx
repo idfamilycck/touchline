@@ -1,6 +1,8 @@
 ﻿"use client";
 
-// 정보 3계층의 2층: winProbability().rules → 아이콘 + 한 문장 + 델타 칩 카드.
+// 정보 3계층의 2층: 지금 세팅이 발동시킨 전술 규칙 → 아이콘 + 한 문장 + 델타 칩 카드.
+// 규칙은 applyModifiers()에서 오며(store의 useTacticRules), 승/무/패 확률과는 무관하다 —
+// "무엇이 우리 공격/수비를 얼마나 밀어올리는가"만 말한다.
 // 조작→반응 1:1 원칙: 마지막 조작으로 새로 뜨거나 효과가 바뀐 카드에만 한 번 펄스.
 // 이전 rules 배열과 diff한 뒤, 바뀐 카드 요소를 key remount해 CSS 펄스를 재생한다.
 
@@ -86,8 +88,8 @@ export function FactorCards({ rules }: FactorCardsProps) {
       <div className="panel rounded-panel p-5">
         <p className="eyebrow text-dim">전술 근거</p>
         <p className="mt-3 rounded-panel border border-line bg-surface/50 p-3 text-[13px] leading-relaxed text-dim">
-          지금은 승률을 크게 흔드는 요인이 없어요. 포메이션·지시·특수 전술을 바꾸면
-          그 근거가 여기에 카드로 나타납니다.
+          지금 세팅에서 특별히 발동 중인 전술 효과가 없어요. 포메이션·지시·특수 전술을
+          바꾸면 그 근거가 여기에 카드로 나타납니다.
         </p>
       </div>
     );
