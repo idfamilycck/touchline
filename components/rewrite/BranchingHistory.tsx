@@ -164,10 +164,10 @@ export function BranchingHistory({
 
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[12px] font-bold text-dim">
         <span className="inline-flex items-center gap-1.5">
-          <i className="h-1 w-4 rounded-full" style={{ background: "var(--color-dim)" }} />실제 역사
+          <i aria-hidden className="h-1 w-4 rounded-full" style={{ background: "var(--color-dim)" }} />실제 역사
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <i className="h-1 w-4 rounded-full" style={{ background: "var(--color-accent)" }} />당신의 평행세계
+          <i aria-hidden className="h-1 w-4 rounded-full" style={{ background: "var(--color-accent)" }} />당신의 평행세계
         </span>
         <span className="stat-num ml-auto text-dim">
           위 {meCode} 우세 · 아래 {oppCode} 우세

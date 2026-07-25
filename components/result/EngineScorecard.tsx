@@ -81,11 +81,12 @@ export function EngineScorecard({ scorecard }: { scorecard: Scorecard }) {
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] font-bold text-dim">
             <span className="inline-flex items-center gap-1.5">
-              <i className="h-3.5 w-3.5 rounded-[3px]" style={{ background: "var(--color-gain)", opacity: 0.85 }} />
+              <i aria-hidden className="h-3.5 w-3.5 rounded-[3px]" style={{ background: "var(--color-gain)", opacity: 0.85 }} />
               승자 적중
             </span>
             <span className="inline-flex items-center gap-1.5">
               <i
+                aria-hidden
                 className="relative h-3.5 w-3.5 rounded-[3px]"
                 style={{ background: "var(--color-danger)", opacity: 0.92 }}
               >
@@ -103,7 +104,7 @@ export function EngineScorecard({ scorecard }: { scorecard: Scorecard }) {
 
       <p className="mt-5 rounded-panel border border-line bg-surface-2/40 px-3.5 py-3 text-[13px] leading-relaxed text-dim">
         승/패 두 갈래만 놓고 찍는 무작위의 기준선은 50%입니다. 이 엔진은{" "}
-        <b className="text-accent">{ratePct.toFixed(0)}%</b>로 실제 승부처를 그만큼 따라갑니다 — 당신의
+        <b className="text-accent">{ratePct.toFixed(0)}%</b>로 실제 승부처를 그만큼 따라갑니다. 당신의
         &ldquo;평행세계&rdquo;가 상상이 아니라 근거를 갖는 이유입니다.
       </p>
     </section>
