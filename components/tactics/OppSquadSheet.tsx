@@ -3,19 +3,27 @@
 // 상대팀 전력 상세 — 실제 선발 11명과 포메이션을 피치 위에 펼쳐 보여주는 시트.
 //
 // 스카우팅 리포트는 "이 팀이 어떤 팀인가"를 수치로 말한다. 감독이 그다음 알고 싶은 건
-// "그래서 누가 어디에 서는가"인데, 좁은 분석 열에 피치 다이어그램을 욱여넣으면 둘 다
-// 못 읽는다. 그래서 별도 오버레이로 뺐다.
+// "그래서 누가 어디에 서는가 + 각자 얼마나 강한가"인데, 좁은 분석 열에 다 넣으면 못
+// 읽는다. 그래서 별도 오버레이로 뺐다.
 //
-// 여기 있는 이름·포지션·배치는 전부 실제 경기 기록이다. 선수 능력치는 일부러 넣지
-// 않았다 — 이 앱의 WC2026 선수 능력치는 합성값이라(lib/wc2026/players.ts) 실제 선수
-// 정보인 양 늘어놓으면 거짓이 된다.
+// 이름·포지션·배치는 전부 실제 경기 기록이다. 능력치는 이 앱이 산정한 값(합성값,
+// lib/wc2026/players.ts)이지만 — 경기 시뮬레이션이 바로 이 수치로 돌아가므로, 감독이
+// 상대 전력을 판단하려면 그 값을 봐야 한다. 그래서 여기 함께 싣되, "산정한 값"임을
+// 화면에 분명히 밝힌다. playersOf(팀)의 선수 id는 이 명단의 playerId와 동일하다
+// (lib/wc2026/register.ts가 실제 명단에서 id를 그대로 가져와 등록한다).
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { X, Users } from "@phosphor-icons/react";
 import type { OppLineup, LineupSlot } from "@/lib/wc2026/lineup";
+import type { Player } from "@/lib/types";
+import { playersOf } from "@/lib/data/players";
+import { wc2026TeamId } from "@/lib/wc2026/source";
 import { roundLabelKo } from "@/components/rewrite/match-browser";
 import { FlagBadge } from "@/components/ui/FlagBadge";
+import { AttributeGrid } from "@/components/tactics/AttributeGrid";
+import { overallOf } from "@/components/tactics/squad-sort";
+import { attrColor, attrTierKo } from "./attr-color";
 
 interface OppSquadSheetProps {
   lineup: OppLineup;
@@ -39,15 +47,29 @@ const BAND_LABEL: Record<LineupSlot["band"], string> = {
 
 const BAND_ORDER: LineupSlot["band"][] = ["gk", "def", "dm", "mid", "am", "att"];
 
-function PitchDot({ slot }: { slot: LineupSlot }) {
+/** 표시용 종합값(정수). 없으면 undefined. */
+function ovrOf(player: Player | undefined): number | undefined {
+  return player ? Math.round(overallOf(player)) : undefined;
+}
+
+function PitchDot({ slot, ovr }: { slot: LineupSlot; ovr?: number }) {
   return (
     <div
       className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5"
       // y는 0이 자기 골문이므로 화면에서는 아래쪽 -> bottom 기준으로 놓는다.
       style={{ left: `${slot.x}%`, bottom: `${slot.y}%` }}
     >
-      <span className="flex size-7 items-center justify-center rounded-full border border-white/30 bg-accent text-[10px] font-black text-accent-ink shadow-sm">
+      <span className="relative flex size-7 items-center justify-center rounded-full border border-white/30 bg-accent text-[10px] font-black text-accent-ink shadow-sm">
         {slot.position.replace(/-[LR]$/, "")}
+        {ovr != null && (
+          <span
+            className="stat-num absolute -right-2 -top-1.5 rounded-full border border-black/30 bg-black/80 px-1 text-[9px] font-black leading-[1.4]"
+            style={{ color: attrColor(ovr) }}
+          >
+            {ovr}
+            <span className="sr-only"> 종합 ({attrTierKo(ovr)})</span>
+          </span>
+        )}
       </span>
       <span className="max-w-[68px] truncate rounded-full bg-black/55 px-1.5 py-px text-[10px] font-bold leading-tight text-white">
         {slot.name}
@@ -72,6 +94,34 @@ export function OppSquadSheet({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  // 실제 명단 id -> 이 앱이 산정한 Player(능력치). register가 명단 id를 그대로 등록하므로
+  // playerId로 바로 조회된다.
+  const players = useMemo(() => {
+    const m = new Map<string, Player>();
+    for (const p of playersOf(wc2026TeamId(lineup.teamCode))) m.set(p.id, p);
+    return m;
+  }, [lineup.teamCode]);
+
+  // 선발 중 종합 최고 선수를 기본 선택 — 시트를 열자마자 대표 선수의 능력치가 보인다.
+  const topId = useMemo(() => {
+    let best: string | undefined;
+    let bestOvr = -1;
+    for (const s of lineup.starters) {
+      const p = players.get(s.playerId);
+      if (!p) continue;
+      const o = overallOf(p);
+      if (o > bestOvr) {
+        bestOvr = o;
+        best = s.playerId;
+      }
+    }
+    return best;
+  }, [players, lineup.starters]);
+
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+  const activeId = selectedId ?? topId;
+  const activePlayer = activeId ? players.get(activeId) : undefined;
 
   const kickoffKo = lineup.kickoffISO.slice(0, 10).replace(/-/g, ".");
   const byBand = BAND_ORDER.map((band) => ({
@@ -99,7 +149,7 @@ export function OppSquadSheet({
         aria-label={`${nameKo} 실제 선수명단`}
         initial={{ scale: 0.94, y: 16 }}
         animate={{ scale: 1, y: 0 }}
-        className="panel relative flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-panel"
+        className="panel relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-panel"
       >
         {/* 헤더 */}
         <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
@@ -136,7 +186,7 @@ export function OppSquadSheet({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 gap-5 p-5 md:grid-cols-[minmax(0,1fr)_minmax(0,260px)]">
+          <div className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,232px)_minmax(0,260px)]">
             {/* 피치 */}
             <div>
               <div className="pitch-stripes relative aspect-[3/4] w-full overflow-hidden rounded-panel border border-line">
@@ -151,7 +201,7 @@ export function OppSquadSheet({
                   </g>
                 </svg>
                 {lineup.starters.map((s) => (
-                  <PitchDot key={s.playerId} slot={s} />
+                  <PitchDot key={s.playerId} slot={s} ovr={ovrOf(players.get(s.playerId))} />
                 ))}
               </div>
               <p className="mt-2 text-center text-[12px] text-dim">
@@ -159,7 +209,7 @@ export function OppSquadSheet({
               </p>
             </div>
 
-            {/* 명단 */}
+            {/* 명단 — 각 선수를 눌러 오른쪽에서 능력치를 본다. */}
             <div className="flex flex-col gap-4">
               <div>
                 <p className="eyebrow flex items-center gap-1.5 text-dim">
@@ -167,18 +217,42 @@ export function OppSquadSheet({
                   선발 {lineup.starters.length}명
                 </p>
                 <div className="mt-2 flex flex-col gap-2.5">
-                  {byBand.map(({ band, players }) => (
+                  {byBand.map(({ band, players: bandPlayers }) => (
                     <div key={band}>
                       <p className="text-[11px] font-black uppercase tracking-wide text-dim">
                         {BAND_LABEL[band]}
                       </p>
                       <ul className="mt-1 flex flex-col gap-0.5">
-                        {players.map((s) => (
-                          <li key={s.playerId} className="flex items-baseline justify-between gap-2">
-                            <span className="truncate text-[13px] text-ink">{s.name}</span>
-                            <span className="stat-num shrink-0 text-[11px] text-dim">{s.position}</span>
-                          </li>
-                        ))}
+                        {bandPlayers.map((s) => {
+                          const ovr = ovrOf(players.get(s.playerId));
+                          const active = activeId === s.playerId;
+                          return (
+                            <li key={s.playerId}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedId(s.playerId)}
+                                aria-pressed={active}
+                                className={`flex w-full items-center justify-between gap-2 rounded-control px-2 py-1 text-left transition-colors ${
+                                  active ? "bg-accent/15 ring-1 ring-accent/40" : "hover:bg-surface-2/60"
+                                }`}
+                              >
+                                <span className="truncate text-[13px] text-ink">{s.name}</span>
+                                <span className="flex shrink-0 items-center gap-2">
+                                  <span className="stat-num text-[11px] text-dim">{s.position}</span>
+                                  {ovr != null && (
+                                    <span
+                                      className="stat-num w-6 text-right text-[13px] font-black"
+                                      style={{ color: attrColor(ovr) }}
+                                    >
+                                      {ovr}
+                                      <span className="sr-only"> 종합 ({attrTierKo(ovr)})</span>
+                                    </span>
+                                  )}
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   ))}
@@ -189,21 +263,43 @@ export function OppSquadSheet({
                 <div>
                   <p className="eyebrow text-dim">교체 명단 {lineup.bench.length}명</p>
                   <ul className="mt-1.5 flex flex-wrap gap-1.5">
-                    {lineup.bench.map((b) => (
-                      <li
-                        key={b.playerId}
-                        className="rounded-full border border-line bg-surface-2/60 px-2 py-0.5 text-[12px] text-dim"
-                      >
-                        {b.name}
-                      </li>
-                    ))}
+                    {lineup.bench.map((b) => {
+                      const ovr = ovrOf(players.get(b.playerId));
+                      const active = activeId === b.playerId;
+                      return (
+                        <li key={b.playerId}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedId(b.playerId)}
+                            aria-pressed={active}
+                            className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[12px] transition-colors ${
+                              active
+                                ? "border-accent/50 bg-accent/15 text-ink"
+                                : "border-line bg-surface-2/60 text-dim hover:border-white/25"
+                            }`}
+                          >
+                            <span className="truncate">{b.name}</span>
+                            {ovr != null && (
+                              <span className="stat-num font-black" style={{ color: attrColor(ovr) }}>
+                                {ovr}
+                                <span className="sr-only"> 종합 ({attrTierKo(ovr)})</span>
+                              </span>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
+            </div>
 
+            {/* 선택한 선수 능력치 — 경기 시뮬레이션이 쓰는 그 값. */}
+            <div className="flex flex-col gap-3">
+              <AttributeGrid player={activePlayer} />
               <p className="rounded-panel border border-line bg-surface/40 px-3 py-2 text-[12px] leading-relaxed text-dim">
-                이름·포지션·배치는 실제 경기 기록입니다. 개별 선수 능력치는 이 앱이
-                생성한 값이라 여기에 싣지 않았어요.
+                이름·포지션·배치는 실제 경기 기록이고, 능력치는 이 앱이 산정한 값입니다 —
+                경기 시뮬레이션이 바로 이 수치로 돌아갑니다.
               </p>
             </div>
           </div>
