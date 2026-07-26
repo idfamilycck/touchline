@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { makeSetup } from "./__testutils__";
-import { RULE_DEFS, type RuleCtx } from "./modifiers";
+import { RULE_DEFS, applyModifiers, saturate, type RuleCtx } from "./modifiers";
 import { computeLambdas, winProbability } from "./winprob";
 import { teamById } from "@/lib/data/teams";
 import { venueById } from "@/lib/data/venues";
@@ -127,15 +127,30 @@ describe("세부 지시 상시 기본 효과", () => {
 });
 
 describe("RULE_DEFS 개별 규칙", () => {
-  it("high_line_vs_pace: line=3 & 상대 공격 평균 pace>80 → deltaDefense -0.08", () => {
+  // 램프(A-3): 임계값 절벽을 없앴으므로 "임계값 넘으면 정확히 -0.08"이 아니라
+  // "램프 상단(86)에서 -0.08, 하단(74)에서 0, 그 사이는 연속 증가"를 검증한다.
+  it("high_line_vs_pace: 상대 pace 램프에 비례해 deltaDefense가 0 → -0.08로 연속 증가", () => {
     const rule = findRule("high_line_vs_pace");
-    const fires = withMe(baseCtx({ oppAttPaceAvg: 85 }), { line: 3 });
-    expect(rule.when(fires)).toBe(true);
-    expect(rule.effect(fires)).toEqual({ da: 0, dd: -0.08 });
-    expect(rule.textKo(fires)).toContain("−8%");
+    const at = (pace: number) => withMe(baseCtx({ oppAttPaceAvg: pace }), { line: 3 });
 
-    const noFire = withMe(baseCtx({ oppAttPaceAvg: 75 }), { line: 3 });
-    expect(rule.when(noFire)).toBe(false);
+    // 램프 상단(86 이상)에서 최대 효과
+    expect(rule.effect(at(86)).dd).toBeCloseTo(-0.08, 6);
+    expect(rule.effect(at(95)).dd).toBeCloseTo(-0.08, 6);
+    expect(rule.textKo(at(86))).toContain("−8%");
+
+    // 램프 하단 이하에서는 발동조차 하지 않는다
+    expect(rule.when(at(74))).toBe(false);
+    expect(rule.when(at(70))).toBe(false);
+
+    // 원래 임계값 80은 램프 중앙 → 절반 효과
+    expect(rule.effect(at(80)).dd).toBeCloseTo(-0.04, 6);
+
+    // 절벽 없음: 임계값 근처에서 0.2 차이는 효과 차이도 미미해야 한다.
+    const jump = Math.abs(rule.effect(at(80.1)).dd - rule.effect(at(79.9)).dd);
+    expect(jump).toBeLessThan(0.005);
+
+    // 단조 증가
+    expect(rule.effect(at(84)).dd).toBeLessThan(rule.effect(at(78)).dd);
   });
 
   it("direct_targetman: buildup=direct & ST 역할=st_target → deltaAttack +0.06", () => {
@@ -156,19 +171,28 @@ describe("RULE_DEFS 개별 규칙", () => {
     expect(rule.effect(ctx)).toEqual({ da: -0.05, dd: 0 });
   });
 
-  it("focus_vs_weakflank: focus=left → 상대 오른쪽 FB 약체 시 deltaAttack +0.07", () => {
+  it("focus_vs_weakflank: 상대 측면 약점 정도에 비례해 deltaAttack이 커진다", () => {
     const rule = findRule("focus_vs_weakflank");
-    const ctx = withMe(baseCtx({ oppDefContribAvg: 60, oppFbRContrib: 50, oppFbLContrib: 60 }), {
-      focus: "left",
-    });
-    expect(rule.when(ctx)).toBe(true);
-    expect(rule.effect(ctx)).toEqual({ da: 0.07, dd: 0 });
-    expect(rule.textKo(ctx)).toContain("오른쪽");
+    const at = (fbR: number) =>
+      withMe(baseCtx({ oppDefContribAvg: 60, oppFbRContrib: fbR, oppFbLContrib: 60 }), {
+        focus: "left",
+      });
 
-    const notWeak = withMe(baseCtx({ oppDefContribAvg: 60, oppFbRContrib: 59, oppFbLContrib: 60 }), {
-      focus: "left",
-    });
-    expect(rule.when(notWeak)).toBe(false);
+    // 평균의 86%(=14% 부족)면 램프 상단 → 최대 +0.07
+    const wideOpen = at(60 * 0.86);
+    expect(rule.when(wideOpen)).toBe(true);
+    expect(rule.effect(wideOpen).da).toBeCloseTo(0.07, 6);
+    expect(rule.textKo(wideOpen)).toContain("오른쪽");
+
+    // 거의 평균 수준이면 발동하지 않는다
+    expect(rule.when(at(59.5))).toBe(false);
+
+    // 약할수록 크다(단조)
+    expect(rule.effect(at(52)).da).toBeGreaterThan(rule.effect(at(56)).da);
+
+    // 중앙 집중이면 애초에 대상이 없다
+    const center = withMe(baseCtx({ oppDefContribAvg: 60, oppFbRContrib: 40 }), { focus: "center" });
+    expect(rule.when(center)).toBe(false);
   });
 
   it("wide_vs_narrow: 나=wide 상대=narrow → +0.03 / 나=narrow 상대=wide → -0.03", () => {
@@ -189,18 +213,24 @@ describe("RULE_DEFS 개별 규칙", () => {
     expect(rule.effect(ctx)).toEqual({ da: 0.06, dd: 0 });
   });
 
-  it("offside_trap: trap=true & 상대 공격 평균 pace<=82 → deltaDefense +0.04 (이득)", () => {
+  it("offside_trap: 느린 상대 +0.04 → 빠른 상대 -0.05로 부호가 연속적으로 뒤집힌다", () => {
     const rule = findRule("offside_trap");
-    const ctx = withMe(baseCtx({ oppAttPaceAvg: 78 }), { offsideTrap: true });
-    expect(rule.when(ctx)).toBe(true);
-    expect(rule.effect(ctx)).toEqual({ da: 0, dd: 0.04 });
-  });
+    const at = (pace: number) => withMe(baseCtx({ oppAttPaceAvg: pace }), { offsideTrap: true });
 
-  it("offside_trap: trap=true & 상대 공격 평균 pace>82 → deltaDefense -0.05 (위험)", () => {
-    const rule = findRule("offside_trap");
-    const ctx = withMe(baseCtx({ oppAttPaceAvg: 88 }), { offsideTrap: true });
-    expect(rule.when(ctx)).toBe(true);
-    expect(rule.effect(ctx)).toEqual({ da: 0, dd: -0.05 });
+    // 램프 하단(76 이하): 순이득
+    expect(rule.effect(at(76)).dd).toBeCloseTo(0.04, 6);
+    expect(rule.effect(at(60)).dd).toBeCloseTo(0.04, 6);
+    // 램프 상단(88 이상): 순손해
+    expect(rule.effect(at(88)).dd).toBeCloseTo(-0.05, 6);
+    expect(rule.effect(at(99)).dd).toBeCloseTo(-0.05, 6);
+
+    // 트랩을 안 걸면 발동하지 않는다
+    expect(rule.when(withMe(baseCtx({ oppAttPaceAvg: 88 }), { offsideTrap: false }))).toBe(false);
+
+    // 중간 지점에서 부호가 한 번만 뒤집히고, 그 전이가 매끄럽다
+    const jump = Math.abs(rule.effect(at(82.1)).dd - rule.effect(at(81.9)).dd);
+    expect(jump).toBeLessThan(0.005);
+    expect(rule.effect(at(80)).dd).toBeGreaterThan(rule.effect(at(84)).dd);
   });
 
   it("man_marking_fatigue: manMark 지정 → deltaDefense +0.05", () => {
@@ -212,18 +242,23 @@ describe("RULE_DEFS 개별 규칙", () => {
     expect(rule.when(baseCtx())).toBe(false);
   });
 
-  it("man_marking_scheme: marking=man & 상대 att라인 드리블 평균>=78 → deltaDefense -0.03, 미만이면 +0.02", () => {
+  it("man_marking_scheme: 상대 개인기가 좋아질수록 +0.02 → -0.03으로 연속 전환", () => {
     const rule = findRule("man_marking_scheme");
-    const vsDribbler = withMe(baseCtx({ oppAttDribblingAvg: 82 }), { marking: "man" });
-    expect(rule.when(vsDribbler)).toBe(true);
-    expect(rule.effect(vsDribbler)).toEqual({ da: 0, dd: -0.03 });
-    expect(rule.textKo(vsDribbler)).toContain("−3%");
+    const at = (dribble: number) =>
+      withMe(baseCtx({ oppAttDribblingAvg: dribble }), { marking: "man" });
 
-    const vsPlain = withMe(baseCtx({ oppAttDribblingAvg: 70 }), { marking: "man" });
-    expect(rule.when(vsPlain)).toBe(true);
-    expect(rule.effect(vsPlain)).toEqual({ da: 0, dd: 0.02 });
-    expect(rule.textKo(vsPlain)).toContain("+2%");
+    // 램프 상단(84 이상): 뚫린다
+    expect(rule.effect(at(84)).dd).toBeCloseTo(-0.03, 6);
+    expect(rule.textKo(at(84))).toContain("−3%");
+    // 램프 하단(72 이하): 봉쇄된다
+    expect(rule.effect(at(72)).dd).toBeCloseTo(0.02, 6);
+    expect(rule.textKo(at(72))).toContain("+2%");
 
+    // 전환이 매끄럽다
+    const jump = Math.abs(rule.effect(at(78.1)).dd - rule.effect(at(77.9)).dd);
+    expect(jump).toBeLessThan(0.005);
+
+    // 지역방어면 이 규칙은 아예 발동하지 않는다(램프와 무관한 이산 조건)
     const zonal = withMe(baseCtx({ oppAttDribblingAvg: 82 }), { marking: "zonal" });
     expect(rule.when(zonal)).toBe(false);
   });
@@ -264,20 +299,28 @@ describe("RULE_DEFS 개별 규칙", () => {
     expect(rule.when(domeCtx)).toBe(false);
   });
 
-  it("form: form>=8 → deltaAttack +0.03 / form<=3 → deltaAttack -0.03", () => {
+  it("form: 폼 1~10을 -0.03~+0.03으로 선형 사상하고, 중간 폼에서는 카드를 띄우지 않는다", () => {
     const rule = findRule("form");
-    const hiForm: Team = { ...teamById("kor")!, form: 9 };
-    const ctxHi = { ...baseCtx(), meTeam: hiForm };
-    expect(rule.when(ctxHi)).toBe(true);
-    expect(rule.effect(ctxHi)).toEqual({ da: 0.03, dd: 0 });
+    const at = (form: number) => ({
+      ...baseCtx(),
+      meTeam: { ...teamById("kor")!, form } as Team,
+    });
 
-    const loForm: Team = { ...teamById("kor")!, form: 2 };
-    const ctxLo = { ...baseCtx(), meTeam: loForm };
-    expect(rule.when(ctxLo)).toBe(true);
-    expect(rule.effect(ctxLo)).toEqual({ da: -0.03, dd: 0 });
+    // 양 극단
+    expect(rule.effect(at(10)).da).toBeCloseTo(0.03, 6);
+    expect(rule.effect(at(1)).da).toBeCloseTo(-0.03, 6);
+    // 중앙(5.5)에서 0
+    expect(rule.effect(at(5.5)).da).toBeCloseTo(0, 6);
 
-    const midForm: Team = { ...teamById("kor")!, form: 5 };
-    expect(rule.when({ ...baseCtx(), meTeam: midForm })).toBe(false);
+    // 카드는 확실히 좋다/나쁘다일 때만
+    expect(rule.when(at(9))).toBe(true);
+    expect(rule.when(at(2))).toBe(true);
+    expect(rule.when(at(5))).toBe(false);
+    expect(rule.when(at(6))).toBe(false);
+
+    // ELO에서 파생된 폼(register.ts의 formFromElo)이 1점 움직여도 절벽이 없다
+    const jump = Math.abs(rule.effect(at(8)).da - rule.effect(at(7)).da);
+    expect(jump).toBeLessThan(0.008);
   });
 
   it("h2h_edge: 한쪽 승수가 2배 이상 & 3승 이상 → deltaAttack +0.02", () => {
@@ -298,7 +341,15 @@ describe("RULE_DEFS 개별 규칙", () => {
     expect(captain.mental).toBeGreaterThanOrEqual(85);
     const ctxHi = withMe(baseCtx(), {}, { captainId: "kor_16" });
     expect(rule.when(ctxHi)).toBe(true);
-    expect(rule.effect(ctxHi)).toEqual({ da: 0, dd: 0.02 });
+    // 램프(78~92): mental 91이면 거의 최대치, 92 이상이면 정확히 +0.02
+    expect(rule.effect(ctxHi).dd).toBeGreaterThan(0.017);
+    expect(rule.effect(ctxHi).dd).toBeLessThanOrEqual(0.02);
+
+    const ironWilled: Player = { ...captain, id: "test_captain_max", mental: 95 };
+    const ctxMax = withMe({ ...baseCtx(), meSquad: [...playersOf("kor"), ironWilled] }, {}, {
+      captainId: "test_captain_max",
+    });
+    expect(rule.effect(ctxMax).dd).toBeCloseTo(0.02, 6);
 
     const lowSynthetic: Player = { ...captain, id: "test_captain_lo", mental: 70 };
     const ctxLo = withMe({ ...baseCtx(), meSquad: [...playersOf("kor"), lowSynthetic] }, {}, {
@@ -409,6 +460,83 @@ describe("winProbability", () => {
 
     expect(rDirect.some((r) => r.id === "direct_targetman")).toBe(true);
     expect(rShort.some((r) => r.id === "direct_targetman")).toBe(false);
+  });
+
+  it("보정 포화: 델타를 아무리 쌓아도 상한을 넘지 않는다", () => {
+    // 작은 합에서는 종전 곱셈과 거의 같고, 큰 합에서는 눌린다.
+    expect(saturate(0)).toBeCloseTo(1, 10);
+    expect(saturate(0.05)).toBeCloseTo(1.05, 3); // 단일 보정은 사실상 그대로
+    expect(saturate(0.1)).toBeGreaterThan(1.09);
+    expect(saturate(0.1)).toBeLessThan(1.1);
+
+    // 극단 중첩은 포화한다
+    expect(saturate(0.6)).toBeLessThan(1.4);
+    expect(saturate(2.0)).toBeLessThan(1.46);
+    expect(saturate(100)).toBeLessThan(1.46);
+
+    // 음수 쪽도 대칭으로 눌린다(0 이하로 내려가 λ 부호가 뒤집히지 않는다)
+    expect(saturate(-100)).toBeGreaterThan(0.54);
+    expect(saturate(-0.05)).toBeCloseTo(0.95, 3);
+
+    // 단조 증가
+    expect(saturate(0.3)).toBeGreaterThan(saturate(0.2));
+  });
+
+  it("보정 포화: 모든 매치업에서 attackMult/defenseMult가 합리적 범위에 머문다", () => {
+    // recommend()가 23,328개 조합에서 최대 중첩을 찾아내도록 만들어져 있으므로,
+    // 극단 설정을 물려도 배수가 폭주하지 않아야 한다.
+    const me = makeSetup("kor", "4-3-3", {
+      line: 3,
+      tempo: 3,
+      pressing: 3,
+      attacking: 1,
+      buildup: "direct",
+      possession: 3,
+      transitionSpeed: 3,
+      lineSpacing: 3,
+      width: "wide",
+      focus: "left",
+      marking: "man",
+      offsideTrap: true,
+    });
+    const opp = makeSetup("bra", "4-3-3", { line: 3, pressing: 3, width: "narrow" });
+    const venue = venueById("metlife")!;
+    const meTeam = teamById("kor")!;
+    const oppTeam = teamById("bra")!;
+    const mod = applyModifiers(me, opp, venue, meTeam, oppTeam);
+    expect(mod.attackMult).toBeLessThan(1.46);
+    expect(mod.attackMult).toBeGreaterThan(0.54);
+    expect(mod.defenseMult).toBeLessThan(1.46);
+    expect(mod.defenseMult).toBeGreaterThan(0.54);
+  });
+
+  it("수적 열세: 10인이 되면 내 λ는 내려가고 상대 λ는 올라간다", () => {
+    const me = makeSetup("kor", "4-3-3");
+    const opp = makeSetup("jpn", "4-3-3");
+    const even = computeLambdas(me, opp, "metlife");
+
+    // 센터백 1명 퇴장(가장 방어적인 위치를 골라, 공격 라인 손실이 아닌 순수
+    // 수적 열세 효과만 남긴다).
+    const lineup = { ...me.lineup };
+    delete lineup["cb1"];
+    const short = computeLambdas({ ...me, lineup }, opp, "metlife");
+
+    expect(short.lambdaMe).toBeLessThan(even.lambdaMe);
+    expect(short.lambdaOpp).toBeGreaterThan(even.lambdaOpp);
+  });
+
+  it("수적 열세: 공격수 퇴장이 수비수 퇴장보다 내 λ를 더 깎는다", () => {
+    const me = makeSetup("kor", "4-3-3");
+    const opp = makeSetup("jpn", "4-3-3");
+    const loseCb = { ...me.lineup };
+    delete loseCb["cb1"];
+    const loseSt = { ...me.lineup };
+    delete loseSt["st"];
+
+    const withoutCb = computeLambdas({ ...me, lineup: loseCb }, opp, "metlife");
+    const withoutSt = computeLambdas({ ...me, lineup: loseSt }, opp, "metlife");
+
+    expect(withoutSt.lambdaMe).toBeLessThan(withoutCb.lambdaMe);
   });
 
   it("모든 AppliedRule의 textKo는 비어있지 않고 delta는 ±0.15 이내", () => {

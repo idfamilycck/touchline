@@ -12,6 +12,7 @@ import {
   Flag,
   Square,
   Siren,
+  Prohibit,
   ArrowsClockwise,
   ClipboardText,
   Timer,
@@ -30,10 +31,13 @@ const ICON: Record<MatchEventType, Icon> = {
   save: HandPalm,
   corner: Flag,
   card: Square,
+  red: Prohibit,
+  opp_tactic: ClipboardText,
   crisis: Siren,
   sub: ArrowsClockwise,
   tactic_change: ClipboardText,
   halftime: Timer,
+  period: Timer,
   fulltime: FlagCheckered,
 };
 
@@ -41,9 +45,11 @@ const MAX_ROWS = 40;
 
 interface CommentaryFeedProps {
   events: MatchEvent[];
+  /** 연장 진입 이후면 분 표기가 "90+n"이 아니라 실제 시각(91~120)이다. */
+  extraTime?: boolean;
 }
 
-export function CommentaryFeed({ events }: CommentaryFeedProps) {
+export function CommentaryFeed({ events, extraTime = false }: CommentaryFeedProps) {
   // 최근 MAX_ROWS개만, 최신이 위로 오도록 역순.
   const rows = events.slice(-MAX_ROWS).reverse();
 
@@ -61,7 +67,9 @@ export function CommentaryFeed({ events }: CommentaryFeedProps) {
       >
         {rows.map((e, i) => {
           const isGoal = e.type === "goal";
-          const isCrisis = e.type === "crisis";
+          // 퇴장은 위기와 동급으로 강조한다 — 수적 열세는 남은 시간 전체의 승률을
+          // 바꾸는 사건이라 중계에서 흘려보내면 안 된다.
+          const isCrisis = e.type === "crisis" || e.type === "red";
           const isOurs = e.side === "me";
           const EventIcon = ICON[e.type];
           return (
@@ -79,7 +87,7 @@ export function CommentaryFeed({ events }: CommentaryFeedProps) {
                 className="stat-num mt-0.5 w-9 shrink-0 text-right text-[13px] text-dim"
                 aria-hidden
               >
-                {minuteLabel(e.minute)}
+                {minuteLabel(e.minute, extraTime)}
               </span>
               <span className="mt-0.5 shrink-0 leading-none" aria-hidden>
                 <EventIcon size={15} weight="bold" />

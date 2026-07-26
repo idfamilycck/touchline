@@ -3,7 +3,7 @@ import { venueById } from "@/lib/data/venues";
 import { h2hOf } from "@/lib/data/h2h";
 import { autoPlace } from "./autoplace";
 import { lineStrengths } from "./strength";
-import { winProbability, lambdasFromParts } from "./winprob";
+import { winProbability, lambdasFromParts, onPitchCount } from "./winprob";
 import { buildCtx, evaluateModifiers, type AppliedRule } from "./modifiers";
 import { outcomeProbs } from "./poisson";
 import type { FormationId, RoleId, SideSetup, TeamInstructions } from "@/lib/types";
@@ -179,7 +179,12 @@ export function recommend(me: SideSetup, opp: SideSetup, venueId: string): Recom
                       modMe,
                       modOpp,
                       meTeam,
-                      oppTeam
+                      oppTeam,
+                      // rewrite 모드에선 실제 퇴장이 반영된 10인 라인업으로 작전실에
+                      // 들어올 수 있다. 후보는 autoPlace(11인)지만 상대는 그대로이므로
+                      // 양쪽 인원을 명시해 수적 상황을 추천에도 반영한다.
+                      onPitchCount(candidateBase),
+                      onPitchCount(opp)
                     );
                     const { win } = outcomeProbs(lambdaMe, lambdaOpp);
                     evaluated++;

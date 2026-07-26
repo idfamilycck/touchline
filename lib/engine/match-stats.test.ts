@@ -6,6 +6,8 @@ import {
   recentMomentum,
   teamStaminaPct,
   MOMENTUM_WINDOW_MIN,
+  playerRatings,
+  manOfTheMatch,
 } from "./match-stats";
 import type { MatchEvent, Intervention } from "./match";
 
@@ -179,5 +181,84 @@ describe("teamStaminaPct (선발 평균 체력)", () => {
 
   it("아무도 없으면 100", () => {
     expect(teamStaminaPct({}, {})).toBe(100);
+  });
+});
+
+describe("playerRatings (C)", () => {
+  const evP = (
+    type: MatchEvent["type"],
+    side: "me" | "opp",
+    playerId: string,
+    minute = 10
+  ): MatchEvent => ({ minute, type, side, playerId, textKo: type });
+
+  it("골은 가점, 경고는 감점, 퇴장은 큰 감점", () => {
+    const rows = playerRatings([
+      evP("goal", "me", "scorer"),
+      evP("card", "me", "fouler"),
+      evP("card", "me", "fouler", 20),
+      evP("red", "me", "fouler", 30),
+    ]);
+    const scorer = rows.find((r) => r.playerId === "scorer")!;
+    const fouler = rows.find((r) => r.playerId === "fouler")!;
+    expect(scorer.rating).toBeGreaterThan(6.0);
+    expect(scorer.goals).toBe(1);
+    expect(fouler.rating).toBeLessThan(6.0);
+    expect(fouler.cards).toBe(2);
+    expect(fouler.sentOff).toBe(true);
+  });
+
+  it("평점은 4.0~10.0으로 제한된다", () => {
+    const manyGoals = playerRatings(
+      Array.from({ length: 20 }, (_, i) => evP("goal", "me", "machine", i + 1))
+    )[0];
+    expect(manyGoals.rating).toBeLessThanOrEqual(10.0);
+
+    const manyReds = playerRatings(
+      Array.from({ length: 10 }, (_, i) => evP("red", "me", "villain", i + 1))
+    )[0];
+    expect(manyReds.rating).toBeGreaterThanOrEqual(4.0);
+  });
+
+  it("평점 내림차순으로 정렬된다", () => {
+    const rows = playerRatings([
+      evP("chance", "me", "quiet"),
+      evP("goal", "me", "star"),
+      evP("shot", "me", "busy"),
+      evP("shot", "me", "busy", 20),
+    ]);
+    for (let i = 1; i < rows.length; i++) {
+      expect(rows[i - 1].rating).toBeGreaterThanOrEqual(rows[i].rating);
+    }
+    expect(rows[0].playerId).toBe("star");
+  });
+
+  it("playerId 없는 이벤트와 평점에 관여하지 않는 이벤트는 무시한다", () => {
+    const rows = playerRatings([
+      ev("kickoff", "me"),
+      ev("halftime", "me"),
+      ev("opp_tactic", "opp"),
+      evP("goal", "me", "scorer"),
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].playerId).toBe("scorer");
+  });
+
+  it("양 팀 선수가 같은 id여도 팀별로 분리 집계된다", () => {
+    const rows = playerRatings([evP("goal", "me", "x"), evP("card", "opp", "x")]);
+    expect(rows).toHaveLength(2);
+    expect(rows.find((r) => r.side === "me")!.rating).toBeGreaterThan(6);
+    expect(rows.find((r) => r.side === "opp")!.rating).toBeLessThan(6);
+  });
+
+  it("manOfTheMatch는 해당 팀 최고 평점을 준다", () => {
+    const events = [
+      evP("goal", "me", "hero"),
+      evP("shot", "me", "other"),
+      evP("goal", "opp", "villain"),
+    ];
+    expect(manOfTheMatch(events, "me")!.playerId).toBe("hero");
+    expect(manOfTheMatch(events, "opp")!.playerId).toBe("villain");
+    expect(manOfTheMatch([], "me")).toBeUndefined();
   });
 });
