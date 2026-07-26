@@ -73,13 +73,16 @@ export default function FreeMatchupPage() {
   };
 
   return (
-    <main id="main" className="flex flex-1 scroll-mt-14 flex-col pb-28">
+    <main
+      id="main"
+      className="flex flex-1 scroll-mt-14 flex-col pb-28 lg:h-[calc(100dvh-3.5rem)] lg:flex-none lg:overflow-hidden lg:pb-0"
+    >
       {/* ── 히어로 ───────────────────────────────────────── */}
       <section
         aria-label="히어로"
-        className="pitch-stripes relative overflow-hidden border-b border-line"
+        className="pitch-stripes relative overflow-hidden border-b border-line lg:shrink-0"
       >
-        <div className="mx-auto grid w-full max-w-5xl grid-cols-1 items-center gap-8 px-5 pb-7 pt-6 sm:pt-9 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)]">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-8 px-5 pb-7 pt-6 sm:pt-9 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] lg:pb-5 lg:pt-6">
           <div>
             <Link href="/" className="text-xs text-dim transition-colors hover:text-ink">
               ← 처음으로
@@ -99,7 +102,7 @@ export default function FreeMatchupPage() {
             </HeroIntro>
           </div>
 
-          <div className="hidden h-[320px] justify-self-end lg:block">
+          <div className="hidden h-[320px] justify-self-end lg:block lg:h-[248px]">
             <HeroBoardIntro>
               <HeroBoard />
             </HeroBoardIntro>
@@ -107,30 +110,40 @@ export default function FreeMatchupPage() {
         </div>
       </section>
 
-      {/* ── 매치업 구성 ──────────────────────────────────── */}
-      <section aria-label="매치업 구성" className="mx-auto w-full max-w-5xl px-5 pt-9">
-        <header className="accent-tab mb-5 pl-4">
-          <h2 className="display text-balance text-3xl text-ink">누구를 이끌고, 누구를 상대할까</h2>
-        </header>
-        <TeamGrid myTeamId={myTeamId} oppTeamId={oppTeamId} onSelect={handleTeamClick} />
-      </section>
+      {/* ── 선택 영역 ─────────────────────────────────────
+          lg에서는 한 화면에 고정하고 두 컬럼(팀·경기장)만 내부 스크롤한다.
+          왼쪽에서 두 팀을, 오른쪽에서 경기장을 고른다. 모바일은 기존처럼
+          세로로 쌓여 자연 스크롤된다. */}
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-8 px-5 pt-9 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-10 lg:overflow-hidden lg:pt-6">
+        <section aria-label="매치업 구성" className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          <header className="accent-tab mb-5 pl-4">
+            <h2 className="display text-balance text-3xl text-ink">누구를 이끌고, 누구를 상대할까</h2>
+          </header>
+          <TeamGrid myTeamId={myTeamId} oppTeamId={oppTeamId} onSelect={handleTeamClick} />
+        </section>
 
-      {/* ── 경기장 선택 ──────────────────────────────────── */}
-      <section aria-label="경기장 선택" className="mx-auto w-full max-w-5xl px-5 pt-9">
-        <header className="accent-tab mb-5 pl-4">
-          <h2 className="display text-balance text-3xl text-ink">어디에서 맞붙을까</h2>
-        </header>
-        <VenuePicker venueId={venueId} onSelect={setVenueId} />
-      </section>
+        <div className="flex min-w-0 flex-col gap-8 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          <section aria-label="경기장 선택">
+            <header className="accent-tab mb-5 pl-4">
+              <h2 className="display text-balance text-3xl text-ink">어디에서 맞붙을까</h2>
+            </header>
+            <VenuePicker venueId={venueId} onSelect={setVenueId} />
+          </section>
+          {/* 고지는 lg에서 오른쪽 컬럼 하단에. 모바일은 아래 footer가 담당. */}
+          <div className="hidden lg:block">
+            <Disclaimer />
+          </div>
+        </div>
+      </div>
 
-      {/* ── 하단 고지 ────────────────────────────────────── */}
-      <footer className="mx-auto mt-16 w-full max-w-5xl px-5 pb-4">
+      {/* ── 하단 고지(모바일 전용) ─────────────────────────── */}
+      <footer className="mx-auto mt-16 w-full max-w-5xl px-5 pb-4 lg:hidden">
         <Disclaimer />
       </footer>
 
-      {/* ── 방송 스코어보드(하단 고정) — 시그니처 ─────────── */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-pitch/85 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:gap-4">
+      {/* ── 방송 스코어보드 — 시그니처. 모바일은 하단 고정, lg는 정적 바. ── */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-pitch/85 backdrop-blur-md lg:static lg:z-auto lg:shrink-0 lg:bg-pitch">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:gap-4">
           {myTeam && oppTeam ? (
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <div className="flex items-center gap-2 text-sm">
