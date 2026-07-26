@@ -75,10 +75,11 @@ html {
 
 body {
   min-height: 100%;
-  /* 상단 스포트라이트: 야간 경기장 조명이 위에서 떨어지는 느낌.
-     시안 글로우가 아니라 아주 옅은 초록 확산광이라 색이 UI를 물들이지 않는다. */
+  /* 상단 확산광: 야간 경기장 조명이 위에서 떨어지는 느낌. 좌우 플러드라이트는
+     아래 body::before(fixed)가 맡고, 여기선 중앙 확산광만 옅게 깐다. 전부 저채도
+     초록이라 색이 UI를 물들이지 않는다. */
   background:
-    radial-gradient(130% 70% at 50% -12%, rgba(70, 200, 130, 0.07), transparent 60%),
+    radial-gradient(130% 64% at 50% -12%, rgba(70, 200, 130, 0.055), transparent 62%),
     var(--color-pitch);
   color: var(--color-ink);
   font-family: var(--font-sans);
@@ -89,6 +90,21 @@ body {
      아주 긴 토큰(URL 등)만 예외적으로 끊도록 break-word를 함께 둔다. */
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+
+/* 월드컵 야간 경기장 플러드라이트 — 좌우 두 조명이 위에서 비춘다. fixed·pointer-events
+   -none·z-index:-1이라 스크롤해도 같은 자리에서 은은히 유지되고(전 화면 공통 분위기)
+   리페인트 부담이 없다. 본문 콘텐츠(z:auto)는 항상 이 위에 그려져 대비가 유지된다.
+   prefers-reduced-* 무관(정적 그라디언트라 모션·투명도 이슈 없음). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(66% 44% at 12% -6%, rgba(104, 222, 158, 0.07), transparent 60%),
+    radial-gradient(66% 44% at 88% -6%, rgba(104, 222, 158, 0.07), transparent 60%);
 }
 
 /* 잔디 이랑(모잉 스트라이프) — 히어로/작전실 바탕용 방송 질감 */
