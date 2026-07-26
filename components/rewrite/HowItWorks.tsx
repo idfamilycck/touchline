@@ -2,34 +2,34 @@
 // 화면이 글로 빽빽했다 — 아이콘 + 짧은 라벨만 남긴 슬림 스트립으로 바꿔 핵심 루프
 // (경기 선택 → 지휘봉 잡기 → 역사 변경)를 시각적으로 5초에 잡히게 한다.
 
+import { Fragment } from "react";
 import Link from "next/link";
-import { ListChecks, ClockCounterClockwise, Strategy, SealCheck, ArrowRight } from "@phosphor-icons/react";
+import { ListChecks, ClockCounterClockwise, Strategy, SealCheck, ArrowRight, CaretRight } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 import { ENGINE_VALIDATION } from "@/lib/wc2026/validation";
 
-const STEPS: Array<{ n: number; Icon: Icon; title: string }> = [
-  { n: 1, Icon: ListChecks, title: "경기 선택" },
-  { n: 2, Icon: ClockCounterClockwise, title: "지휘봉 잡기" },
-  { n: 3, Icon: Strategy, title: "역사 변경" },
+const STEPS: Array<{ Icon: Icon; title: string }> = [
+  { Icon: ListChecks, title: "경기 선택" },
+  { Icon: ClockCounterClockwise, title: "지휘봉 잡기" },
+  { Icon: Strategy, title: "역사 변경" },
 ];
 
 export function HowItWorks() {
   return (
-    <div className="flex flex-col gap-3">
-      <ol className="grid grid-cols-3 gap-2 sm:gap-2.5">
-        {STEPS.map((s) => (
-          <li
-            key={s.n}
-            className="panel flex flex-col items-center gap-1.5 rounded-panel px-2 py-3 text-center sm:flex-row sm:items-center sm:gap-2.5 sm:px-3.5 sm:py-2.5 sm:text-left"
-          >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
-              <s.Icon size={17} weight="bold" aria-hidden />
-            </span>
-            <p className="flex items-baseline gap-1.5 text-[13px] font-bold text-ink sm:text-sm">
-              <span className="stat-num text-accent">{s.n}</span>
-              <span>{s.title}</span>
-            </p>
-          </li>
+    <div className="flex flex-col gap-3.5">
+      {/* 핵심 루프를 카드 3개가 아니라 방송 자막처럼 한 줄 흐름으로: 경기 선택 →
+          지휘봉 잡기 → 역사 변경. */}
+      <ol className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+        {STEPS.map((s, i) => (
+          <Fragment key={s.title}>
+            <li className="inline-flex items-center gap-1.5 text-[13px] font-bold text-ink sm:text-sm">
+              <s.Icon size={16} weight="bold" aria-hidden className="text-accent" />
+              {s.title}
+            </li>
+            {i < STEPS.length - 1 && (
+              <CaretRight size={13} weight="bold" aria-hidden className="text-dim/70" />
+            )}
+          </Fragment>
         ))}
       </ol>
 

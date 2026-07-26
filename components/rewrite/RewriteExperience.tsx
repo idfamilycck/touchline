@@ -18,6 +18,7 @@ import type { Wc2026Match } from "@/lib/wc2026/types";
 import { MatchBrowser } from "@/components/rewrite/MatchBrowser";
 import { MatchDetail } from "@/components/rewrite/MatchDetail";
 import { HowItWorks } from "@/components/rewrite/HowItWorks";
+import { HeroPitch } from "@/components/rewrite/HeroPitch";
 import { HighlightGallery } from "@/components/rewrite/HighlightGallery";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 
@@ -82,8 +83,11 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
               ← 처음으로
             </Link>
           )}
+          {/* 방송 오프닝 히어로: 왼쪽 메시지, 오른쪽 실제 피치 그래픽(스코어보드·국기).
+              텍스트만 쌓으면 슬라이드처럼 밋밋해 — 앱의 실제 방송 그래픽으로 월드컵
+              중계 느낌을 준다. lg 미만에서는 메시지 아래에 피치를 세로로 쌓는다. */}
           <div
-            className={`grid grid-cols-1 gap-x-10 gap-y-4 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-end ${
+            className={`grid grid-cols-1 items-center gap-x-12 gap-y-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] ${
               showBackLink ? "mt-3" : ""
             }`}
           >
@@ -93,23 +97,25 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
               </motion.p>
               <motion.h1
                 {...rise(0.08)}
-                className="display mt-2 text-balance text-4xl text-ink sm:text-5xl"
+                className="display mt-2 text-balance text-4xl text-ink sm:text-5xl lg:text-6xl"
               >
                 그 순간,<br />감독이었다면.
               </motion.h1>
+              <motion.p
+                {...rise(0.16)}
+                className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-dim sm:text-base"
+              >
+                실제 월드컵의 결정적 순간을 골라, 당신의 전술로 다시 씁니다.
+              </motion.p>
+              <motion.div {...rise(0.24)} className="mt-5">
+                <HowItWorks />
+              </motion.div>
             </div>
-            <motion.p
-              {...rise(0.16)}
-              className="max-w-xl text-pretty text-sm leading-relaxed text-dim sm:text-base lg:pb-1"
-            >
-              실제 월드컵의 결정적 순간을 골라, 당신의 전술로 다시 씁니다.
-            </motion.p>
-          </div>
 
-          {/* 이렇게 진행돼요(3단계) + 검증 근거 — 첫 화면 이해도. */}
-          <motion.div {...rise(0.24)} className="mt-6">
-            <HowItWorks />
-          </motion.div>
+            <motion.div {...rise(0.12)}>
+              <HeroPitch />
+            </motion.div>
+          </div>
         </div>
       </section>
 
