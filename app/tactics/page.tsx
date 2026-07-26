@@ -130,11 +130,11 @@ function TacticTabsPanel() {
   );
 }
 
-/** 전술 근거 · AI 추천 · 계산 근거 상세 — 하단 가로 행(lg에서 3열). */
+/** 전술 근거 · AI 추천 · 계산 근거 상세 — 오른쪽 레일에 세로로 분리된 패널들. */
 function ExtrasPanel() {
   const rules = useTacticRules();
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div className="flex flex-col gap-4">
       <FactorCards rules={rules} />
       <RecommendPanel />
 
@@ -322,7 +322,7 @@ export default function TacticsPage() {
     >
       {/* ── 헤더 ─────────────────────────────────────────── */}
       <header className="border-b border-line px-5 py-4 lg:shrink-0">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="eyebrow text-accent">작전실</p>
             <h1 className="display mt-0.5 truncate text-2xl text-ink">
@@ -385,9 +385,9 @@ export default function TacticsPage() {
         {/* 한 화면(16:9) 작전실: lg에서 3열이 남은 높이를 채우고 각 열이 내부 스크롤한다
             — 페이지는 스크롤되지 않는다. 왼쪽 스쿼드 · 가운데 피치+전술지시 · 오른쪽
             스카우팅+근거/추천. 모바일은 lg:* 미적용이라 탭 전환대로 세로로 쌓인다. */}
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-5 pt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(0,330px)] lg:overflow-hidden lg:pb-4">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-4 px-5 pt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)_minmax(0,380px)] lg:gap-5 lg:overflow-hidden lg:pb-4">
           {/* 왼쪽: 스쿼드 (내부 스크롤) */}
-          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-y-auto lg:pr-1">
             <section
               id="panel-squad"
               role="tabpanel"
@@ -405,7 +405,7 @@ export default function TacticsPage() {
           </div>
 
           {/* 가운데: 피치 + 전술 지시 (내부 스크롤) */}
-          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-y-auto lg:pr-1">
             <section
               id="panel-pitch"
               role="tabpanel"
@@ -431,7 +431,7 @@ export default function TacticsPage() {
           </div>
 
           {/* 오른쪽: 상대 스카우팅 + 근거/추천/상세 (내부 스크롤) */}
-          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-y-auto lg:pr-1">
             <section
               id="panel-scout"
               role="tabpanel"
@@ -469,13 +469,13 @@ export default function TacticsPage() {
         </DragOverlay>
       </DndContext>
 
-      <footer className="mx-auto mt-10 w-full max-w-6xl px-5 lg:hidden">
+      <footer className="mx-auto mt-10 w-full max-w-7xl px-5 lg:hidden">
         <Disclaimer />
       </footer>
 
       {/* 하단 CTA: 모바일은 화면 하단 고정, lg에서는 플렉스 마지막 줄(정적)로 */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-pitch/90 px-5 py-3 backdrop-blur-md lg:static lg:z-auto lg:shrink-0">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="stat-num text-[13px] text-ink">
               선발 {placedCount}/11 배치

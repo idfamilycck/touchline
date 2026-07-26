@@ -130,14 +130,17 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
       <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 px-5 pt-9 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-8 lg:overflow-hidden lg:pt-6">
         <section
           aria-label="경기 선택"
-          className="flex min-w-0 flex-col gap-9 lg:min-h-0 lg:gap-7 lg:overflow-y-auto lg:pr-1"
+          className="flex min-w-0 flex-col gap-5 lg:min-h-0 lg:gap-4 lg:overflow-hidden"
         >
-          {/* 명장면: 104경기 목록보다 먼저 — 고르는 부담 없이 가장 극적인 순간으로
-              곧장 들어갈 수 있게. 목록은 그 아래에서 이어 고른다. */}
-          <HighlightGallery />
+          {/* 패널 1 — 명장면. 목록과 독립된 패널로 분리해, 아래 목록을 스크롤해도
+              명장면 패널은 그대로 남는다. lg에서 높이를 나눠 갖고 각자 내부 스크롤. */}
+          <div className="panel min-h-0 rounded-panel p-4 sm:p-5 lg:max-h-[42%] lg:overflow-y-auto lg:pr-1">
+            <HighlightGallery />
+          </div>
 
-          <div>
-            <header className="accent-tab mb-5 pl-4">
+          {/* 패널 2 — 경기 목록. 헤더는 고정, 목록만 내부 스크롤. */}
+          <div className="panel flex min-h-0 flex-col rounded-panel p-4 sm:p-5 lg:flex-1">
+            <header className="accent-tab mb-4 shrink-0 pl-4">
               <h2 className="display text-balance text-2xl text-ink sm:text-3xl">
                 어느 경기를 다시 쓸까
               </h2>
@@ -145,19 +148,21 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
                 다시 쓰고 싶은 경기를 눌러, 지휘할 팀과 지휘봉을 잡을 순간을 고르세요.
               </p>
             </header>
-            <MatchBrowser
-              matches={matches}
-              selectedMatchId={selectedMatch?.id}
-              onSelectMatch={handleSelectMatch}
-              renderInlineDetail={(m) => (
-                <MatchDetail
-                  match={m}
-                  side={selectedSide}
-                  onSelectSide={(side) => updateQuery({ side })}
-                  onReset={resetSelection}
-                />
-              )}
-            />
+            <div className="min-h-0 flex-1 lg:overflow-y-auto lg:pr-1">
+              <MatchBrowser
+                matches={matches}
+                selectedMatchId={selectedMatch?.id}
+                onSelectMatch={handleSelectMatch}
+                renderInlineDetail={(m) => (
+                  <MatchDetail
+                    match={m}
+                    side={selectedSide}
+                    onSelectSide={(side) => updateQuery({ side })}
+                    onReset={resetSelection}
+                  />
+                )}
+              />
+            </div>
           </div>
         </section>
 

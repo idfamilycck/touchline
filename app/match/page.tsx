@@ -309,8 +309,8 @@ export default function MatchPage() {
 
         {/* 본문 2열(lg): 왼쪽 피치 · 오른쪽 지표/승률/중계(내부 스크롤). 페이지는
             한 화면에 고정되고, 넘치는 오른쪽만 내부 스크롤. 모바일은 세로로 쌓인다. */}
-        <div className="grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] lg:overflow-hidden">
-        <div className="flex flex-col gap-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+        <div className="grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] lg:gap-6 lg:overflow-hidden">
+        <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-y-auto lg:pr-1">
         {/* 라이브 피치 + 장면 자막 */}
         <div className="relative lg:shrink-0">
           <LivePitch
@@ -355,7 +355,7 @@ export default function MatchPage() {
 
         {/* 오른쪽: 지표판 + 중계 (내부 스크롤). 지표판이 먼저다 — 무엇을 바꿀지는
             승률이 아니라 지표가 말한다. */}
-        <div className="flex flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+        <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-y-auto lg:pr-1">
           <LiveMetrics
             match={match}
             meCode={teamById(match.me.teamId)?.code ?? "ME"}
