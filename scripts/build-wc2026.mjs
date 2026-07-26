@@ -80,14 +80,16 @@ const ROUND_ORDER = ["group", "r32", "r16", "qf", "sf", "third", "final", "champ
 // (또한 48팀이 6개 값에 뭉쳐 독일=남아공처럼 구분 불가였다.) eloratings.net/FIFA
 // 랭킹 ~2025 기준의 독립적 사전 전력으로 교체 — 검증이 진짜 예측이 되고, 실측상
 // 재현율도 오히려 오른다(lib/engine/validation.test.ts).
+// eloratings.net/2026_World_Cup 실측값(2026-07-25 수집, World Football Elo Ratings).
+// 코드 매핑은 eloratings 2자리(예: ES/AR/EN/SQ) -> 우리 3자리로 변환했다.
 const REAL_ELO = {
-  ARG: 2100, FRA: 2050, ESP: 2040, BRA: 2010, ENG: 2000, POR: 1985, NED: 1965,
-  GER: 1930, CRO: 1900, BEL: 1895, URU: 1885, COL: 1875, MAR: 1870, JPN: 1860,
-  SUI: 1855, USA: 1850, MEX: 1845, SEN: 1820, NOR: 1810, ECU: 1800, AUT: 1795,
-  KOR: 1790, SWE: 1780, CIV: 1770, TUR: 1770, EGY: 1765, AUS: 1765, SCO: 1755,
-  ALG: 1720, CZE: 1715, IRN: 1715, TUN: 1690, CAN: 1695, PAR: 1680, BIH: 1675,
-  GHA: 1675, KSA: 1655, QAT: 1650, PAN: 1620, RSA: 1620, COD: 1615, IRQ: 1605,
-  UZB: 1600, CPV: 1560, JOR: 1560, HAI: 1500, NZL: 1495, CUW: 1480,
+  ALG: 1756, ARG: 2173, AUS: 1795, AUT: 1821, BEL: 1948, BIH: 1605, BRA: 1993,
+  CAN: 1729, CIV: 1727, COD: 1704, COL: 2003, CPV: 1619, CRO: 1882, CUW: 1438,
+  CZE: 1680, ECU: 1871, EGY: 1742, ENG: 2125, ESP: 2259, FRA: 2070, GER: 1908,
+  GHA: 1570, HAI: 1517, IRN: 1764, IRQ: 1561, JOR: 1628, JPN: 1888, KOR: 1723,
+  KSA: 1596, MAR: 1901, MEX: 1913, NED: 1971, NOR: 1951, NZL: 1534, PAN: 1658,
+  PAR: 1814, POR: 1995, QAT: 1411, RSA: 1559, SCO: 1745, SEN: 1816, SUI: 1928,
+  SWE: 1731, TUN: 1562, TUR: 1852, URU: 1841, USA: 1747, UZB: 1631,
 };
 const ELO_FALLBACK = 1600; // 표에 없는 코드(데이터 이상)용 중위값
 

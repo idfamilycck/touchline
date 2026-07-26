@@ -12,11 +12,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import { wc2026Matches } from "@/lib/wc2026/data";
 import type { Wc2026Match } from "@/lib/wc2026/types";
 import { MatchBrowser } from "@/components/rewrite/MatchBrowser";
 import { MatchDetail } from "@/components/rewrite/MatchDetail";
 import { HowItWorks } from "@/components/rewrite/HowItWorks";
+import { HighlightGallery } from "@/components/rewrite/HighlightGallery";
 import { Disclaimer } from "@/components/ui/Disclaimer";
 
 interface RewriteExperienceProps {
@@ -29,6 +31,19 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const matches = wc2026Matches();
+  const reduce = useReducedMotion();
+
+  // 히어로 등장: 아이브로 -> 헤드라인 -> 설명 -> 3단계 순으로 한 번만 올라온다.
+  // 모션의 역할은 위계 전달(먼저 읽을 것부터 도착) — 장식용 루프는 두지 않는다.
+  // prefers-reduced-motion이면 전부 정적으로 즉시 표시된다.
+  const rise = (delay: number) =>
+    reduce
+      ? { initial: false as const }
+      : {
+          initial: { opacity: 0, y: 14 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.55, delay, ease: [0.16, 1, 0.3, 1] as const },
+        };
 
   const matchId = searchParams.get("match") ?? undefined;
   const selectedMatch = matchId ? matches.find((m) => m.id === matchId) : undefined;
@@ -73,22 +88,36 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
             }`}
           >
             <div>
-              <p className="eyebrow text-accent">2026 월드컵 다시 쓰기</p>
-              <h1 className="display mt-2 text-balance text-4xl text-ink sm:text-5xl">
+              <motion.p {...rise(0)} className="eyebrow text-accent">
+                2026 월드컵 다시 쓰기
+              </motion.p>
+              <motion.h1
+                {...rise(0.08)}
+                className="display mt-2 text-balance text-4xl text-ink sm:text-5xl"
+              >
                 그 순간,<br />감독이었다면.
-              </h1>
+              </motion.h1>
             </div>
-            <p className="max-w-xl text-pretty text-sm leading-relaxed text-dim sm:text-base lg:pb-1">
-              실제 2026 월드컵 경기에서 승부를 가른 결정적 순간을 골라, 그 시점부터
-              직접 전술을 지휘해 결과를 바꿔보세요.
-            </p>
+            <motion.p
+              {...rise(0.16)}
+              className="max-w-xl text-pretty text-sm leading-relaxed text-dim sm:text-base lg:pb-1"
+            >
+              실제 월드컵의 결정적 순간을 골라, 당신의 전술로 다시 씁니다.
+            </motion.p>
           </div>
 
           {/* 이렇게 진행돼요(3단계) + 검증 근거 — 첫 화면 이해도. */}
-          <div className="mt-6">
+          <motion.div {...rise(0.24)} className="mt-6">
             <HowItWorks />
-          </div>
+          </motion.div>
         </div>
+      </section>
+
+      {/* ── 명장면(바로 시작) ──────────────────────────────
+          104경기 목록보다 먼저 놓는다: 처음 온 사람이 고르는 부담 없이 가장 극적인
+          순간으로 곧장 들어갈 수 있어야 한다. 목록은 그다음 선택지다. */}
+      <section aria-label="명장면" className="mx-auto w-full max-w-6xl px-5 pt-9">
+        <HighlightGallery />
       </section>
 
       {/* ── 마스터-디테일 ─────────────────────────────────

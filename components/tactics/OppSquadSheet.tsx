@@ -185,7 +185,7 @@ export function OppSquadSheet({
           <span className="stat-num ml-auto text-dim">{kickoffKo}</span>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,232px)_minmax(0,260px)]">
             {/* 피치 */}
             <div>
@@ -236,7 +236,7 @@ export function OppSquadSheet({
                                   active ? "bg-accent/15 ring-1 ring-accent/40" : "hover:bg-surface-2/60"
                                 }`}
                               >
-                                <span className="truncate text-[13px] text-ink">{s.name}</span>
+                                <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{s.name}</span>
                                 <span className="flex shrink-0 items-center gap-2">
                                   <span className="stat-num text-[11px] text-dim">{s.position}</span>
                                   {ovr != null && (
@@ -272,13 +272,13 @@ export function OppSquadSheet({
                             type="button"
                             onClick={() => setSelectedId(b.playerId)}
                             aria-pressed={active}
-                            className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[12px] transition-colors ${
+                            className={`flex max-w-[150px] items-center gap-1.5 rounded-full border px-2 py-0.5 text-[12px] transition-colors ${
                               active
                                 ? "border-accent/50 bg-accent/15 text-ink"
                                 : "border-line bg-surface-2/60 text-dim hover:border-white/25"
                             }`}
                           >
-                            <span className="truncate">{b.name}</span>
+                            <span className="min-w-0 truncate">{b.name}</span>
                             {ovr != null && (
                               <span className="stat-num font-black" style={{ color: attrColor(ovr) }}>
                                 {ovr}

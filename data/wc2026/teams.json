@@ -3,336 +3,336 @@
     "code": "ALG",
     "id": "wc_alg",
     "nameKo": "알제리",
-    "elo": 1720,
+    "elo": 1756,
     "finishRound": "r32"
   },
   {
     "code": "ARG",
     "id": "wc_arg",
     "nameKo": "아르헨티나",
-    "elo": 2100,
+    "elo": 2173,
     "finishRound": "final"
   },
   {
     "code": "AUS",
     "id": "wc_aus",
     "nameKo": "호주",
-    "elo": 1765,
+    "elo": 1795,
     "finishRound": "r32"
   },
   {
     "code": "AUT",
     "id": "wc_aut",
     "nameKo": "오스트리아",
-    "elo": 1795,
+    "elo": 1821,
     "finishRound": "r32"
   },
   {
     "code": "BEL",
     "id": "wc_bel",
     "nameKo": "벨기에",
-    "elo": 1895,
+    "elo": 1948,
     "finishRound": "qf"
   },
   {
     "code": "BIH",
     "id": "wc_bih",
     "nameKo": "보스니아 헤르체고비나",
-    "elo": 1675,
+    "elo": 1605,
     "finishRound": "r32"
   },
   {
     "code": "BRA",
     "id": "wc_bra",
     "nameKo": "브라질",
-    "elo": 2010,
+    "elo": 1993,
     "finishRound": "r16"
   },
   {
     "code": "CAN",
     "id": "wc_can",
     "nameKo": "캐나다",
-    "elo": 1695,
+    "elo": 1729,
     "finishRound": "r16"
   },
   {
     "code": "CIV",
     "id": "wc_civ",
     "nameKo": "코트디부아르",
-    "elo": 1770,
+    "elo": 1727,
     "finishRound": "r32"
   },
   {
     "code": "COD",
     "id": "wc_cod",
     "nameKo": "콩고민주공화국",
-    "elo": 1615,
+    "elo": 1704,
     "finishRound": "r32"
   },
   {
     "code": "COL",
     "id": "wc_col",
     "nameKo": "콜롬비아",
-    "elo": 1875,
+    "elo": 2003,
     "finishRound": "r16"
   },
   {
     "code": "CPV",
     "id": "wc_cpv",
     "nameKo": "카보베르데",
-    "elo": 1560,
+    "elo": 1619,
     "finishRound": "r32"
   },
   {
     "code": "CRO",
     "id": "wc_cro",
     "nameKo": "크로아티아",
-    "elo": 1900,
+    "elo": 1882,
     "finishRound": "r32"
   },
   {
     "code": "CUW",
     "id": "wc_cuw",
     "nameKo": "퀴라소",
-    "elo": 1480,
+    "elo": 1438,
     "finishRound": "group"
   },
   {
     "code": "CZE",
     "id": "wc_cze",
     "nameKo": "체코",
-    "elo": 1715,
+    "elo": 1680,
     "finishRound": "group"
   },
   {
     "code": "ECU",
     "id": "wc_ecu",
     "nameKo": "에콰도르",
-    "elo": 1800,
+    "elo": 1871,
     "finishRound": "r32"
   },
   {
     "code": "EGY",
     "id": "wc_egy",
     "nameKo": "이집트",
-    "elo": 1765,
+    "elo": 1742,
     "finishRound": "r16"
   },
   {
     "code": "ENG",
     "id": "wc_eng",
     "nameKo": "잉글랜드",
-    "elo": 2000,
+    "elo": 2125,
     "finishRound": "third"
   },
   {
     "code": "ESP",
     "id": "wc_esp",
     "nameKo": "스페인",
-    "elo": 2040,
+    "elo": 2259,
     "finishRound": "champion"
   },
   {
     "code": "FRA",
     "id": "wc_fra",
     "nameKo": "프랑스",
-    "elo": 2050,
+    "elo": 2070,
     "finishRound": "third"
   },
   {
     "code": "GER",
     "id": "wc_ger",
     "nameKo": "독일",
-    "elo": 1930,
+    "elo": 1908,
     "finishRound": "r32"
   },
   {
     "code": "GHA",
     "id": "wc_gha",
     "nameKo": "가나",
-    "elo": 1675,
+    "elo": 1570,
     "finishRound": "r32"
   },
   {
     "code": "HAI",
     "id": "wc_hai",
     "nameKo": "아이티",
-    "elo": 1500,
+    "elo": 1517,
     "finishRound": "group"
   },
   {
     "code": "IRN",
     "id": "wc_irn",
     "nameKo": "이란",
-    "elo": 1715,
+    "elo": 1764,
     "finishRound": "group"
   },
   {
     "code": "IRQ",
     "id": "wc_irq",
     "nameKo": "이라크",
-    "elo": 1605,
+    "elo": 1561,
     "finishRound": "group"
   },
   {
     "code": "JOR",
     "id": "wc_jor",
     "nameKo": "요르단",
-    "elo": 1560,
+    "elo": 1628,
     "finishRound": "group"
   },
   {
     "code": "JPN",
     "id": "wc_jpn",
     "nameKo": "일본",
-    "elo": 1860,
+    "elo": 1888,
     "finishRound": "r32"
   },
   {
     "code": "KOR",
     "id": "wc_kor",
     "nameKo": "대한민국",
-    "elo": 1790,
+    "elo": 1723,
     "finishRound": "group"
   },
   {
     "code": "KSA",
     "id": "wc_ksa",
     "nameKo": "사우디아라비아",
-    "elo": 1655,
+    "elo": 1596,
     "finishRound": "group"
   },
   {
     "code": "MAR",
     "id": "wc_mar",
     "nameKo": "모로코",
-    "elo": 1870,
+    "elo": 1901,
     "finishRound": "qf"
   },
   {
     "code": "MEX",
     "id": "wc_mex",
     "nameKo": "멕시코",
-    "elo": 1845,
+    "elo": 1913,
     "finishRound": "r16"
   },
   {
     "code": "NED",
     "id": "wc_ned",
     "nameKo": "네덜란드",
-    "elo": 1965,
+    "elo": 1971,
     "finishRound": "r32"
   },
   {
     "code": "NOR",
     "id": "wc_nor",
     "nameKo": "노르웨이",
-    "elo": 1810,
+    "elo": 1951,
     "finishRound": "qf"
   },
   {
     "code": "NZL",
     "id": "wc_nzl",
     "nameKo": "뉴질랜드",
-    "elo": 1495,
+    "elo": 1534,
     "finishRound": "group"
   },
   {
     "code": "PAN",
     "id": "wc_pan",
     "nameKo": "파나마",
-    "elo": 1620,
+    "elo": 1658,
     "finishRound": "group"
   },
   {
     "code": "PAR",
     "id": "wc_par",
     "nameKo": "파라과이",
-    "elo": 1680,
+    "elo": 1814,
     "finishRound": "r16"
   },
   {
     "code": "POR",
     "id": "wc_por",
     "nameKo": "포르투갈",
-    "elo": 1985,
+    "elo": 1995,
     "finishRound": "r16"
   },
   {
     "code": "QAT",
     "id": "wc_qat",
     "nameKo": "카타르",
-    "elo": 1650,
+    "elo": 1411,
     "finishRound": "group"
   },
   {
     "code": "RSA",
     "id": "wc_rsa",
     "nameKo": "남아프리카공화국",
-    "elo": 1620,
+    "elo": 1559,
     "finishRound": "r32"
   },
   {
     "code": "SCO",
     "id": "wc_sco",
     "nameKo": "스코틀랜드",
-    "elo": 1755,
+    "elo": 1745,
     "finishRound": "group"
   },
   {
     "code": "SEN",
     "id": "wc_sen",
     "nameKo": "세네갈",
-    "elo": 1820,
+    "elo": 1816,
     "finishRound": "r32"
   },
   {
     "code": "SUI",
     "id": "wc_sui",
     "nameKo": "스위스",
-    "elo": 1855,
+    "elo": 1928,
     "finishRound": "qf"
   },
   {
     "code": "SWE",
     "id": "wc_swe",
     "nameKo": "스웨덴",
-    "elo": 1780,
+    "elo": 1731,
     "finishRound": "r32"
   },
   {
     "code": "TUN",
     "id": "wc_tun",
     "nameKo": "튀니지",
-    "elo": 1690,
+    "elo": 1562,
     "finishRound": "group"
   },
   {
     "code": "TUR",
     "id": "wc_tur",
     "nameKo": "튀르키예",
-    "elo": 1770,
+    "elo": 1852,
     "finishRound": "group"
   },
   {
     "code": "URU",
     "id": "wc_uru",
     "nameKo": "우루과이",
-    "elo": 1885,
+    "elo": 1841,
     "finishRound": "group"
   },
   {
     "code": "USA",
     "id": "wc_usa",
     "nameKo": "미국",
-    "elo": 1850,
+    "elo": 1747,
     "finishRound": "r16"
   },
   {
     "code": "UZB",
     "id": "wc_uzb",
     "nameKo": "우즈베키스탄",
-    "elo": 1600,
+    "elo": 1631,
     "finishRound": "group"
   }
 ]
