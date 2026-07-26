@@ -11,7 +11,14 @@ export const ENGINE_CONSTANTS = {
   // (base=1.12에서 2.9135, base=1.08에서 2.7606). elasticity는 재현율 격자에서
   // 1.6이 여전히 최적이라 그대로 둔다.
   LAMBDA_BASE: 1.12,
-  LAMBDA_ELASTICITY: 1.6,
+  // 1.6 -> 1.4: ELO를 eloratings.net/2026 실측(스프레드 1411~2259, 예전 1480~2100보다
+  // 넓음)으로 갱신한 뒤 coef와 함께 재적합했다. 넓어진 ELO 스프레드에서는 탄성을 낮춰
+  // (전력차의 λ 반영을 완만하게) + ELO 계수를 높이는(coef 0.45) 조합이 최적이다. 104경기
+  // 격자 재탐색 결과 승자 재현율 81.3% -> 86.7%(65/75), 전체 58.7% -> 62.5%, goalMae
+  // 0.935 -> 0.925로 전부 개선되며, WC 밸런스 게이트(블로아웃 4.6%<6%, 무승부 23.8%,
+  // 평균득점 3.0)도 통과한다. 탄성을 낮추면 대량 실점(블로아웃)이 오히려 줄어, 높인
+  // coef가 스프레드를 넓히는 효과를 상쇄한다.
+  LAMBDA_ELASTICITY: 1.4,
   LAMBDA_MIN: 0.2,
   LAMBDA_MAX: 4.0,
 
@@ -42,7 +49,12 @@ export const ENGINE_CONSTANTS = {
   // (81.3%). LAMBDA_BASE를 1.35에서 낮춘 것은 모델 오류의 무마가 아니라 득점
   // "수준"의 정상적인 캘리브레이션이며, 전력차 "스프레드"와는 다른 축이다.
   ELO_DIFF_CAP: 400,
-  ELO_MULT_COEF: 0.35,
+  // 0.35 -> 0.45: ELO를 eloratings.net/2026 실측으로 갱신하며 재적합(LAMBDA_ELASTICITY
+  // 주석 참고). 예전 스윕에서 "coef 0.45까지 재현율이 계속 오른다"고 적어둔 그 지점을,
+  // ELO 스프레드가 넓어진 지금 실제로 채택한다. 승자 재현율 86.7%. 유리팀 승률 게이트는
+  // coef를 "낮출" 때만 무너지므로(0.25에서 legacy 50.6%<55%) 높이는 방향은 안전하고,
+  // 오히려 유리팀 승률이 오른다. 블로아웃 상한은 elast 1.4가 함께 눌러 4.6%로 유지된다.
+  ELO_MULT_COEF: 0.45,
 
   // 슈팅 후 골 확률 = clamp(GOAL_PROB_BASE + (contribution - attAvg) / GOAL_PROB_DIVISOR, GOAL_PROB_MIN, GOAL_PROB_MAX)
   // (lib/engine/match.ts의 processChance)
