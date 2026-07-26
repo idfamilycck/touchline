@@ -238,11 +238,14 @@ export default function MatchPage() {
   const displayScoreOpp = match.scoreOpp - heldOpp;
 
   return (
-    <main id="main" className="flex flex-1 scroll-mt-14 flex-col pb-10">
+    <main
+      id="main"
+      className="flex flex-1 scroll-mt-14 flex-col pb-10 lg:h-[calc(100dvh-3.5rem)] lg:flex-none lg:overflow-hidden lg:pb-0"
+    >
       <h1 className="sr-only">경기 중계: 실시간 지휘</h1>
       <CrisisBanner events={match.events} onIntervene={openSheet} />
 
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pt-5 sm:px-5">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-3 px-4 pt-4 sm:px-5 lg:min-h-0 lg:overflow-hidden">
         {mode === "rewrite" && rewriteContext && (
           <RewriteContextBadge
             className="w-fit self-start"
@@ -304,8 +307,12 @@ export default function MatchPage() {
           </div>
         </div>
 
+        {/* 본문 2열(lg): 왼쪽 피치 · 오른쪽 지표/승률/중계(내부 스크롤). 페이지는
+            한 화면에 고정되고, 넘치는 오른쪽만 내부 스크롤. 모바일은 세로로 쌓인다. */}
+        <div className="grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] lg:overflow-hidden">
+        <div className="flex flex-col gap-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
         {/* 라이브 피치 + 장면 자막 */}
-        <div className="relative">
+        <div className="relative lg:shrink-0">
           <LivePitch
             meSetup={match.me}
             oppSetup={match.opp}
@@ -336,25 +343,26 @@ export default function MatchPage() {
             goalArrived={goalArrived}
           />
         </div>
+        {/* 피치 바로 아래: 승률 타임라인 — "이 경기가 어디로 가는가"를 피치와 나란히
+            둔다. 왼쪽 컬럼(피치+승률)이 세로를 채워 화면이 붕 뜨지 않는다. */}
+        <ProbTimeline
+          timeline={match.probTimeline}
+          events={match.events}
+          interventions={match.interventions}
+          shootoutWinProb={pkWinProb}
+        />
+        </div>
 
-        {/* 지표판 + 승률 타임라인 + 중계.
-            지표판이 먼저다 — 승률 그래프는 "결과가 어디로 가는가"만 말하고,
-            무엇을 바꿔야 하는지는 지표가 말한다. */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* 오른쪽: 지표판 + 중계 (내부 스크롤). 지표판이 먼저다 — 무엇을 바꿀지는
+            승률이 아니라 지표가 말한다. */}
+        <div className="flex flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           <LiveMetrics
             match={match}
             meCode={teamById(match.me.teamId)?.code ?? "ME"}
             oppCode={teamById(match.opp.teamId)?.code ?? "OPP"}
           />
-          <div className="flex flex-col gap-4">
-            <ProbTimeline
-              timeline={match.probTimeline}
-              events={match.events}
-              interventions={match.interventions}
-              shootoutWinProb={pkWinProb}
-            />
-            <CommentaryFeed events={match.events} extraTime={match.extraTime} />
-          </div>
+          <CommentaryFeed events={match.events} extraTime={match.extraTime} />
+        </div>
         </div>
       </div>
 
