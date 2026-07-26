@@ -200,7 +200,7 @@ export default function ResultPage() {
   // 스탯 집계는 lib/engine/match-stats.ts가 단일 소스다(MatchSummary가 직접 읽는다).
 
   return (
-    <main id="main" className="mx-auto flex w-full max-w-5xl flex-1 scroll-mt-14 flex-col gap-4 px-4 py-6 sm:px-5">
+    <main id="main" className="mx-auto flex w-full max-w-7xl flex-1 scroll-mt-14 flex-col gap-4 px-4 py-6 sm:px-5">
       {/* 헤드라인: 스코어보드 + 결론을 데스크톱에서 나란히(세로 스택 완화) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
         <header className="panel flex flex-col justify-center rounded-panel px-4 py-5 text-center">
@@ -245,9 +245,11 @@ export default function ResultPage() {
       </section>
       </div>
 
-      {/* 본문: 데스크톱 2열 벤토 — 카드를 그리드에 흘려 세로 길이를 절반으로 줄인다.
-          모바일은 grid-cols-1이라 기존 단일 컬럼 순서 그대로 유지된다. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+      {/* 본문: 데스크톱 masonry(CSS 멀티컬럼) — 높이가 제각각인 카드를 빈틈없이 채워
+          오른쪽 아래에 검은 void가 생기지 않게 한다. break-inside-avoid로 카드가 컬럼
+          사이에서 쪼개지지 않고, 세로 간격은 자식마다 mb로 준다(멀티컬럼엔 gap이 세로엔
+          안 먹음). 모바일은 columns-1이라 기존 단일 컬럼 순서 그대로 유지. */}
+      <div className="columns-1 gap-4 sm:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid">
       {/* 평행세계 비교: rewrite 모드는 "실제 역사" vs "나의 개입", free 모드는
           "실제 경기" vs "무개입 재시뮬레이션"이라는 서로 다른 개념이라 컴포넌트를 분기한다. */}
       {rewriteCompare ? (
