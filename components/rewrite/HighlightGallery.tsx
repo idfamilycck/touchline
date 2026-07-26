@@ -58,7 +58,8 @@ export function HighlightGallery() {
         </p>
       </header>
 
-      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {/* 홈에서 왼쪽 스크롤 컬럼(≈1.6fr) 안에 놓이므로 2열이 카드 폭에 맞다. */}
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {list.map((h, i) => {
           const me = display(h.side);
           const opp = display(h.oppCode);

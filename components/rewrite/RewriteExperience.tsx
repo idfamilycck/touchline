@@ -69,15 +69,18 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
   };
 
   return (
-    <main id="main" className="flex flex-1 scroll-mt-14 flex-col pb-12">
+    <main
+      id="main"
+      className="flex flex-1 scroll-mt-14 flex-col pb-12 lg:h-[calc(100dvh-3.5rem)] lg:flex-none lg:overflow-hidden lg:pb-0"
+    >
       {/* ── 히어로 ───────────────────────────────────────── */}
       <section
         aria-label="히어로"
-        className="pitch-stripes relative overflow-hidden border-b border-line"
+        className="pitch-stripes relative overflow-hidden border-b border-line lg:shrink-0"
       >
         {/* PC에서는 제목과 설명을 가로로 나눠 히어로 높이를 줄인다. 세로로 쌓으면
             경기 브라우저가 화면 밖으로 밀려 "본론이 안 보이는" 첫인상이 된다. */}
-        <div className="mx-auto w-full max-w-6xl px-5 pb-6 pt-6 sm:pt-8">
+        <div className="mx-auto w-full max-w-6xl px-5 pb-6 pt-6 sm:pt-8 lg:pb-4 lg:pt-5">
           {showBackLink && (
             <Link href="/" className="text-xs text-dim transition-colors hover:text-ink">
               ← 처음으로
@@ -119,44 +122,47 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
         </div>
       </section>
 
-      {/* ── 명장면(바로 시작) ──────────────────────────────
-          104경기 목록보다 먼저 놓는다: 처음 온 사람이 고르는 부담 없이 가장 극적인
-          순간으로 곧장 들어갈 수 있어야 한다. 목록은 그다음 선택지다. */}
-      <section aria-label="명장면" className="mx-auto w-full max-w-6xl px-5 pt-9">
-        <HighlightGallery />
-      </section>
-
       {/* ── 마스터-디테일 ─────────────────────────────────
-          좌: 경기 행 리스트(넓게) / 우: 선택한 경기 상세(좁게, lg 이상 sticky).
+          lg에서는 뷰포트 높이에 고정하고 두 컬럼만 내부 스크롤한다.
+          좌: 명장면 + 경기 행 리스트(넓게, 스크롤) / 우: 선택한 경기 상세(좁게, 스크롤).
           lg 미만에서는 우측 컬럼을 숨기고 상세를 선택된 행 아래에 인라인으로 편다
           (같은 MatchDetail을 쓰되 둘 중 하나는 항상 display:none). */}
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 px-5 pt-9 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <section aria-label="경기 선택" className="min-w-0">
-          <header className="accent-tab mb-5 pl-4">
-            <h2 className="display text-balance text-2xl text-ink sm:text-3xl">
-              어느 경기를 다시 쓸까
-            </h2>
-            <p className="mt-1.5 text-[13px] text-dim">
-              다시 쓰고 싶은 경기를 눌러, 지휘할 팀과 지휘봉을 잡을 순간을 고르세요.
-            </p>
-          </header>
-          <MatchBrowser
-            matches={matches}
-            selectedMatchId={selectedMatch?.id}
-            onSelectMatch={handleSelectMatch}
-            renderInlineDetail={(m) => (
-              <MatchDetail
-                match={m}
-                side={selectedSide}
-                onSelectSide={(side) => updateQuery({ side })}
-                onReset={resetSelection}
-              />
-            )}
-          />
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 px-5 pt-9 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:gap-8 lg:overflow-hidden lg:pt-6">
+        <section
+          aria-label="경기 선택"
+          className="flex min-w-0 flex-col gap-9 lg:min-h-0 lg:gap-7 lg:overflow-y-auto lg:pr-1"
+        >
+          {/* 명장면: 104경기 목록보다 먼저 — 고르는 부담 없이 가장 극적인 순간으로
+              곧장 들어갈 수 있게. 목록은 그 아래에서 이어 고른다. */}
+          <HighlightGallery />
+
+          <div>
+            <header className="accent-tab mb-5 pl-4">
+              <h2 className="display text-balance text-2xl text-ink sm:text-3xl">
+                어느 경기를 다시 쓸까
+              </h2>
+              <p className="mt-1.5 text-[13px] text-dim">
+                다시 쓰고 싶은 경기를 눌러, 지휘할 팀과 지휘봉을 잡을 순간을 고르세요.
+              </p>
+            </header>
+            <MatchBrowser
+              matches={matches}
+              selectedMatchId={selectedMatch?.id}
+              onSelectMatch={handleSelectMatch}
+              renderInlineDetail={(m) => (
+                <MatchDetail
+                  match={m}
+                  side={selectedSide}
+                  onSelectSide={(side) => updateQuery({ side })}
+                  onReset={resetSelection}
+                />
+              )}
+            />
+          </div>
         </section>
 
         {/* 우측 상세 컬럼(lg 이상에서만). 라벨은 MatchDetail이 직접 들고 있다. */}
-        <div className="hidden min-w-0 lg:sticky lg:top-[4.5rem] lg:block lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
+        <div className="hidden min-w-0 lg:block lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           <MatchDetail
             match={selectedMatch}
             side={selectedSide}
@@ -167,8 +173,8 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
         </div>
       </div>
 
-      {/* ── 하단 고지 ────────────────────────────────────── */}
-      <footer className="mx-auto mt-16 w-full max-w-6xl px-5 pb-4">
+      {/* ── 하단 고지(모바일 전용; lg는 한 화면 고정이라 숨긴다) ─── */}
+      <footer className="mx-auto mt-16 w-full max-w-6xl px-5 pb-4 lg:hidden">
         <Disclaimer />
       </footer>
     </main>
