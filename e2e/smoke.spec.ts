@@ -20,11 +20,12 @@ test("매치업 구성 → 작전실 → 경기 완주 → 복기 도달", async
   await page.getByRole("region", { name: "경기장 선택" }).getByRole("button").first().click();
   await page.getByRole("button", { name: /작전실 입장/ }).click();
 
-  // ── 작전실: 승률 게이지 확인 ──────────────────────────────
+  // ── 작전실: 분석 열 확인 ──────────────────────────────────
   await expect(page).toHaveURL(/\/tactics/);
   // 첫 진입 온보딩 코치마크(딤 오버레이)가 클릭을 가로채므로 건너뛴다.
   await page.getByRole("button", { name: "건너뛰기" }).click();
-  await expect(page.getByText("라이브 승률 예측")).toBeVisible();
+  // 킥오프 전 승률(WinGauge)은 제거됐다 — 분석 열 1층은 상대 스카우팅이다.
+  await expect(page.getByText("상대 분석").first()).toBeVisible();
   // selectMatchup은 양 팀 11명을 자동 배치 → 경기 시작 버튼이 활성.
   const beginBtn = page.getByRole("button", { name: /경기 시작/ });
   await expect(beginBtn).toBeEnabled();

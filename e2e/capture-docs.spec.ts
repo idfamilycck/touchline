@@ -34,7 +34,8 @@ async function enterTactics(page: Page) {
   await expect(page).toHaveURL(/\/tactics/);
   // 첫 진입 온보딩 코치마크는 캡처를 가리므로 닫는다.
   await page.getByRole("button", { name: "건너뛰기" }).click();
-  await expect(page.getByText("라이브 승률 예측")).toBeVisible();
+  // 킥오프 전 승률(WinGauge)은 제거됐다. 분석 열의 1층은 이제 상대 스카우팅이다.
+  await expect(page.getByText("상대 분석").first()).toBeVisible();
 }
 
 test("01 홈(자유 매치업)", async ({ page }) => {
@@ -51,7 +52,9 @@ test("07 다시 쓰기 경기 브라우저 + 08 결정적 순간", async ({ page
   await page.screenshot({ path: `${OUT}/07-rewrite-browser.png` });
 
   // 경기 카드 하나를 고르고 사이드를 선택하면 "결정적 순간" 카드가 열린다.
-  const card = page.locator("li").filter({ has: page.getByRole("button") }).first();
+  // (홈 상단 "명장면 갤러리" 카드도 li+button이라 반드시 경기 목록으로 좁힌다 —
+  //  갤러리 카드를 누르면 곧장 작전실로 넘어가 상세 패널이 열리지 않는다.)
+  const card = page.getByRole("region", { name: "경기 선택" }).locator("ul > li").first();
   await card.getByRole("button").first().click();
   const side = page.getByRole("button", { name: /지휘하기/ }).first();
   await expect(side).toBeVisible({ timeout: 10_000 });
@@ -113,6 +116,83 @@ test("04 경기 중계 + 05 개입 시트", async ({ page }) => {
   await page.getByRole("button", { name: "작전 변경" }).first().click();
   await page.waitForTimeout(900);
   await page.screenshot({ path: `${OUT}/05-match-intervention.png` });
+});
+
+test("11 엔진 성적표", async ({ page }) => {
+  await page.goto("/engine");
+  // 히트맵은 다음 프레임에 계산되므로 헤드라인이 뜬 뒤 잡는다.
+  await expect(page.getByText("엔진 성적표 · 무개입 재현")).toBeVisible({ timeout: 20_000 });
+  await page.waitForTimeout(600);
+  // 좁은 단일 컬럼이라 뷰포트 캡처는 아래가 통째로 빈다. 본문만 요소 캡처한다.
+  await page.locator("main").screenshot({ path: `${OUT}/11-engine.png` });
+});
+
+test("12 다시 쓰기 복기 - 실제 역사 vs 평행세계 · 분기하는 역사", async ({ page }) => {
+  // rewrite 모드로 한 경기를 완주해야만 나오는 화면이라, e2e/rewrite.spec.ts와 같은
+  // 경로를 그대로 밟는다(순간 카드가 있는 첫 조합을 바운드 루프로 찾는다).
+  await page.goto("/");
+  const matchSection = page.getByRole("region", { name: "경기 선택" });
+  await expect(matchSection.locator("ul > li").first()).toBeVisible();
+  const detailPanel = page.getByRole("region", { name: "선택한 경기" });
+  const momentSection = detailPanel.getByRole("region", { name: "결정적 순간 선택" });
+
+  await matchSection.locator("ul > li").first().locator("button").first().click();
+  const sideButtons = detailPanel.getByRole("button", { name: /지휘하기/ });
+  await expect(sideButtons.first()).toBeVisible({ timeout: 10_000 });
+  await sideButtons.first().click();
+  const moments = momentSection.locator("ul button");
+  await expect(moments.first()).toBeVisible();
+  // 후반전 프리셋(3번째)이 있으면 그걸 쓴다 - 분기 구간이 길어 타임라인이 잘 보인다.
+  const momentCount = await moments.count();
+  await moments.nth(momentCount > 2 ? 2 : 0).click();
+
+  await expect(page).toHaveURL(/\/tactics/);
+  // rewrite 모드는 작전실 위에 "지휘봉 인계" 오버레이가 먼저 뜬다(모달이라 클릭을 가로챈다).
+  const handoff = page.getByRole("button", { name: /지휘봉 잡기/ });
+  await expect(handoff).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(900); // 등장 모션이 끝난 뒤 잡는다
+  await page.screenshot({ path: `${OUT}/14-handoff.png` });
+  await handoff.click();
+  await page.getByRole("button", { name: "건너뛰기" }).click();
+  await page.getByRole("button", { name: /경기 시작/ }).click();
+  await expect(page).toHaveURL(/\/match/);
+  await page.getByRole("button", { name: "재생" }).click();
+
+  const resumeBtn = page.getByRole("button", { name: "이어서 재개" });
+  const endHome = page.getByRole("link", { name: "홈으로 나가기" });
+  await expect(resumeBtn.or(endHome)).toBeVisible({ timeout: 60_000 });
+  if (await resumeBtn.isVisible()) await resumeBtn.click();
+  await expect(endHome).toBeVisible({ timeout: 60_000 });
+
+  const shootoutBtn = page.getByRole("button", { name: /승부차기/ });
+  if (await shootoutBtn.isVisible()) {
+    await shootoutBtn.click();
+    await expect(page).toHaveURL(/\/shootout/);
+    await page.getByRole("button", { name: "추천 5인 자동 선택" }).click();
+    await page.getByRole("button", { name: /승부차기 시작/ }).click();
+    const seeResult = page.getByRole("button", { name: /결과 보기/ });
+    await expect(async () => {
+      const kick = page.getByRole("button", { name: "차기", exact: true });
+      if (await kick.isVisible()) await kick.click();
+      await expect(seeResult).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 90_000 });
+    await seeResult.click();
+  } else {
+    await page.getByRole("button", { name: /결과 보기/ }).click();
+  }
+
+  await expect(page).toHaveURL(/\/result/);
+  await expect(page.getByText("실제 역사 vs 평행세계")).toBeVisible({ timeout: 20_000 });
+  // 복기 화면은 좁은 단일 컬럼이라 뷰포트 전체를 찍으면 좌우가 검게 비어 기획서에서
+  // 쓸모가 없다. 카드 두 장을 각각 요소 캡처한다(실제 vs 평행세계 / 분기하는 역사).
+  const sectionWith = (text: string) =>
+    page.locator("section").filter({ hasText: text }).last();
+
+  await sectionWith("실제 역사 vs 평행세계").screenshot({ path: `${OUT}/12-real-vs-parallel.png` });
+  const branching = sectionWith("분기하는 역사");
+  await branching.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(500);
+  await branching.screenshot({ path: `${OUT}/13-branching.png` });
 });
 
 test("06 복기", async ({ page }) => {
