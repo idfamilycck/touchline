@@ -62,14 +62,17 @@ function TournamentContent() {
   }
 
   return (
-    <main id="main" className="flex flex-1 scroll-mt-14 flex-col pb-12">
+    <main
+      id="main"
+      className="flex flex-1 scroll-mt-14 flex-col pb-12 lg:h-[calc(100dvh-3.5rem)] lg:flex-none lg:overflow-hidden lg:pb-0"
+    >
       {/* ── 히어로 ───────────────────────────────────────── */}
       <section
         aria-label="히어로"
-        className="pitch-stripes relative overflow-hidden border-b border-line"
+        className="pitch-stripes relative overflow-hidden border-b border-line lg:shrink-0"
       >
         {/* /rewrite와 같은 이유로 PC에서는 가로 2단(제목 | 설명). */}
-        <div className="mx-auto w-full max-w-6xl px-5 pb-6 pt-6 sm:pt-8">
+        <div className="mx-auto w-full max-w-6xl px-5 pb-6 pt-6 sm:pt-8 lg:pb-4 lg:pt-5">
           <Link href="/" className="text-xs text-dim transition-colors hover:text-ink">
             ← 처음으로
           </Link>
@@ -90,7 +93,7 @@ function TournamentContent() {
 
       {/* ── 대한민국 요약(최상단 고정) ───────────────────── */}
       {kor && (
-        <section aria-label="대한민국 요약" className="mx-auto w-full max-w-6xl px-5 pt-6">
+        <section aria-label="대한민국 요약" className="mx-auto w-full max-w-6xl px-5 pt-6 lg:shrink-0 lg:pt-4">
           <KoreaSummary summary={kor} />
         </section>
       )}
@@ -98,7 +101,7 @@ function TournamentContent() {
       {/* ── 뷰 전환 탭 ───────────────────────────────────── */}
       {/* 헤더(h-14) 바로 아래에 붙어 따라온다. 어느 뷰를 보고 있는지, 다른 뷰로 어떻게
           가는지가 긴 표를 스크롤하는 동안에도 화면에서 사라지지 않는다. */}
-      <div className="sticky top-14 z-20 mt-6 border-y border-line bg-pitch/90 backdrop-blur-md">
+      <div className="sticky top-14 z-20 mt-6 border-y border-line bg-pitch/90 backdrop-blur-md lg:mt-4 lg:shrink-0">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 py-3">
           <TournamentTabs view={view} onSelect={selectView} />
           <p className="hidden shrink-0 text-[13px] text-dim sm:block">
@@ -107,8 +110,9 @@ function TournamentContent() {
         </div>
       </div>
 
-      {/* ── 뷰 본문 ──────────────────────────────────────── */}
-      <div className="mx-auto w-full max-w-6xl px-5 pt-7">
+      {/* ── 뷰 본문 ──────────────────────────────────────────
+          lg에서는 이 영역만 세로(순위표)·가로(대진표) 내부 스크롤한다. */}
+      <div className="mx-auto w-full max-w-6xl px-5 pt-7 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-6">
         {/* 접근성 이름은 aria-labelledby(탭 버튼)가 가져간다. aria-label을 함께 다는 것은
             e2e/capture-docs.spec.ts가 [aria-label="토너먼트 대진표"] 셀렉터로 대진표
             영역을 잡아 문서용 캡처를 뜨기 때문이다(개편 전 섹션 라벨을 그대로 보존). */}
@@ -133,8 +137,8 @@ function TournamentContent() {
         )}
       </div>
 
-      {/* ── 하단 고지 ────────────────────────────────────── */}
-      <footer className="mx-auto mt-16 w-full max-w-6xl px-5 pb-4">
+      {/* ── 하단 고지(모바일 전용; lg는 한 화면 고정이라 숨긴다) ─── */}
+      <footer className="mx-auto mt-16 w-full max-w-6xl px-5 pb-4 lg:hidden">
         <Disclaimer />
       </footer>
     </main>
