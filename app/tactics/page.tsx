@@ -316,9 +316,12 @@ export default function TacticsPage() {
   ];
 
   return (
-    <main id="main" className="flex flex-1 scroll-mt-14 flex-col pb-28">
+    <main
+      id="main"
+      className="flex flex-1 scroll-mt-14 flex-col pb-28 lg:h-[calc(100dvh-3.5rem)] lg:flex-none lg:overflow-hidden lg:pb-0"
+    >
       {/* ── 헤더 ─────────────────────────────────────────── */}
-      <header className="border-b border-line px-5 py-4">
+      <header className="border-b border-line px-5 py-4 lg:shrink-0">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="eyebrow text-accent">작전실</p>
@@ -379,15 +382,18 @@ export default function TacticsPage() {
       </div>
 
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="tactics-grid mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-5 pt-5">
-          {/* 스쿼드 레일 (lg: 왼쪽, 스티키 + 내부 스크롤) */}
-          <section
-            id="panel-squad"
-            role="tabpanel"
-            aria-labelledby="tab-squad"
-            className={`ta-squad ${tab === "squad" ? "block" : "hidden"} lg:block`}
-          >
-            <div className="lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:overflow-y-auto lg:pr-1">
+        {/* 한 화면(16:9) 작전실: lg에서 3열이 남은 높이를 채우고 각 열이 내부 스크롤한다
+            — 페이지는 스크롤되지 않는다. 왼쪽 스쿼드 · 가운데 피치+전술지시 · 오른쪽
+            스카우팅+근거/추천. 모바일은 lg:* 미적용이라 탭 전환대로 세로로 쌓인다. */}
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-5 pt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(0,330px)] lg:overflow-hidden lg:pb-4">
+          {/* 왼쪽: 스쿼드 (내부 스크롤) */}
+          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+            <section
+              id="panel-squad"
+              role="tabpanel"
+              aria-labelledby="tab-squad"
+              className={`${tab === "squad" ? "block" : "hidden"} lg:block`}
+            >
               <SquadList
                 me={me}
                 teamColor={teamColor}
@@ -395,56 +401,58 @@ export default function TacticsPage() {
                 onSelectPlayer={onSelectPlayer}
               />
               <AttributeGrid player={selectedPlayer} className="mt-4" />
-            </div>
-          </section>
+            </section>
+          </div>
 
-          {/* 피치 (lg: 가운데 위) */}
-          <section
-            id="panel-pitch"
-            role="tabpanel"
-            aria-labelledby="tab-pitch"
-            className={`ta-pitch ${tab === "pitch" ? "block" : "hidden"} lg:block`}
-          >
-            <PitchBoard
-              me={me}
-              teamColor={teamColor}
-              selected={selected}
-              onSelectPlayer={onSelectPlayer}
-              onPlaceAtSlot={onPlaceAtSlot}
-            />
-          </section>
+          {/* 가운데: 피치 + 전술 지시 (내부 스크롤) */}
+          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+            <section
+              id="panel-pitch"
+              role="tabpanel"
+              aria-labelledby="tab-pitch"
+              className={`${tab === "pitch" ? "block" : "hidden"} lg:block`}
+            >
+              <PitchBoard
+                me={me}
+                teamColor={teamColor}
+                selected={selected}
+                onSelectPlayer={onSelectPlayer}
+                onPlaceAtSlot={onPlaceAtSlot}
+              />
+            </section>
+            <section
+              id="panel-tactics"
+              role="tabpanel"
+              aria-labelledby="tab-analysis"
+              className={`${tab === "analysis" ? "block" : "hidden"} lg:block`}
+            >
+              <TacticTabsPanel />
+            </section>
+          </div>
 
-          {/* 상대 스카우팅 레일 (lg: 오른쪽, 스티키) */}
-          <section
-            id="panel-scout"
-            role="tabpanel"
-            aria-labelledby="tab-analysis"
-            className={`ta-scout ${tab === "analysis" ? "block" : "hidden"} lg:block`}
-          >
-            <div className="lg:sticky lg:top-[4.5rem] lg:max-h-[calc(100vh-6.5rem)] lg:overflow-y-auto lg:pr-1">
+          {/* 오른쪽: 상대 스카우팅 + 근거/추천/상세 (내부 스크롤) */}
+          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+            <section
+              id="panel-scout"
+              role="tabpanel"
+              aria-labelledby="tab-analysis"
+              className={`${tab === "analysis" ? "block" : "hidden"} lg:block`}
+            >
               <ScoutRail />
+            </section>
+            <section
+              id="panel-extras"
+              role="tabpanel"
+              aria-labelledby="tab-analysis"
+              className={`${tab === "analysis" ? "block" : "hidden"} lg:block`}
+            >
+              <ExtrasPanel />
+            </section>
+            {/* 고지문은 lg에서만 이 열 하단에(모바일은 아래 footer가 담당) */}
+            <div className="hidden lg:block">
+              <Disclaimer />
             </div>
-          </section>
-
-          {/* 전술 지시 (lg: 피치 아래 가운데 — 예전엔 이 자리가 통째로 비어 있었다) */}
-          <section
-            id="panel-tactics"
-            role="tabpanel"
-            aria-labelledby="tab-analysis"
-            className={`ta-tactics ${tab === "analysis" ? "block" : "hidden"} lg:block`}
-          >
-            <TacticTabsPanel />
-          </section>
-
-          {/* 근거 · 추천 · 상세 (lg: 하단 가로 행) */}
-          <section
-            id="panel-extras"
-            role="tabpanel"
-            aria-labelledby="tab-analysis"
-            className={`ta-extras ${tab === "analysis" ? "block" : "hidden"} lg:block`}
-          >
-            <ExtrasPanel />
-          </section>
+          </div>
         </div>
 
         <DragOverlay dropAnimation={null}>
@@ -461,12 +469,12 @@ export default function TacticsPage() {
         </DragOverlay>
       </DndContext>
 
-      <footer className="mx-auto mt-10 w-full max-w-6xl px-5">
+      <footer className="mx-auto mt-10 w-full max-w-6xl px-5 lg:hidden">
         <Disclaimer />
       </footer>
 
-      {/* 하단 고정 CTA */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-pitch/90 px-5 py-3 backdrop-blur-md">
+      {/* 하단 CTA: 모바일은 화면 하단 고정, lg에서는 플렉스 마지막 줄(정적)로 */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-pitch/90 px-5 py-3 backdrop-blur-md lg:static lg:z-auto lg:shrink-0">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="stat-num text-[13px] text-ink">
