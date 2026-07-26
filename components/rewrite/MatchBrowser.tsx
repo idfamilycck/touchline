@@ -173,7 +173,9 @@ export function MatchBrowser({
             우측 상세는 sticky로 함께 보인다. 모바일은 max-h가 없어 자연히 늘어나며
             선택 행 아래 인라인 상세가 그대로 펼쳐진다. */}
         <div className="min-h-0 overflow-y-auto lg:flex-1">
-        <ul>
+        {/* 이름을 붙여 둔다: 같은 "경기 선택" 영역 안에 명장면 갤러리 목록도 있어서,
+            스크린리더에서도 자동화에서도 둘을 구분할 수 있어야 한다. */}
+        <ul aria-label="경기 목록">
           {shown.map((m) => {
             const home = teamDisplay(m.home);
             const away = teamDisplay(m.away);
