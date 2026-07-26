@@ -309,7 +309,7 @@ export default function MatchPage() {
 
         {/* 본문 2열(lg): 왼쪽 피치 · 오른쪽 지표/승률/중계(내부 스크롤). 페이지는
             한 화면에 고정되고, 넘치는 오른쪽만 내부 스크롤. 모바일은 세로로 쌓인다. */}
-        <div className="grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] lg:gap-6 lg:overflow-hidden">
+        <div className="grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-5 lg:overflow-hidden">
         <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-y-auto lg:pr-1">
         {/* 라이브 피치 + 장면 자막 */}
         <div className="relative lg:shrink-0">
@@ -343,8 +343,7 @@ export default function MatchPage() {
             goalArrived={goalArrived}
           />
         </div>
-        {/* 피치 바로 아래: 승률 타임라인 — "이 경기가 어디로 가는가"를 피치와 나란히
-            둔다. 왼쪽 컬럼(피치+승률)이 세로를 채워 화면이 붕 뜨지 않는다. */}
+        {/* 경기 화면 아래: 승률 타임라인(분리된 패널). 경기 화면과 승률을 뚜렷이 나눈다. */}
         <ProbTimeline
           timeline={match.probTimeline}
           events={match.events}
@@ -353,15 +352,15 @@ export default function MatchPage() {
         />
         </div>
 
-        {/* 오른쪽: 지표판 + 중계 (내부 스크롤). 지표판이 먼저다 — 무엇을 바꿀지는
-            승률이 아니라 지표가 말한다. */}
+        {/* 오른쪽: 실시간 중계(경기 화면 우측에 붙는 티커) + 경기 지표. 컬럼 하나만
+            스크롤한다(중첩 스크롤 없음). */}
         <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-y-auto lg:pr-1">
+          <CommentaryFeed events={match.events} extraTime={match.extraTime} />
           <LiveMetrics
             match={match}
             meCode={teamById(match.me.teamId)?.code ?? "ME"}
             oppCode={teamById(match.opp.teamId)?.code ?? "OPP"}
           />
-          <CommentaryFeed events={match.events} extraTime={match.extraTime} />
         </div>
         </div>
       </div>

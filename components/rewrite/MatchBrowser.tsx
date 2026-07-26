@@ -161,7 +161,7 @@ export function MatchBrowser({
       {/* 경기 행 리스트 — 카드 그리드가 아니라 헤어라인으로만 나뉘는 조밀한 행.
           한 줄에 라운드 · 홈 국기/팀명 · 스코어 · 원정 팀명/국기 · 이벤트 수가 들어간다.
           구분선은 .data-row(border-bottom 하나)만 쓴다 — 행마다 위아래 선을 겹치지 않게. */}
-      <div className="flex flex-col overflow-hidden rounded-panel border border-line bg-surface/60 lg:max-h-[calc(100vh-13rem)]">
+      <div className="flex flex-col overflow-hidden rounded-panel border border-line bg-surface/60">
         {/* 열 이름 — FM식 데이터 표의 머리. 좁은 폭에서는 스코어 열만 남긴다. */}
         <div className="data-head flex shrink-0 items-center gap-2 px-3 py-1.5 sm:gap-3">
           <span className="w-14 shrink-0 sm:w-20">라운드</span>
