@@ -200,9 +200,10 @@ export default function ResultPage() {
   // 스탯 집계는 lib/engine/match-stats.ts가 단일 소스다(MatchSummary가 직접 읽는다).
 
   return (
-    <main id="main" className="mx-auto flex w-full max-w-md flex-1 scroll-mt-14 flex-col gap-4 px-4 py-6 sm:px-5">
-      {/* 헤드라인 */}
-      <header className="panel rounded-panel px-4 py-5 text-center">
+    <main id="main" className="mx-auto flex w-full max-w-5xl flex-1 scroll-mt-14 flex-col gap-4 px-4 py-6 sm:px-5">
+      {/* 헤드라인: 스코어보드 + 결론을 데스크톱에서 나란히(세로 스택 완화) */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <header className="panel flex flex-col justify-center rounded-panel px-4 py-5 text-center">
         <h1 className="eyebrow text-balance text-accent">경기 복기</h1>
         <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-dim">
           <span>{me?.code ?? "ME"}</span>
@@ -242,7 +243,11 @@ export default function ResultPage() {
             : "같은 라인업으로 개입 없이 처음부터 다시 돌렸을 때와 비교한 승률 변화입니다."}
         </p>
       </section>
+      </div>
 
+      {/* 본문: 데스크톱 2열 벤토 — 카드를 그리드에 흘려 세로 길이를 절반으로 줄인다.
+          모바일은 grid-cols-1이라 기존 단일 컬럼 순서 그대로 유지된다. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
       {/* 평행세계 비교: rewrite 모드는 "실제 역사" vs "나의 개입", free 모드는
           "실제 경기" vs "무개입 재시뮬레이션"이라는 서로 다른 개념이라 컴포넌트를 분기한다. */}
       {rewriteCompare ? (
@@ -275,7 +280,10 @@ export default function ResultPage() {
 
       {/* 선수 평점. 이벤트에 이미 playerId가 다 붙어 있어 집계만으로 만들어진다. */}
       <PlayerRatings match={match} />
+      </div>
 
+      {/* 공유 카드 + 다음 행동(CTA)을 데스크톱에서 나란히 */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
       {/* 공유 카드 */}
       <ShareCard match={match} cf={cf} shootout={shootout} />
 
@@ -322,6 +330,7 @@ export default function ResultPage() {
         <Link href="/" className="mt-1 text-center text-[13px] text-dim hover:text-ink">
           홈으로
         </Link>
+      </div>
       </div>
 
       <footer className="mt-2 w-full">
