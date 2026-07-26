@@ -102,8 +102,7 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
               {...rise(0.16)}
               className="max-w-xl text-pretty text-sm leading-relaxed text-dim sm:text-base lg:pb-1"
             >
-              실제 2026 월드컵 경기에서 승부를 가른 결정적 순간을 골라, 그 시점부터
-              직접 전술을 지휘해 결과를 바꿔보세요.
+              실제 월드컵의 결정적 순간을 골라, 당신의 전술로 다시 씁니다.
             </motion.p>
           </div>
 
