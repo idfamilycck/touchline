@@ -200,56 +200,84 @@ export default function ResultPage() {
   // 스탯 집계는 lib/engine/match-stats.ts가 단일 소스다(MatchSummary가 직접 읽는다).
 
   return (
-    <main id="main" className="mx-auto flex w-full max-w-7xl flex-1 scroll-mt-14 flex-col gap-4 px-4 py-6 sm:px-5">
-      {/* 헤드라인: 스코어보드 + 결론을 데스크톱에서 나란히(세로 스택 완화) */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
-        <header className="panel flex flex-col justify-center rounded-panel px-4 py-5 text-center">
-        <h1 className="eyebrow text-balance text-accent">경기 복기</h1>
-        <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-dim">
-          <span>{me?.code ?? "ME"}</span>
-          <span className="stat-num display text-5xl text-ink">
-            {match.scoreMe}<span className="px-2 text-dim">:</span>{match.scoreOpp}
-          </span>
-          <span>{opp?.code ?? "OPP"}</span>
-        </div>
-        <p className="mt-2 text-sm text-dim">
-          {me?.nameKo ?? "우리"} vs {opp?.nameKo ?? "상대"}
-        </p>
-        {shootout && (
-          <p className="stat-num mt-1 text-[13px] text-dim">
-            승부차기 {shootoutMe} : {shootoutOpp}
+    <main
+      id="main"
+      className="mx-auto flex w-full max-w-[1560px] flex-1 scroll-mt-14 flex-col gap-3 px-4 py-4 sm:px-5 lg:h-[calc(100dvh-3.5rem)] lg:flex-none lg:overflow-hidden"
+    >
+      {/* 한 화면(16:9) 대시보드: 위 헤드라인 밴드(스코어보드·결론·다음행동)를 고정하고,
+          아래 3열이 남은 높이를 채우며 각 열이 내부 스크롤한다 — 페이지 자체는 lg에서
+          스크롤되지 않는다. 모바일은 lg:* 미적용이라 자연스럽게 세로로 쌓여 스크롤된다. */}
+      <div className="grid shrink-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,230px)_minmax(0,1fr)_minmax(0,270px)] lg:items-stretch">
+        <header className="panel flex flex-col justify-center rounded-panel px-4 py-3 text-center">
+          <h1 className="eyebrow text-balance text-accent">경기 복기</h1>
+          <div className="mt-1.5 flex items-center justify-center gap-2 text-xs font-bold text-dim">
+            <span>{me?.code ?? "ME"}</span>
+            <span className="stat-num display text-4xl text-ink">
+              {match.scoreMe}<span className="px-2 text-dim">:</span>{match.scoreOpp}
+            </span>
+            <span>{opp?.code ?? "OPP"}</span>
+          </div>
+          <p className="mt-1 text-[13px] text-dim">
+            {me?.nameKo ?? "우리"} vs {opp?.nameKo ?? "상대"}
           </p>
-        )}
-        <p className="stat-num mt-3 text-lg font-black" style={{ color: wordColor }}>
-          {overallWord}
-        </p>
-      </header>
+          {shootout && (
+            <p className="stat-num text-[13px] text-dim">승부차기 {shootoutMe} : {shootoutOpp}</p>
+          )}
+          <p className="stat-num mt-1.5 text-base font-black" style={{ color: wordColor }}>
+            {overallWord}
+          </p>
+        </header>
 
-      {/* 카운터팩추얼 히어로 결론 */}
-      <section
-        className="rounded-panel border p-5"
-        style={{ borderColor: tone.color, background: tone.bg }}
-      >
-        <p className="eyebrow" style={{ color: tone.color }}>
-          결정적 순간
-        </p>
-        <p className="mt-2 flex items-start gap-2 text-xl font-black leading-snug text-ink">
-          <tone.Icon size={22} weight="bold" className="mt-0.5 shrink-0" aria-hidden />
-          <span>{hero.text}</span>
-        </p>
-        <p className="mt-2 text-[13px] text-dim">
-          {rewriteCompare
-            ? "실제 월드컵 역사의 정규시간 결과와, 당신이 지휘봉을 잡은 뒤의 결과를 비교합니다."
-            : "같은 라인업으로 개입 없이 처음부터 다시 돌렸을 때와 비교한 승률 변화입니다."}
-        </p>
-      </section>
+        {/* 카운터팩추얼 히어로 결론 */}
+        <section
+          className="flex flex-col justify-center rounded-panel border px-4 py-3.5"
+          style={{ borderColor: tone.color, background: tone.bg }}
+        >
+          <p className="eyebrow" style={{ color: tone.color }}>결정적 순간</p>
+          <p className="mt-1.5 flex items-start gap-2 text-lg font-black leading-snug text-ink">
+            <tone.Icon size={20} weight="bold" className="mt-0.5 shrink-0" aria-hidden />
+            <span>{hero.text}</span>
+          </p>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-dim">
+            {rewriteCompare
+              ? "실제 정규시간 결과와, 당신이 지휘봉을 잡은 뒤의 결과를 비교합니다."
+              : "개입 없이 다시 돌렸을 때와 비교한 승률 변화입니다."}
+          </p>
+        </section>
+
+        {/* 다음 행동(CTA) */}
+        <div className="flex flex-col justify-center gap-2">
+          {mode === "rewrite" ? (
+            <button
+              type="button"
+              onClick={() => { leavingRef.current = true; router.push("/rewrite"); }}
+              className="w-full rounded-control bg-accent py-3 text-sm font-black text-accent-ink transition-transform hover:-translate-y-0.5"
+            >
+              다른 경기 다시 쓰기 →
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { leavingRef.current = true; rematch(); router.push("/tactics"); }}
+              className="w-full rounded-control bg-accent py-3 text-sm font-black text-accent-ink transition-transform hover:-translate-y-0.5"
+            >
+              같은 매치업 다시 도전 →
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => { leavingRef.current = true; reset(); router.push("/"); }}
+            className="w-full rounded-control border border-line py-2.5 text-[13px] font-bold text-dim transition-colors hover:border-white/25 hover:text-ink"
+          >
+            새 매치업 고르기
+          </button>
+        </div>
       </div>
 
-      {/* 본문: 데스크톱 masonry(CSS 멀티컬럼) — 높이가 제각각인 카드를 빈틈없이 채워
-          오른쪽 아래에 검은 void가 생기지 않게 한다. break-inside-avoid로 카드가 컬럼
-          사이에서 쪼개지지 않고, 세로 간격은 자식마다 mb로 준다(멀티컬럼엔 gap이 세로엔
-          안 먹음). 모바일은 columns-1이라 기존 단일 컬럼 순서 그대로 유지. */}
-      <div className="columns-1 gap-4 sm:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid">
+      {/* 본문: 3열, 각 열이 남은 높이를 채우고 내부 스크롤(lg). 모바일은 lg:* 미적용이라
+          단일 컬럼으로 쌓여 페이지가 자연스럽게 스크롤된다. */}
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-3 lg:overflow-hidden">
+        <div className="flex min-w-0 flex-col gap-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
       {/* 평행세계 비교: rewrite 모드는 "실제 역사" vs "나의 개입", free 모드는
           "실제 경기" vs "무개입 재시뮬레이션"이라는 서로 다른 개념이라 컴포넌트를 분기한다. */}
       {rewriteCompare ? (
@@ -265,13 +293,17 @@ export default function ResultPage() {
 
       {/* 분기하는 역사 (rewrite 모드 전용) */}
       {branching && <BranchingHistory {...branching} meCode={me?.code ?? "ME"} oppCode={opp?.code ?? "OPP"} />}
+        </div>
 
+        <div className="flex min-w-0 flex-col gap-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
       {/* 승률 타임라인 */}
       <FinalTimeline match={match} />
 
       {/* 전술 평가 & 보완 */}
       {review && <TacticsReviewPanel review={review} />}
+        </div>
 
+        <div className="flex min-w-0 flex-col gap-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
       {/* 경기 요약. 예전에는 접힌 아코디언 안에 네 줄뿐이라 "결과 요약이 없다"는
           인상을 줬다. 펼친 상태로 두고 지표를 늘렸다. */}
       <MatchSummary
@@ -282,62 +314,16 @@ export default function ResultPage() {
 
       {/* 선수 평점. 이벤트에 이미 playerId가 다 붙어 있어 집계만으로 만들어진다. */}
       <PlayerRatings match={match} />
-      </div>
 
-      {/* 공유 카드 + 다음 행동(CTA)을 데스크톱에서 나란히 */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
-      {/* 공유 카드 */}
+      {/* 공유 카드 (col3 하단) */}
       <ShareCard match={match} cf={cf} shootout={shootout} />
 
-      {/* CTA */}
-      <div className="flex flex-col gap-2 pt-1">
-        {mode === "rewrite" ? (
-          // rewrite 모드: rematch()는 free 모드용 라인업 리셋 로직이라 mode를 "rewrite"로
-          // 남겨둔 채 부적절한 상태를 만든다(알려진 불일치). 대신 다른 실제 경기의
-          // "결정적 순간"을 새로 고르러 /rewrite로 보낸다.
-          <button
-            type="button"
-            onClick={() => {
-              leavingRef.current = true;
-              router.push("/rewrite");
-            }}
-            className="w-full rounded-control bg-accent py-4 text-base font-black text-accent-ink transition-transform hover:-translate-y-0.5"
-          >
-            다른 경기 다시 쓰기 →
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              leavingRef.current = true;
-              rematch();
-              router.push("/tactics");
-            }}
-            className="w-full rounded-control bg-accent py-4 text-base font-black text-accent-ink transition-transform hover:-translate-y-0.5"
-          >
-            같은 매치업 다시 도전 →
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => {
-            leavingRef.current = true;
-            reset();
-            router.push("/");
-          }}
-          className="w-full rounded-control border border-line py-3.5 text-sm font-bold text-dim transition-colors hover:border-white/25 hover:text-ink"
-        >
-          새 매치업 고르기
-        </button>
-        <Link href="/" className="mt-1 text-center text-[13px] text-dim hover:text-ink">
-          홈으로
-        </Link>
+      <Disclaimer />
+      <Link href="/" className="pb-1 text-center text-[12px] text-dim transition-colors hover:text-ink">
+        홈으로
+      </Link>
+        </div>
       </div>
-      </div>
-
-      <footer className="mt-2 w-full">
-        <Disclaimer />
-      </footer>
     </main>
   );
 }
