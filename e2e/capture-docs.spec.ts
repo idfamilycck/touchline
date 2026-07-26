@@ -20,6 +20,20 @@ test.use({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 });
 
 test.describe.configure({ mode: "serial" });
 
+// 개발 서버의 Next 데브툴 배지(좌하단 검은 원)가 화면 구석에 같이 찍혀, 기획서에
+// 제품과 무관한 오브젝트가 들어간다. 캡처 동안만 가린다.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const hide = () => {
+      const style = document.createElement("style");
+      style.textContent = "nextjs-portal, [data-nextjs-toast], #__next-build-watcher { display: none !important; }";
+      document.head.appendChild(style);
+    };
+    if (document.head) hide();
+    else document.addEventListener("DOMContentLoaded", hide);
+  });
+});
+
 /** 자유 매치업(/free)에서 팀 2개 + 경기장을 골라 작전실까지 들어간다. */
 async function enterTactics(page: Page) {
   await page.goto("/free");
@@ -54,7 +68,7 @@ test("07 다시 쓰기 경기 브라우저 + 08 결정적 순간", async ({ page
   // 경기 카드 하나를 고르고 사이드를 선택하면 "결정적 순간" 카드가 열린다.
   // (홈 상단 "명장면 갤러리" 카드도 li+button이라 반드시 경기 목록으로 좁힌다 —
   //  갤러리 카드를 누르면 곧장 작전실로 넘어가 상세 패널이 열리지 않는다.)
-  const card = page.getByRole("region", { name: "경기 선택" }).locator("ul > li").first();
+  const card = page.getByRole("list", { name: "경기 목록" }).locator("li").first();
   await card.getByRole("button").first().click();
   const side = page.getByRole("button", { name: /지휘하기/ }).first();
   await expect(side).toBeVisible({ timeout: 10_000 });
@@ -131,12 +145,12 @@ test("12 다시 쓰기 복기 - 실제 역사 vs 평행세계 · 분기하는 �
   // rewrite 모드로 한 경기를 완주해야만 나오는 화면이라, e2e/rewrite.spec.ts와 같은
   // 경로를 그대로 밟는다(순간 카드가 있는 첫 조합을 바운드 루프로 찾는다).
   await page.goto("/");
-  const matchSection = page.getByRole("region", { name: "경기 선택" });
-  await expect(matchSection.locator("ul > li").first()).toBeVisible();
+  const matchList = page.getByRole("list", { name: "경기 목록" });
+  await expect(matchList.locator("li").first()).toBeVisible();
   const detailPanel = page.getByRole("region", { name: "선택한 경기" });
   const momentSection = detailPanel.getByRole("region", { name: "결정적 순간 선택" });
 
-  await matchSection.locator("ul > li").first().locator("button").first().click();
+  await matchList.locator("li").first().locator("button").first().click();
   const sideButtons = detailPanel.getByRole("button", { name: /지휘하기/ });
   await expect(sideButtons.first()).toBeVisible({ timeout: 10_000 });
   await sideButtons.first().click();

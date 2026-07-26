@@ -26,9 +26,10 @@ test("월드컵 다시 쓰기 → 결정적 순간 선택 → 경기 완주 → 
   // 상세는 데스크톱(우측 sticky 컬럼)과 모바일(행 아래 인라인) 두 벌이 렌더되지만
   // 한쪽은 항상 display:none이라 접근성 트리에는 하나만 올라온다 — 그래서
   // getByRole로 잡으면 뷰포트와 무관하게 "지금 보이는 상세"가 잡힌다.
-  const matchSection = page.getByRole("region", { name: "경기 선택" });
-  await expect(matchSection).toBeVisible();
-  const matchRows = matchSection.locator("ul > li");
+  // "경기 선택" 영역에는 명장면 갤러리 목록도 함께 있으므로 경기 목록만 집는다.
+  const matchList = page.getByRole("list", { name: "경기 목록" });
+  await expect(matchList).toBeVisible();
+  const matchRows = matchList.locator("li");
   await expect(matchRows.first()).toBeVisible();
 
   const detailPanel = page.getByRole("region", { name: "선택한 경기" });
