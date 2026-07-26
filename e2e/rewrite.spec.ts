@@ -67,6 +67,10 @@ test("월드컵 다시 쓰기 → 결정적 순간 선택 → 경기 완주 → 
 
   // ── 작전실(rewrite 컨텍스트) ──────────────────────────────
   await expect(page).toHaveURL(/\/tactics/);
+  // rewrite 모드는 작전실 위에 "지휘봉 인계" 오버레이(모달)가 먼저 떠 클릭을 가로챈다.
+  const handoff = page.getByRole("button", { name: /지휘봉 잡기/ });
+  await expect(handoff).toBeVisible({ timeout: 15_000 });
+  await handoff.click();
   // 첫 진입 온보딩 코치마크(딤 오버레이)가 클릭을 가로채므로 건너뛴다.
   await page.getByRole("button", { name: "건너뛰기" }).click();
   // rewrite 모드 전용 컨텍스트 배지("실제 경기 · A vs B · N'부터 지휘"). 가운데
@@ -132,6 +136,7 @@ test("월드컵 다시 쓰기 → 결정적 순간 선택 → 경기 완주 → 
   // myFor/myAgainst/myResultKo 등으로 스코어카드를 그리며, 그 카드의 라벨이
   // "당신의 평행세계"다).
   await expect(page.getByText("실제 역사 vs 평행세계")).toBeVisible();
-  await expect(page.getByText("당신의 평행세계")).toBeVisible();
-  await expect(page.getByText("실제 역사", { exact: true })).toBeVisible();
+  // 아래에 "분기하는 역사" 타임라인이 붙으면서 같은 라벨이 범례에도 등장한다(2개 매칭).
+  await expect(page.getByText("당신의 평행세계").first()).toBeVisible();
+  await expect(page.getByText("실제 역사", { exact: true }).first()).toBeVisible();
 });
