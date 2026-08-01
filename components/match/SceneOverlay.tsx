@@ -28,6 +28,9 @@ export function SceneOverlay({ sceneEvents, attribution, goalArrived = true }: S
   // 도착 전에는 체인의 마지막 고리("골!")를 빼고, 문구도 진행형으로 바꾼다.
   const chain = pending ? fullChain.slice(0, -1) : fullChain;
   const headline = pending ? "슛이 골문으로 향합니다" : (primary?.textKo ?? "");
+  // 골이 확정된 순간(공 도착)엔 중계 자막을 크게 키우고 "GOAL" 태그를 붙여
+  // "대시보드"가 아니라 "방송"의 호흡을 준다.
+  const confirmedGoal = isGoal && !pending;
 
   return (
     <AnimatePresence>
@@ -53,11 +56,28 @@ export function SceneOverlay({ sceneEvents, attribution, goalArrived = true }: S
               <span className="display rounded-md bg-accent px-1.5 py-0.5 text-xs font-bold text-black">
                 {primary.minute}&#39;
               </span>
+              {confirmedGoal && (
+                <motion.span
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 14 }}
+                  className="display rounded-md px-2 py-0.5 text-xs font-black tracking-wide text-white"
+                  style={{ background: primary.side === "me" ? "var(--color-accent)" : "var(--color-danger)" }}
+                >
+                  ⚽ GOAL
+                </motion.span>
+              )}
               {chain.length > 1 && (
                 <span className="text-xs font-semibold tracking-wide text-dim">{chain.join(" → ")}</span>
               )}
             </div>
-            <p className="mt-1.5 text-sm font-bold leading-snug text-white sm:text-base">{headline}</p>
+            <p
+              className={`mt-1.5 font-bold leading-snug text-white ${
+                confirmedGoal ? "text-lg sm:text-2xl" : "text-sm sm:text-base"
+              }`}
+            >
+              {headline}
+            </p>
             {/* 발동 전술 칩은 결과가 확정된 뒤에 붙인다(빌드업 중에는 아직 근거가 아니다). */}
             {attribution && !pending && (
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-dim">

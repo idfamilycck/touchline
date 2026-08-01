@@ -35,6 +35,11 @@ interface ProbTimelineProps {
    * 그대로 순수 승리 확률이다(두 숫자를 한 축에 섞지 않는다).
    */
   shootoutWinProb?: number;
+  /**
+   * 다시 쓰기 모드에서 지휘봉을 잡은 분. 있으면 "여기서 내가 바꿨다"를 한 프레임에
+   * 보이도록 세로 마커로 강조한다(free 모드에선 undefined → 마커 없음).
+   */
+  takeoverMinute?: number;
 }
 
 function xOf(minute: number, maxMin: number): number {
@@ -50,6 +55,7 @@ export function ProbTimeline({
   events,
   interventions,
   shootoutWinProb,
+  takeoverMinute,
 }: ProbTimelineProps) {
   const pts = timeline.length > 0 ? timeline : [{ minute: 0, win: 0.5, draw: 0.25 }];
   const last = pts[pts.length - 1];
@@ -179,6 +185,31 @@ export function ProbTimeline({
             color="var(--color-ink)"
           />
         ))}
+
+        {/* 지휘봉 인계 지점 — "여기서부터 내가 다시 썼다"를 한 프레임에 보인다. */}
+        {takeoverMinute != null && takeoverMinute > 0 && takeoverMinute < maxMin && (
+          <g>
+            <line
+              x1={xOf(takeoverMinute, maxMin)}
+              y1={PAD_T}
+              x2={xOf(takeoverMinute, maxMin)}
+              y2={H - PAD_B}
+              stroke="var(--color-accent)"
+              strokeWidth={1.2}
+              opacity={0.9}
+            />
+            <text
+              x={xOf(takeoverMinute, maxMin)}
+              y={PAD_T - 4}
+              textAnchor="middle"
+              fontSize="8"
+              fontWeight={700}
+              fill="var(--color-accent)"
+            >
+              인계 {takeoverMinute}′
+            </text>
+          </g>
+        )}
 
         {/* 현재 분 커서 */}
         <line

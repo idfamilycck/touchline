@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { TrendUp, TrendDown, Target, type Icon } from "@phosphor-icons/react";
+import { TrendUp, TrendDown, Target, Trophy, type Icon } from "@phosphor-icons/react";
 import { useAppStore } from "@/lib/store";
 import { counterfactual } from "@/lib/engine/counterfactual";
 import { teamById } from "@/lib/data/teams";
@@ -196,6 +196,8 @@ export default function ResultPage() {
       }
     : heroLine(cf.deltas);
   const tone = HERO_TONE[hero.tone];
+  // 다시 쓰기 모드에서 실제 역사를 개선(뒤집음)했는가 — 히어로 승격 조건.
+  const rewriteBeat = Boolean(rewriteCompare) && hero.tone === "gain";
 
   // 스탯 집계는 lib/engine/match-stats.ts가 단일 소스다(MatchSummary가 직접 읽는다).
 
@@ -228,14 +230,25 @@ export default function ResultPage() {
           </p>
         </header>
 
-        {/* 카운터팩추얼 히어로 결론 */}
+        {/* 카운터팩추얼 히어로 결론. 실제 역사를 뒤집었을 때(다시 쓰기·개선)는
+            트로피 + 더 큰 글씨로 승격해 결과 화면의 감정 정점이 데이터보다 먼저 읽히게 한다. */}
         <section
           className="flex flex-col justify-center rounded-panel border px-4 py-3.5"
           style={{ borderColor: tone.color, background: tone.bg }}
         >
-          <p className="eyebrow" style={{ color: tone.color }}>결정적 순간</p>
-          <p className="mt-1.5 flex items-start gap-2 text-lg font-black leading-snug text-ink">
-            <tone.Icon size={20} weight="bold" className="mt-0.5 shrink-0" aria-hidden />
+          <p className="eyebrow" style={{ color: tone.color }}>
+            {rewriteBeat ? "역사를 다시 썼습니다" : "결정적 순간"}
+          </p>
+          <p
+            className={`mt-1.5 flex items-start gap-2 font-black leading-snug text-ink ${
+              rewriteBeat ? "text-xl sm:text-2xl" : "text-lg"
+            }`}
+          >
+            {rewriteBeat ? (
+              <Trophy size={24} weight="fill" className="mt-0.5 shrink-0 text-gain" aria-hidden />
+            ) : (
+              <tone.Icon size={20} weight="bold" className="mt-0.5 shrink-0" aria-hidden />
+            )}
             <span>{hero.text}</span>
           </p>
           <p className="mt-1.5 text-[12px] leading-relaxed text-dim">
@@ -296,8 +309,8 @@ export default function ResultPage() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-3 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-      {/* 승률 타임라인 */}
-      <FinalTimeline match={match} />
+      {/* 승률 타임라인 (다시 쓰기 모드면 인계 지점 마커 포함) */}
+      <FinalTimeline match={match} takeoverMinute={rewriteCompare ? rewriteContext?.takeoverMinute : undefined} />
 
       {/* 전술 평가 & 보완 */}
       {review && <TacticsReviewPanel review={review} />}

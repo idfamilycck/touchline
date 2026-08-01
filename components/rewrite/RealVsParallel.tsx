@@ -147,6 +147,9 @@ export function RealVsParallel({ compare, meCode, oppCode, timeline }: RealVsPar
 
   const improved = compare.changedOutcome && resultRank(myWord) > resultRank(realWord);
   const worsened = compare.changedOutcome && resultRank(myWord) < resultRank(realWord);
+  // 실제로 이 구간에 터졌지만 내 평행세계에서 사라진 실점 수 = "당신이 지운 골".
+  // 공유용 훅이라 인계 이후 구간의 실제 실점 대비 내 실점의 감소분으로 센다.
+  const erased = timeline ? timeline.realConceded.length - timeline.myConceded : 0;
   const deltaColor = !compare.changedOutcome
     ? "var(--color-dim)"
     : improved
@@ -173,6 +176,30 @@ export function RealVsParallel({ compare, meCode, oppCode, timeline }: RealVsPar
         <div className="mt-3 flex items-center gap-2 rounded-panel border border-danger/40 bg-danger/10 px-3.5 py-2.5">
           <ArrowUUpLeft size={20} weight="bold" aria-hidden className="shrink-0 text-danger" />
           <p className="text-sm font-black text-danger">이번엔 역사를 넘지 못했습니다</p>
+        </div>
+      )}
+
+      {/* "당신이 지운 골" — 실제로 터졌던 실점을 이름과 함께 취소선으로 지워 보여주는
+          공유용 훅. 개선했고 실제 실점을 줄였을 때만 노출한다. */}
+      {improved && erased > 0 && timeline && timeline.realConceded.length > 0 && (
+        <div className="mt-3 rounded-panel border border-gain/40 bg-gain/10 px-3.5 py-3">
+          <p className="stat-num text-2xl font-black leading-none text-gain">
+            당신이 지운 {erased}골
+          </p>
+          <p className="mt-1 text-[13px] text-dim">실제로 이 시간대에 터졌던 골입니다.</p>
+          <ul className="mt-2 flex flex-wrap gap-1.5">
+            {timeline.realConceded.map((g) => (
+              <li
+                key={`${g.minute}-${g.playerName}`}
+                className="flex items-center gap-1 rounded-full border border-line bg-surface-2/50 px-2 py-0.5 text-[13px] text-dim line-through"
+              >
+                <SoccerBall size={11} weight="bold" aria-hidden className="text-danger" />
+                <span className="tnum font-bold">{g.minute}&apos;</span>
+                <span>{g.playerName}</span>
+                {g.ownGoal && <span>자책</span>}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

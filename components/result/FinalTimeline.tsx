@@ -23,9 +23,11 @@ const OPP_MOVE_LABEL: Record<string, string> = {
 
 interface FinalTimelineProps {
   match: MatchState;
+  /** 다시 쓰기 모드에서 지휘봉을 잡은 분(복기 타임라인에 인계 마커로 표시). */
+  takeoverMinute?: number;
 }
 
-export function FinalTimeline({ match }: FinalTimelineProps) {
+export function FinalTimeline({ match, takeoverMinute }: FinalTimelineProps) {
   const me = teamById(match.me.teamId);
   const opp = teamById(match.opp.teamId);
 
@@ -63,6 +65,7 @@ export function FinalTimeline({ match }: FinalTimelineProps) {
         events={match.events}
         interventions={match.interventions}
         shootoutWinProb={shootoutWinProb(match.me, match.opp)}
+        takeoverMinute={takeoverMinute}
       />
 
       {/* 범례 */}

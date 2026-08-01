@@ -387,6 +387,7 @@ export default function MatchPage() {
                 events={match.events}
                 interventions={match.interventions}
                 shootoutWinProb={pkWinProb}
+                takeoverMinute={mode === "rewrite" ? rewriteContext?.takeoverMinute : undefined}
               />
             </div>
           </div>
