@@ -453,7 +453,9 @@ export default function MatchPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <div className="absolute inset-0 bg-black/70" />
+            {/* 백드롭: 뒤 경기 화면(피치·스코어보드)을 흐리게 비춰 트로피가 검은
+                공백이 아니라 "경기장" 위에 뜨게 한다. */}
+            <div className="absolute inset-0 bg-black/55 backdrop-blur-md" />
             <motion.div
               initial={{ scale: 0.92, y: 14 }}
               animate={{ scale: 1, y: 0 }}
@@ -501,14 +503,44 @@ export default function MatchPage() {
                     <>
                       {/* 승리 정점: 트로피가 튀어오르고, 다시 쓰기로 실제 역사를 뒤집었으면
                           "역사를 다시 썼습니다"로 카피를 승격한다(일반 승리는 "승리했습니다!"). */}
-                      <motion.div
-                        initial={{ scale: 0, rotate: -20 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ type: "spring", stiffness: 240, damping: 12, delay: 0.08 }}
-                        className="mx-auto mt-4 flex size-14 items-center justify-center rounded-full bg-gain/15 ring-1 ring-gain/40"
-                      >
-                        <Trophy size={30} weight="fill" aria-hidden className="text-gain" />
-                      </motion.div>
+                      <div className="relative mx-auto mt-4 size-14">
+                        {/* 색종이 버스트 — 트로피 중심에서 사방으로 터진다(고정 각도, 결정론적). */}
+                        <div aria-hidden className="pointer-events-none absolute inset-0">
+                          {Array.from({ length: 12 }).map((_, i) => {
+                            const ang = (i / 12) * Math.PI * 2;
+                            const dist = 66;
+                            const colors = [
+                              "var(--color-gain)",
+                              "var(--color-accent)",
+                              "var(--color-gold)",
+                              "var(--color-ink)",
+                            ];
+                            return (
+                              <motion.span
+                                key={i}
+                                className="absolute left-1/2 top-1/2 size-1.5 rounded-[1px]"
+                                style={{ background: colors[i % colors.length] }}
+                                initial={{ x: 0, y: 0, opacity: 0, scale: 1 }}
+                                animate={{
+                                  x: Math.cos(ang) * dist,
+                                  y: Math.sin(ang) * dist,
+                                  opacity: [0, 1, 0],
+                                  scale: [1, 1, 0.4],
+                                }}
+                                transition={{ duration: 0.85, delay: 0.16, ease: "easeOut" }}
+                              />
+                            );
+                          })}
+                        </div>
+                        <motion.div
+                          initial={{ scale: 0, rotate: -20 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", stiffness: 240, damping: 12, delay: 0.08 }}
+                          className="flex size-14 items-center justify-center rounded-full bg-gain/15 ring-1 ring-gain/40"
+                        >
+                          <Trophy size={30} weight="fill" aria-hidden className="text-gain" />
+                        </motion.div>
+                      </div>
                       <motion.h2
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
