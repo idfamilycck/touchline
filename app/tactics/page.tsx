@@ -410,7 +410,8 @@ export default function TacticsPage() {
               id="panel-pitch"
               role="tabpanel"
               aria-labelledby="tab-pitch"
-              className={`${tab === "pitch" ? "block" : "hidden"} lg:block`}
+              // 피치를 자체 패널로 감싸 아래 전술 패널과 뚜렷이 분리한다.
+              className={`${tab === "pitch" ? "block" : "hidden"} panel rounded-panel p-3 lg:block lg:p-4`}
             >
               <PitchBoard
                 me={me}

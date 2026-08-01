@@ -10,6 +10,7 @@
 // useSearchParams()는 정적 내보내기 프리렌더 시 Suspense 경계가 필요하므로,
 // 이 컴포넌트를 쓰는 라우트는 <Suspense>로 감싼다.
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
@@ -67,6 +68,17 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
   const resetSelection = () => {
     updateQuery({ match: undefined, side: undefined });
   };
+
+  // 첫 진입 시 히어로 옆 상세 패널이 "경기를 고르세요"로 비어 죽은 공간처럼 보이지
+  // 않도록, 선택된 경기가 없으면 대표 경기(한국전 우선)를 자동으로 골라 패널을
+  // 살려 둔다. 마운트 시 1회만 — 이후 사용자가 "선택 해제"하면 그대로 빈 상태로 둔다.
+  // (딥링크로 ?match=가 이미 있으면 건드리지 않는다.)
+  useEffect(() => {
+    if (matchId) return;
+    const featured = matches.find((m) => m.home === "KOR" || m.away === "KOR") ?? matches[0];
+    if (featured) updateQuery({ match: featured.id });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main

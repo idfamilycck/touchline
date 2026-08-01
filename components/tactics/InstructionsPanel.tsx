@@ -93,13 +93,14 @@ export function InstructionsPanel() {
   if (!instructions) return null;
 
   return (
-    // 넓은 화면(xl+)에서는 네 구역(포메이션·기본전술·성향·세부지시)을 2열로 흘려
-    // 세로 길이를 절반으로 줄인다. 좁은 화면은 그대로 1열.
-    <div data-keep-selection className="flex flex-col gap-6 xl:grid xl:grid-cols-2 xl:gap-x-6 xl:gap-y-6">
-      {/* 포메이션 */}
+    // 포메이션(가로 한 줄) → 기본 전술 → 성향 조절 → 세부 지시 순의 단일 세로 흐름.
+    // 예전 xl:2열 마소너리는 포메이션 옆에 큰 여백을 남겨 "빈 부분이 많은" 인상을
+    // 줬다. 각 구역이 패널 폭을 꽉 채우는 단일 열이라 좌우 빈 공간이 사라진다.
+    <div data-keep-selection className="flex flex-col gap-6">
+      {/* 포메이션 — 6종을 한 줄로 가로 배열(좁은 화면만 3열 2줄). */}
       <section>
         <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-accent">포메이션</h2>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {FORMATION_IDS.map((id) => {
             const active = instructions.formation === id;
             return (

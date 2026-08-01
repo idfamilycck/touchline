@@ -75,7 +75,10 @@ export function HighlightGallery() {
               <button
                 type="button"
                 onClick={() => open(h)}
-                className="panel group flex h-full w-full flex-col gap-3 rounded-panel border-l-4 p-4 text-left transition-colors duration-150 hover:border-white/25"
+                // 바깥 "바로 이 순간부터" 패널과 같은 표면색이면 카드가 그 안에서 떠오르지
+                // 않아 전체가 한 덩어리로 뭉갠다. 카드를 한 단계 어둡게(pitch-2) 눌러
+                // 패널 안에 들어앉은 카드로 읽히게 한다.
+                className="group flex h-full w-full flex-col gap-3 rounded-panel border border-line border-l-4 bg-pitch-2 p-4 text-left transition-colors duration-150 hover:border-white/25"
                 style={{ borderLeftColor: TONE_BAR[h.tone] }}
               >
                 <div className="flex items-center justify-between gap-2">

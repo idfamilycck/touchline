@@ -106,8 +106,8 @@ export function MatchDetail({ match, side, onSelectSide, onReset, aside = false 
         </p>
       </div>
 
-      {/* 사이드 선택 */}
-      <div className="flex flex-col gap-2">
+      {/* 사이드 선택 — 스코어카드와 섞이지 않게 자체 패널로 분리한다. */}
+      <div className="panel flex flex-col gap-2 rounded-panel p-4">
         <p className="data-label">지휘할 팀</p>
         {[match.home, match.away].map((code) => {
           const t = code === match.home ? home : away;
@@ -129,9 +129,12 @@ export function MatchDetail({ match, side, onSelectSide, onReset, aside = false 
         })}
       </div>
 
-      {/* 결정적 순간 — 팀을 고른 뒤에만 */}
+      {/* 결정적 순간 — 팀을 고른 뒤에만. 위 두 블록과 섞이지 않게 자체 패널로 분리한다. */}
       {side && (
-        <section aria-label="결정적 순간 선택" className="flex flex-col gap-3 border-t border-line pt-4">
+        <section
+          aria-label="결정적 순간 선택"
+          className="panel flex flex-col gap-3 rounded-panel p-4"
+        >
           <h3 className="display text-lg text-ink">어디서부터 다시 쓸까</h3>
           <MomentCards match={match} side={side} />
         </section>

@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Play, Pause, Brain } from "@phosphor-icons/react";
+import { Play, Pause, Brain, Trophy } from "@phosphor-icons/react";
 import { useAppStore } from "@/lib/store";
 import { Scoreboard, minuteLabel } from "@/components/match/Scoreboard";
 import { LivePitch } from "@/components/match/LivePitch";
@@ -38,6 +38,8 @@ import { applyModifiers, type AppliedRule } from "@/lib/engine/modifiers";
 import { teamById } from "@/lib/data/teams";
 import { venueById } from "@/lib/data/venues";
 import { h2hOf } from "@/lib/data/h2h";
+import { wc2026MatchById } from "@/lib/wc2026/data";
+import { buildCompare, resultRank } from "@/components/rewrite/compare";
 import type { Intervention, MatchEvent } from "@/lib/engine/match";
 
 // 하이라이트 점프 페이싱: 장면 없는 분은 SKIP_MS 간격으로 빠르게 흘려보내고,
@@ -63,6 +65,22 @@ export default function MatchPage() {
     if (!match) return undefined;
     return shootoutWinProb(match.me, match.opp);
   }, [match?.me, match?.opp]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 다시 쓰기 모드에서 내 결과가 실제 역사를 뒤집었는가 — 종료 오버레이의 정점
+  // 카피("역사를 다시 썼습니다")를 이 값으로 가른다. free 모드나 실제 경기 정보를
+  // 못 찾으면 false로 폴백해 일반 "승리했습니다!"로 남는다.
+  const beatReality = useMemo(() => {
+    if (mode !== "rewrite" || !rewriteContext || !match) return false;
+    const real = wc2026MatchById(rewriteContext.matchId);
+    if (!real) return false;
+    const cmp = buildCompare(
+      real,
+      rewriteContext.side,
+      { scoreMe: match.scoreMe, scoreOpp: match.scoreOpp },
+      rewriteContext.endMinute ?? 90,
+    );
+    return cmp.changedOutcome && resultRank(cmp.myResultKo) > resultRank(cmp.realResultKo);
+  }, [mode, rewriteContext, match]);
 
   const [playing, setPlaying] = useState(false); // 새로고침/진입 시 항상 일시정지로 시작
   // 재생을 한 번이라도 시작했는가. 라이브 피치의 "정지 대형 vs 동적 전형"을 가른다.
@@ -307,10 +325,15 @@ export default function MatchPage() {
           </div>
         </div>
 
-        {/* 본문 2열(lg): 왼쪽 피치 · 오른쪽 지표/승률/중계(내부 스크롤). 페이지는
-            한 화면에 고정되고, 넘치는 오른쪽만 내부 스크롤. 모바일은 세로로 쌓인다. */}
-        <div className="grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-5 lg:overflow-hidden">
-        <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-y-auto lg:pr-1">
+        {/* 본문 2열(lg) — 경기를 한 화면에 담는다. 페이지는 고정되고 각 열의 하단만
+            내부 스크롤한다. 모바일(lg 미만)은 아래 순서대로 세로로 쌓인다.
+              · 왼쪽 열: 피치(위) → 경기 지표(아래)
+              · 오른쪽 열: 승률 타임라인(위, 축소) → 실시간 중계(아래)
+            이렇게 하면 승률 타임라인은 피치 우측에, 경기 지표는 실시간 중계 왼쪽에
+            놓여 요청한 배치가 그대로 성립한다. */}
+        <div className="grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-2 lg:gap-5 lg:overflow-hidden">
+        {/* ── 왼쪽 열: 피치 + 경기 지표 ── */}
+        <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-hidden">
         {/* 라이브 피치 + 장면 자막 */}
         <div className="relative lg:shrink-0">
           <LivePitch
@@ -343,24 +366,34 @@ export default function MatchPage() {
             goalArrived={goalArrived}
           />
         </div>
-        {/* 경기 화면 아래: 승률 타임라인(분리된 패널). 경기 화면과 승률을 뚜렷이 나눈다. */}
-        <ProbTimeline
-          timeline={match.probTimeline}
-          events={match.events}
-          interventions={match.interventions}
-          shootoutWinProb={pkWinProb}
-        />
-        </div>
-
-        {/* 오른쪽: 실시간 중계(경기 화면 우측에 붙는 티커) + 경기 지표. 컬럼 하나만
-            스크롤한다(중첩 스크롤 없음). */}
-        <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-y-auto lg:pr-1">
-          <CommentaryFeed events={match.events} extraTime={match.extraTime} />
+        {/* 경기 지표 — 피치 아래(실시간 중계 왼쪽). 넘치면 이 칸만 스크롤한다. */}
+        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
           <LiveMetrics
             match={match}
             meCode={teamById(match.me.teamId)?.code ?? "ME"}
             oppCode={teamById(match.opp.teamId)?.code ?? "OPP"}
           />
+        </div>
+        </div>
+
+        {/* ── 오른쪽 열: 승률 타임라인(축소) + 실시간 중계 ── */}
+        <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-hidden">
+          {/* 승률 타임라인 — 피치 우측에 붙는 축소 패널. 넓은 열에서 차트가 커지지
+              않도록 카드 폭을 제한해 콤팩트하게 유지한다. */}
+          <div className="lg:shrink-0">
+            <div className="w-full lg:max-w-[380px]">
+              <ProbTimeline
+                timeline={match.probTimeline}
+                events={match.events}
+                interventions={match.interventions}
+                shootoutWinProb={pkWinProb}
+              />
+            </div>
+          </div>
+          {/* 실시간 중계 — 넘치면 이 칸만 스크롤한다(중첩 스크롤 없음). */}
+          <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+            <CommentaryFeed events={match.events} extraTime={match.extraTime} />
+          </div>
         </div>
         </div>
       </div>
@@ -424,8 +457,19 @@ export default function MatchPage() {
             <motion.div
               initial={{ scale: 0.92, y: 14 }}
               animate={{ scale: 1, y: 0 }}
-              className="panel relative w-full max-w-sm rounded-panel p-6 text-center"
+              className="panel relative isolate w-full max-w-sm overflow-hidden rounded-panel p-6 text-center"
             >
+              {/* 승리 시 초록 축포 글로우(콘텐츠 뒤 -z-10). 정점의 카타르시스를 연출한다. */}
+              {!isDraw && match.scoreMe > match.scoreOpp && (
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 -z-10"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.6 }}
+                  style={{ background: "radial-gradient(circle at 50% 32%, rgba(59,227,138,0.32), transparent 62%)" }}
+                />
+              )}
               <p className="eyebrow text-accent">경기 종료</p>
               <div className="stat-num display mt-3 text-5xl text-ink">
                 {match.scoreMe} : {match.scoreOpp}
@@ -453,12 +497,35 @@ export default function MatchPage() {
                 </>
               ) : (
                 <>
-                  <h2
-                    className="mt-4 text-lg font-black"
-                    style={{ color: match.scoreMe > match.scoreOpp ? "var(--color-gain)" : "var(--color-danger)" }}
-                  >
-                    {match.scoreMe > match.scoreOpp ? "승리했습니다!" : "패배했습니다"}
-                  </h2>
+                  {match.scoreMe > match.scoreOpp ? (
+                    <>
+                      {/* 승리 정점: 트로피가 튀어오르고, 다시 쓰기로 실제 역사를 뒤집었으면
+                          "역사를 다시 썼습니다"로 카피를 승격한다(일반 승리는 "승리했습니다!"). */}
+                      <motion.div
+                        initial={{ scale: 0, rotate: -20 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", stiffness: 240, damping: 12, delay: 0.08 }}
+                        className="mx-auto mt-4 flex size-14 items-center justify-center rounded-full bg-gain/15 ring-1 ring-gain/40"
+                      >
+                        <Trophy size={30} weight="fill" aria-hidden className="text-gain" />
+                      </motion.div>
+                      <motion.h2
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.18 }}
+                        className="mt-3 text-2xl font-black text-gain"
+                      >
+                        {beatReality ? "역사를 다시 썼습니다" : "승리했습니다!"}
+                      </motion.h2>
+                      {beatReality && (
+                        <p className="mt-1.5 text-[13px] leading-relaxed text-dim">
+                          당신의 지휘가 실제 결과를 뒤집었습니다.
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <h2 className="mt-4 text-lg font-black text-danger">패배했습니다</h2>
+                  )}
                   <button
                     type="button"
                     onClick={() => router.push("/result")}

@@ -28,8 +28,9 @@ export function EngineScorecard({ scorecard }: { scorecard: Scorecard }) {
       <div className="mt-5 grid gap-6 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center">
         {/* 헤드라인 수치 */}
         <div>
+          {/* 한 자리 소수로 통일 — 홈 배지·결과 화면과 같은 86.7% 표기(반올림 불일치 방지). */}
           <p className="display text-6xl font-black leading-none text-gain">
-            {ratePct.toFixed(0)}
+            {ratePct.toFixed(1)}
             <span className="text-2xl">%</span>
           </p>
           <p className="eyebrow mt-1.5 text-dim">승부 갈린 경기 · 승자 재현</p>
@@ -104,7 +105,7 @@ export function EngineScorecard({ scorecard }: { scorecard: Scorecard }) {
 
       <p className="mt-5 rounded-panel border border-line bg-surface-2/40 px-3.5 py-3 text-[13px] leading-relaxed text-dim">
         승/패 두 갈래만 놓고 찍는 무작위의 기준선은 50%입니다. 이 엔진은{" "}
-        <b className="text-accent">{ratePct.toFixed(0)}%</b>로 실제 승부처를 그만큼 따라갑니다. 당신의
+        <b className="text-accent">{ratePct.toFixed(1)}%</b>로 실제 승부처를 그만큼 따라갑니다. 당신의
         &ldquo;평행세계&rdquo;가 상상이 아니라 근거를 갖는 이유입니다.
       </p>
     </section>
