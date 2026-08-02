@@ -348,25 +348,34 @@ export default function MatchPage() {
             피치를 경기 지표와 승률 타임라인 사이(가운데)에 둔다. 데이터 열은 내부
             스크롤, 피치 열은 세로 가운데 정렬. 모바일은 피치를 맨 위로(order-first) 두고
             경기지표 → 승률타임라인 → 실시간중계 순으로 세로로 쌓인다. */}
-        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,236px)_minmax(0,1fr)_minmax(0,272px)] lg:gap-4 lg:overflow-hidden">
-          {/* 경기 지표 — 피치 왼쪽 */}
-          <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-            <LiveMetrics
-              match={match}
-              meCode={teamById(match.me.teamId)?.code ?? "ME"}
-              oppCode={teamById(match.opp.teamId)?.code ?? "OPP"}
-            />
+        {/* lg에서는 이 행의 높이를 "피치의 실제 높이"에 맞춘다. 피치는 5:3 가로형이라
+            화면 세로를 강제로 꽉 채우면(행을 뷰포트에 늘리면) 어딘가에 빈 공간이 생긴다
+            (위 또는 아래). 그래서 행을 뷰포트로 늘리지 않고 피치 폭 기준 높이에 맞추고,
+            좌우 패널은 그 높이에 절대배치로 겹쳐 채운다 — 피치 위아래 빈틈 없이 세 열의
+            높이가 정확히 같아진다. 남는 세로 공간은 세 열 블록 아래로 간다(피치 주변 X). */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,236px)_minmax(0,1fr)_minmax(0,272px)] lg:items-stretch lg:gap-4">
+          {/* 경기 지표 — 피치 왼쪽. lg에서 절대배치로 행(=피치) 높이를 채우고 내부 스크롤. */}
+          <div className="flex min-w-0 flex-col lg:relative">
+            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto lg:pr-1">
+              <LiveMetrics
+                match={match}
+                meCode={teamById(match.me.teamId)?.code ?? "ME"}
+                oppCode={teamById(match.opp.teamId)?.code ?? "OPP"}
+              />
+            </div>
           </div>
 
-          {/* 라이브 피치 + 장면 자막 — 경기 지표와 승률 타임라인 사이. 모바일은 맨 위. */}
-          <div className="order-first flex min-w-0 lg:order-none lg:h-full lg:min-h-0 lg:items-center lg:justify-center lg:overflow-hidden">
-            {/* lg에서는 피치를 세로(행 높이) 기준으로 키운다 — h-full로 행 높이를 꽉
-                채우고 폭은 5:3 비율로 따라오게(w-auto) 해, 위아래 빈 공간 없이 최대 크기로
-                채우되 잘리지 않는다. 폭이 열보다 넓어지면(세로가 긴 화면) max-w-full이 폭을
-                제한해 피치가 행보다 짧아지는데, 이때 flex-col·justify-end로 피치를 아래에
-                붙여 하단을 좌우 패널(경기 지표·중계) 하단과 정확히 맞춘다(남는 여백은 위로). */}
-            <div className="relative w-full aspect-[300/180] lg:flex lg:h-full lg:w-auto lg:max-w-full lg:flex-col lg:justify-end">
+          {/* 라이브 피치 + 장면 자막 — 경기 지표와 승률 타임라인 사이. 모바일은 맨 위.
+              폭 기준(w-full·aspect 5:3)으로 크기가 정해져 이 열의 높이 = 행 높이가 된다. */}
+          <div className="order-first flex min-w-0 lg:order-none">
+            {/* 폭 기준 5:3로 크기가 정해져 이 박스 높이 = 행 높이가 된다. 다만 세로가
+                짧은 화면에선 폭 기준 높이가 가용 높이를 넘어 잘릴 수 있어, max-h로 가용
+                높이(대략 헤더+스코어보드+컨트롤 = 22rem 제외)에 제한한다. 제한이 걸리면
+                LivePitch(h-full·w-full + preserveAspectRatio meet)가 비율을 지켜 축소돼
+                잘리지 않는다. 대부분의 넓은/보통 화면에선 제한이 걸리지 않아 꽉 찬다. */}
+            <div className="relative w-full aspect-[300/180] lg:max-h-[calc(100dvh-22rem)]">
               <LivePitch
+                className="h-full w-full"
                 meSetup={match.me}
                 oppSetup={match.opp}
                 scene={(() => {
@@ -399,19 +408,22 @@ export default function MatchPage() {
           </div>
 
           {/* 승률 타임라인(위) + 실시간 중계(아래) — 피치 오른쪽 한 열에 세로로 쌓는다.
-              타임라인은 고정, 중계는 넘치면 이 칸만 내부 스크롤. */}
-          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:gap-4 lg:overflow-hidden">
-            <div className="lg:shrink-0">
-              <ProbTimeline
-                timeline={match.probTimeline}
-                events={match.events}
-                interventions={match.interventions}
-                shootoutWinProb={pkWinProb}
-                takeoverMinute={mode === "rewrite" ? rewriteContext?.takeoverMinute : undefined}
-              />
-            </div>
-            <div className="flex lg:min-h-0 lg:flex-1">
-              <CommentaryFeed events={match.events} extraTime={match.extraTime} />
+              lg에서 절대배치로 행(=피치) 높이를 채운다: 타임라인 고정, 중계는 남는 높이를
+              채우고 넘치면 목록 안에서만 스크롤 → 하단이 피치·경기 지표 하단과 정확히 맞음. */}
+          <div className="flex min-w-0 flex-col gap-4 lg:relative lg:block lg:gap-0">
+            <div className="flex flex-col gap-4 lg:absolute lg:inset-0 lg:gap-4 lg:overflow-hidden">
+              <div className="lg:shrink-0">
+                <ProbTimeline
+                  timeline={match.probTimeline}
+                  events={match.events}
+                  interventions={match.interventions}
+                  shootoutWinProb={pkWinProb}
+                  takeoverMinute={mode === "rewrite" ? rewriteContext?.takeoverMinute : undefined}
+                />
+              </div>
+              <div className="flex lg:min-h-0 lg:flex-1">
+                <CommentaryFeed events={match.events} extraTime={match.extraTime} />
+              </div>
             </div>
           </div>
         </div>

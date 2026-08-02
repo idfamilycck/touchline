@@ -127,6 +127,8 @@ interface LivePitchProps {
    * 타이머를 페이지가 단일 소스로 들고 있어야 자막(SceneOverlay)과 어긋나지 않는다.
    */
   goalArrived?: boolean;
+  /** 루트 컨테이너 추가 클래스(예: 부모 박스를 꽉 채우게 h-full w-full). */
+  className?: string;
 }
 
 export function LivePitch({
@@ -136,6 +138,7 @@ export function LivePitch({
   lean = 0,
   live = true,
   goalArrived = false,
+  className = "",
 }: LivePitchProps) {
   const meColor = teamById(meSetup.teamId)?.color2 ?? "var(--color-accent)";
   const oppColor = teamById(oppSetup.teamId)?.color1 ?? "var(--color-danger)";
@@ -280,13 +283,19 @@ export function LivePitch({
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-panel border border-line"
+      className={`relative overflow-hidden rounded-panel border border-line ${className}`}
       style={{ background: "linear-gradient(180deg, var(--color-turf), var(--color-turf-2))" }}
       // 화면 흔들림도 골이 "들어간 순간"에 맞춘다(장면 시작이 아니라).
       animate={goalArrived ? { x: [0, -5, 5, -4, 4, 0] } : { x: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full" role="img" aria-label="라이브 경기 피치">
+      <svg
+        viewBox={`0 0 ${VB_W} ${VB_H}`}
+        className="h-full w-full"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label="라이브 경기 피치"
+      >
         {/* 잔디 이랑 */}
         {Array.from({ length: 8 }).map((_, i) => (
           <rect
