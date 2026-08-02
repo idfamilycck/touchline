@@ -5,6 +5,7 @@ import { playerContribution, type LineStrengths } from "./strength";
 import { possessionShare } from "./possession";
 import { nextOpponentReaction } from "./opponent-ai";
 import { cornerGoalProb, cornerTaker, selectCornerScorer } from "./setpiece";
+import { pickFoulZone, freeKickGoalProb, freeKickTaker, FK_SHOT_PROB } from "./freekick";
 import { poissonPmf } from "./poisson";
 import { playersOf } from "@/lib/data/players";
 import { FORMATIONS } from "@/lib/data/formations";
@@ -222,15 +223,28 @@ const POSITION_EXERTION: Record<string, number> = {
   st: 1.0,
 };
 
+// 맨마킹 체력 소모 배율: 마커(defending)가 타깃(dribbling+pace 평균)에 밀릴수록
+// 쫓아다니느라 더 지친다. diff=0(대등한 매치업)이면 기존 고정값(1.2)을 유지하고,
+// 마커가 열세일수록 최대 1.6배까지, 우세할수록 최소 1.05배까지(맨마킹은 항상
+// 약간의 추가 부담이 있다는 전제) 변한다. strength.ts의 manMarkTargetMult와 대칭:
+// 약한 수비수가 드리블·스피드 좋은 선수를 전담 마크하면 라인 기여도는 거의
+// 못 깎는 대신(그쪽 함수) 체력만 많이 쓰게(이 함수) 만든다.
+function manMarkStaminaMult(markerDefense: number, targetSkill: number): number {
+  const diff = Math.max(-50, Math.min(50, markerDefense - targetSkill));
+  return Math.max(1.05, Math.min(1.6, 1.2 - (diff / 50) * 0.4));
+}
+
 function decayOnPitch(
   stamina: Record<string, number>,
   setup: SideSetup,
+  opp: SideSetup,
   flags: ReturnType<typeof computeStaminaFlags>,
   exertionMult = 1
 ): void {
-  const marker = setup.special?.manMark?.markerId;
+  const mark = setup.special?.manMark;
   const formation = FORMATIONS[setup.instructions.formation];
   const squad = playersOf(setup.teamId);
+  const targetPlayer = mark ? playersOf(opp.teamId).find((p) => p.id === mark.targetId) : undefined;
   // 슬롯을 순회해야 포지션별 활동량을 반영할 수 있다(예전엔 lineup의 playerId만 돌아
   // 전원이 같은 rate로 균일하게 닳았다 — "체력이 다 똑같이 준다"는 문제의 원인).
   for (const slot of formation.slots) {
@@ -241,14 +255,19 @@ function decayOnPitch(
     // ① 포지션 활동량
     rate *= POSITION_EXERTION[prefix] ?? 1;
     // ② 개인 스태미나 능력치: 높을수록 덜 지친다(99 → 0.8×, 1 → 1.2×). 개인차를 만든다.
-    const sta = squad.find((p) => p.id === playerId)?.attrs.stamina ?? 50;
+    const player = squad.find((p) => p.id === playerId);
+    const sta = player?.attrs.stamina ?? 50;
     rate *= 1.2 - (sta / 99) * 0.4;
     // ③ 팀 전체 환경·전술
     if (flags.altitude) rate *= 1.3;
     if (flags.heat) rate *= 1.25;
     if (flags.highTempo) rate *= 1.15;
     if (flags.highPress) rate *= 1.15;
-    if (marker && marker === playerId) rate *= 1.2;
+    if (mark && mark.markerId === playerId) {
+      const markerDefense = player?.attrs.defending ?? 50;
+      const targetSkill = targetPlayer ? (targetPlayer.attrs.dribbling + targetPlayer.attrs.pace) / 2 : 50;
+      rate *= manMarkStaminaMult(markerDefense, targetSkill);
+    }
     // ④ 연장전 가속
     rate *= exertionMult;
     const current = stamina[playerId] ?? 1;
@@ -358,6 +377,33 @@ const TEXT_TEMPLATES: Record<"chance" | "shot" | "goal" | "save" | "corner" | "c
 
 function eventText(type: keyof typeof TEXT_TEMPLATES, rng: Rng, name: string): string {
   return pickVariant(rng, TEXT_TEMPLATES[type](name));
+}
+
+// 직접 프리킥 전용 중계 문구. TEXT_TEMPLATES와 분리한 이유는 같은 "shot"/"goal" 등의
+// 타입이라도 프리킥 상황에서는 "파울을 얻어낸다", "직접 프리킥을 시도한다"처럼 문맥이
+// 달라서다.
+const FREEKICK_TEXT: Record<"chance" | "shot" | "goal" | "save" | "corner", (name: string) => string[]> = {
+  chance: (name) => [
+    `${name}, 위험 지역에서 파울을 얻어내며 직접 프리킥 기회를 잡습니다!`,
+    `파울! ${name}이(가) 좋은 위치에서 프리킥을 준비합니다.`,
+  ],
+  shot: (name) => [
+    `${name}, 직접 프리킥을 시도합니다!`,
+    `${name}, 벽을 넘기는 궤적으로 프리킥을 노립니다!`,
+  ],
+  goal: (name) => [`${name}의 프리킥, 그대로 골망을 가릅니다!!`, `프리킥 골! ${name}, 환상적인 킥입니다!`],
+  save: (name) => [
+    `${name}의 프리킥, 골키퍼 선방에 막힙니다.`,
+    `아쉽다! ${name}의 프리킥이 골키퍼 손끝에 걸립니다.`,
+  ],
+  corner: (name) => [
+    `${name}의 프리킥, 코너킥으로 연결됩니다.`,
+    `${name}의 프리킥이 살짝 벗어나 코너로 흘러갑니다.`,
+  ],
+};
+
+function freeKickText(kind: keyof typeof FREEKICK_TEXT, rng: Rng, name: string): string {
+  return pickVariant(rng, FREEKICK_TEXT[kind](name));
 }
 
 // 세트피스 득점 문구. 코너 키커를 알면 어시스트로 함께 읽어준다 — 코너 키커 지정이
@@ -765,6 +811,90 @@ export function simulateMinute(state: MatchState): MatchState {
   processCard("me");
   processCard("opp");
 
+  // 파울 → 직접 프리킥(freekick.ts). pressing 기반으로 파울 발생 여부를 굴리고,
+  // 세로 3분할 존 중 위험 지역(수비/중원)에서 난 파울만 직접 프리킥 슈팅으로 잇는다.
+  // card와 별개의 독립 이벤트다 — 이 엔진에서 "파울"은 카드(경고) 판정과 세트피스
+  // 판정 두 곳에서 각자 다른 확률로 따로 굴러가는 근사다.
+  function processFoul(foulerSide: "me" | "opp"): void {
+    const foulerSetup = sideOf(foulerSide);
+    const pFoul = 0.03 * foulerSetup.instructions.pressing;
+    if (rng.next() >= pFoul) return;
+
+    const zone = pickFoulZone(foulerSetup.instructions.pressing, rng.next());
+    if (zone === "att") return; // 상대 진영 파울 — 프리킥 위협 없음
+    if (rng.next() >= FK_SHOT_PROB[zone]) return; // 파울은 났지만 직접 슈팅까지는 안 이어짐
+
+    const beneficiarySide = foulerSide === "me" ? "opp" : "me";
+    const setup = sideOf(beneficiarySide);
+    const taker = freeKickTaker(setup);
+    if (!taker) return;
+
+    additions.push({
+      minute: newMinute,
+      type: "chance",
+      side: beneficiarySide,
+      playerId: taker.id,
+      textKo: freeKickText("chance", rng, taker.name),
+    });
+    additions.push({
+      minute: newMinute,
+      type: "shot",
+      side: beneficiarySide,
+      playerId: taker.id,
+      textKo: freeKickText("shot", rng, taker.name),
+    });
+
+    const goalProb = freeKickGoalProb(zone, taker.setPiece);
+    if (rng.next() < goalProb) {
+      if (beneficiarySide === "me") scoreMe++;
+      else scoreOpp++;
+      additions.push({
+        minute: newMinute,
+        type: "goal",
+        side: beneficiarySide,
+        playerId: taker.id,
+        textKo: freeKickText("goal", rng, taker.name),
+      });
+    } else if (rng.next() < 0.7) {
+      additions.push({
+        minute: newMinute,
+        type: "save",
+        side: beneficiarySide,
+        playerId: taker.id,
+        textKo: freeKickText("save", rng, taker.name),
+      });
+    } else {
+      additions.push({
+        minute: newMinute,
+        type: "corner",
+        side: beneficiarySide,
+        playerId: taker.id,
+        textKo: freeKickText("corner", rng, taker.name),
+      });
+
+      // 이 코너도 setpiece.ts로 해결한다 — processChance의 corner와 마찬가지로,
+      // 여기서 끝내면 다시 "중계 문구만 남기고 아무것도 안 만드는" 막다른 길이 된다.
+      if (rng.next() < cornerGoalProb(setup, foulerSetup)) {
+        const scorer = selectCornerScorer(setup, rng.next());
+        if (scorer) {
+          if (beneficiarySide === "me") scoreMe++;
+          else scoreOpp++;
+          const ckTaker = cornerTaker(setup);
+          additions.push({
+            minute: newMinute,
+            type: "goal",
+            side: beneficiarySide,
+            playerId: scorer.id,
+            textKo: setPieceGoalText(scorer.name, ckTaker?.name),
+          });
+        }
+      }
+    }
+  }
+
+  processFoul("me");
+  processFoul("opp");
+
   // 퇴장이 나온 분에는 5분 경계를 기다리지 않고 즉시 λ를 재계산한다 — 수적 열세는
   // 다음 분부터 바로 승률에 반영돼야 한다(개입과 같은 취급).
   if (sentOff) {
@@ -790,8 +920,8 @@ export function simulateMinute(state: MatchState): MatchState {
   // 스태미나 감소: 온피치 선수만, 벤치는 감소하지 않는다.
   const stamina: Record<string, number> = { ...state.stamina };
   const exertion = state.extraTime ? EXTRA_TIME_EXERTION : 1;
-  decayOnPitch(stamina, meSide, staminaFlagsMe, exertion);
-  decayOnPitch(stamina, oppSide, staminaFlagsOpp, exertion);
+  decayOnPitch(stamina, meSide, oppSide, staminaFlagsMe, exertion);
+  decayOnPitch(stamina, oppSide, meSide, staminaFlagsOpp, exertion);
 
   if (newMinute === 45) {
     additions.push({ minute: 45, type: "halftime", side: "me", textKo: "⏱ 전반전이 종료되었습니다." });

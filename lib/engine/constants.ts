@@ -109,10 +109,18 @@ export const ENGINE_CONSTANTS = {
   CORNER_GOAL_BASE: 0.1,
 
   // WC 48개국 가상 선수의 능력치를 팀 ELO로 가감하는 폭 (lib/wc2026/players.ts의
-  // makeVirtualPlayer). 20이면 전 능력치에 -10~+10을 균일 적용한다.
+  // makeVirtualPlayer). 32면 전 능력치에 -16~+16을 균일 적용한다.
   //
   // 왜 여기 있나: 이 값은 eloMult(ELO_MULT_COEF)와 같은 신호를 두 번째 경로로 λ에
   // 넣는 지점이라, ELO 가중을 조정할 때 반드시 같이 저울에 올려야 하는 튜닝 파라미터다.
-  // 스윕 결과는 ELO_MULT_COEF 주석 참고.
-  WC_ELO_ATTR_SPAN: 20,
+  // "낮추는" 방향의 스윕 결과는 ELO_MULT_COEF 주석 참고(단조 하락, 재현율에 도움 안 됨).
+  //
+  // 20 -> 32: ELO 격차가 ~350점 이상(48개국 스프레드 620 기준 "누가 봐도 차이 나는"
+  // 수준)이면 같은 포지션 선수끼리 variation(±8)으로도 역전 불가능한 계단이 생기게
+  // 하려는 목적으로 올렸다(그보다 격차가 작은 매치업에서는 랜덤 역전이 자연스럽게
+  // 남는다 — 의도된 동작). ELO_MULT_COEF가 이미 0.45로 재적합된 뒤에도 재검증했고,
+  // outcomeRatePct(62.5%)·decisiveWinRatePct(86.7%)와 밸런스 게이트(블로아웃<6% 등)는
+  // 전부 그대로 유지된다 — "낮추는" 스윕과 달리 "올리는" 방향은 재현율을 깎지
+  // 않았다. goalMae만 0.98 -> 1.01로 소폭 이동한다(freekick.ts와 같은 종류의 나비효과).
+  WC_ELO_ATTR_SPAN: 32,
 } as const;

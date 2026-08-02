@@ -98,6 +98,21 @@ export function statValue(player: Player, key: StatKey): number {
   return player.attrs[key];
 }
 
+// 세트피스 원본 값은 생성 공식상 실제로 대략 16~68 구간에 몰려 있다(포지션 기본치
+// 40~44 ± eloBonus(±16) ± variation(±8), GK는 base 30이라 더 낮음. lib/wc2026/players.ts).
+// 다른 능력치처럼 화면에서 1~99를 고루 쓰는 것처럼 보이지 않아, 팀 내 최고의 프리킥
+// 키커조차 attrColor 등급이 "보통"에 그친다. 계산 로직(프리킥 골 확률 등)은 원본 값을
+// 그대로 쓰고, 화면 표시에서만 이 구간을 1~99로 펴서 보여준다.
+const SETPIECE_RAW_MIN = 16;
+const SETPIECE_RAW_MAX = 68;
+
+/** 세트피스 원본 값(16~68 실질 범위)을 화면 표시용 1~99로 펴서 보여준다. */
+export function displaySetPiece(raw: number): number {
+  const clamped = Math.max(SETPIECE_RAW_MIN, Math.min(SETPIECE_RAW_MAX, raw));
+  const t = (clamped - SETPIECE_RAW_MIN) / (SETPIECE_RAW_MAX - SETPIECE_RAW_MIN);
+  return Math.round(1 + t * 98);
+}
+
 // id 접미(kor_16 → 16)를 등번호로 사용한다. 데이터에 별도 번호 필드가 없어
 // 안정적이고 결정적인 유사 등번호로 활용.
 export function jerseyOf(id: string): number {

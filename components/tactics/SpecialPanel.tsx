@@ -8,6 +8,7 @@
 import { useAppStore } from "@/lib/store";
 import { FORMATIONS } from "@/lib/data/formations";
 import { playersOf } from "@/lib/data/players";
+import { displaySetPiece } from "./tactics-labels";
 import type { Player, SideSetup } from "@/lib/types";
 
 // 상대 위협 점수: 슈팅/드리블/속도 가중 — 우선 마킹할 공격 자원을 위로 정렬.
@@ -29,12 +30,15 @@ function LabeledSelect({
   onChange,
   players,
   placeholder,
+  statOf,
 }: {
   label: string;
   value: string | undefined;
   onChange: (id: string | undefined) => void;
   players: Player[];
   placeholder: string;
+  /** 옵션 라벨에 능력치를 병기하고 싶을 때(예: 주장 선택 시 멘탈). */
+  statOf?: (p: Player) => string;
 }) {
   return (
     <label className="flex flex-col gap-1">
@@ -48,6 +52,7 @@ function LabeledSelect({
         {players.map((p) => (
           <option key={p.id} value={p.id}>
             {p.name}
+            {statOf ? ` · ${statOf(p)}` : ""}
           </option>
         ))}
       </select>
@@ -76,6 +81,7 @@ export function SpecialPanel() {
           onChange={(id) => setSpecial({ captainId: id })}
           players={myStarters}
           placeholder="선택 안 함"
+          statOf={(p) => `멘탈 ${p.mental}`}
         />
         <LabeledSelect
           label="프리킥 (FK)"
@@ -83,6 +89,7 @@ export function SpecialPanel() {
           onChange={(id) => setSpecial({ fkTakerId: id })}
           players={myStarters}
           placeholder="선택 안 함"
+          statOf={(p) => `세트피스 ${displaySetPiece(p.setPiece)}`}
         />
         <LabeledSelect
           label="코너킥 (CK)"
@@ -90,6 +97,7 @@ export function SpecialPanel() {
           onChange={(id) => setSpecial({ ckTakerId: id })}
           players={myStarters}
           placeholder="선택 안 함"
+          statOf={(p) => `세트피스 ${displaySetPiece(p.setPiece)}`}
         />
       </section>
 

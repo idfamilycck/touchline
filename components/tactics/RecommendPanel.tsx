@@ -114,7 +114,7 @@ export function RecommendPanel() {
             )}
           </button>
           <p className="text-center text-[13px] leading-relaxed text-dim">
-            제안일 뿐입니다. 상대 분석을 보고 직접 판단하셔도 좋아요.
+            제안일 뿐입니다. 상대 정보를 보고 직접 판단하셔도 좋아요.
           </p>
         </div>
       )}

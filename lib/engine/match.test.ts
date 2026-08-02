@@ -409,3 +409,65 @@ describe("경고·퇴장", () => {
     expect(a.booked).toEqual(b.booked);
   });
 });
+
+describe("파울 → 직접 프리킥", () => {
+  it("여러 시드를 돌리면 직접 프리킥 득점이 실제로 나온다", () => {
+    // 압박 최대(파울 확률 최대)로 여러 시드를 돌려 프리킥 골(코너로 흐른 프리킥의
+    // 헤더 골도 포함될 수 있으므로 "파울" 텍스트를 포함한 chance 뒤에 goal이 붙는
+    // 경우만 프리킥 직접골로 센다)이 실제로 나오는 경기를 찾는다.
+    const me = makeSetup("kor", "4-3-3", { pressing: 3 });
+    const opp = makeSetup("bra", "4-3-3", { pressing: 3 });
+
+    let found = false;
+    for (let seed = 1; seed <= 300 && !found; seed++) {
+      const s = runFullMatch(me, opp, "metlife", seed);
+      found = s.events.some(
+        (e) => e.type === "goal" && e.textKo.includes("프리킥")
+      );
+    }
+    expect(found, "300개 시드 안에 프리킥 골이 하나도 없다면 프리킥 확률 설정을 확인해야 한다").toBe(
+      true
+    );
+  });
+
+  it("작전실에서 지정한 fkTakerId가 실제 프리킥 키커로 쓰인다", () => {
+    const bra = makeSetup("bra", "4-3-3");
+    const designated = bra.lineup["cm_l"];
+    const me = makeSetup("kor", "4-3-3", { pressing: 3 });
+    const opp = { ...bra, special: { ...bra.special, fkTakerId: designated } };
+
+    let sawDesignatedFkChance = false;
+    for (let seed = 1; seed <= 300 && !sawDesignatedFkChance; seed++) {
+      const s = runFullMatch(me, opp, "metlife", seed);
+      sawDesignatedFkChance = s.events.some(
+        (e) => e.type === "chance" && e.side === "opp" && e.textKo.includes("파울") && e.playerId === designated
+      );
+    }
+    expect(
+      sawDesignatedFkChance,
+      "300개 시드 안에 지정 키커의 프리킥 찬스가 하나도 없다면 fkTakerId가 실제로 안 쓰이는 것이다"
+    ).toBe(true);
+  });
+});
+
+describe("맨마킹 차등화", () => {
+  it("같은 마커라도 드리블·스피드가 뛰어난 타깃을 마크하면 약한 타깃을 마크할 때보다 체력이 더 빨리 닳는다", () => {
+    const kor = makeSetup("kor", "4-3-3");
+    const bra = makeSetup("bra", "4-3-3");
+    const marker = Object.values(kor.lineup)[5];
+    const braSquad = playersOf("bra");
+    const bySkillDesc = [...braSquad].sort(
+      (a, b) => b.attrs.dribbling + b.attrs.pace - (a.attrs.dribbling + a.attrs.pace)
+    );
+    const toughTarget = bySkillDesc[0];
+    const easyTarget = bySkillDesc[bySkillDesc.length - 1];
+
+    const withTough = { ...kor, special: { ...kor.special, manMark: { markerId: marker, targetId: toughTarget.id } } };
+    const withEasy = { ...kor, special: { ...kor.special, manMark: { markerId: marker, targetId: easyTarget.id } } };
+
+    const afterTough = runMinutes(initMatch(withTough, bra, "metlife", 1), 90);
+    const afterEasy = runMinutes(initMatch(withEasy, bra, "metlife", 1), 90);
+
+    expect(afterTough.stamina[marker]).toBeLessThan(afterEasy.stamina[marker]);
+  });
+});

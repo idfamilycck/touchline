@@ -5,15 +5,15 @@
 // 여기 있던 WinGauge("라이브 승률 예측")를 대체한다. 이유: 전술을 고르기도 전에
 // 승률이 나와버리면 감독의 판단이 사라진다. 슬라이더를 좌우로 흔들어 숫자가 큰 쪽을
 // 고르는 최적화 게임이 되고, "상대를 보고 내 전술을 정한다"는 이 앱의 전제가 무너진다.
-// 그래서 이 자리에는 결과 예측 대신 "판단 재료"를 놓는다 —
-//   · 상대가 실제 대회에서 어떤 팀이었는가(실측 기록)
-//   · 그래서 무엇을 조심하고 무엇을 파고들 것인가(근거를 인용한 대응책)
+// 그래서 이 자리에는 결과 예측 대신 상대가 실제 대회에서 어떤 팀이었는가(실측 기록)를
+// 놓는다. 성향 태그·대응책 추천은 승률 계산과 무관해 오히려 잘못된 확신을 줄 수 있어
+// 뺐다 — 순수 기록만 보여주고 판단은 사용자가 한다.
 // 승률은 경기가 시작된 뒤 ProbTimeline에서만 등장한다.
 
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Binoculars, Warning, Target, ArrowDown, ArrowUp, Minus, Users } from "@phosphor-icons/react";
-import type { OppScouting, CounterTip, ScoutTrait } from "@/lib/wc2026/scouting";
+import { Binoculars, Users } from "@phosphor-icons/react";
+import type { OppScouting } from "@/lib/wc2026/scouting";
 import type { OppLineup } from "@/lib/wc2026/lineup";
 import { FlagBadge } from "@/components/ui/FlagBadge";
 import { OppSquadSheet } from "@/components/tactics/OppSquadSheet";
@@ -29,18 +29,6 @@ interface ScoutingReportProps {
   lineupIsCurrentMatch?: boolean;
   /** 상대 시작 전술(고정) — 포메이션(실측 우선) + 성향 한 줄(국가 정체성/ELO 산정). */
   startTactics?: { formation: string; styleKo: string };
-}
-
-const TONE_STYLE: Record<ScoutTrait["tone"], { chip: string; label: string }> = {
-  threat: { chip: "border-danger/40 bg-danger/10 text-danger", label: "경계" },
-  weakness: { chip: "border-gain/40 bg-gain/10 text-gain", label: "기회" },
-  neutral: { chip: "border-line bg-surface-2 text-dim", label: "참고" },
-};
-
-function DirectionIcon({ direction }: { direction: CounterTip["direction"] }) {
-  if (direction === "up") return <ArrowUp weight="bold" className="size-3.5" aria-hidden />;
-  if (direction === "down") return <ArrowDown weight="bold" className="size-3.5" aria-hidden />;
-  return <Minus weight="bold" className="size-3.5" aria-hidden />;
 }
 
 /** 대회 기록 한 칸. */
@@ -69,7 +57,7 @@ export function ScoutingReport({
       <div className="panel rounded-panel p-5">
         <p className="eyebrow flex items-center gap-1.5 text-dim">
           <Binoculars size={14} weight="bold" aria-hidden />
-          상대 분석
+          상대 정보
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-dim">
           이 상대는 2026 월드컵 본선 기록이 없어 분석 자료를 만들 수 없습니다.
@@ -78,8 +66,6 @@ export function ScoutingReport({
     );
   }
 
-  const threats = scout.traits.filter((t) => t.tone === "threat");
-  const weaknesses = scout.traits.filter((t) => t.tone === "weakness");
   const record = `${scout.wins}승 ${scout.draws}무 ${scout.losses}패`;
 
   return (
@@ -89,7 +75,7 @@ export function ScoutingReport({
         <div className="min-w-0">
           <p className="eyebrow flex items-center gap-1.5 text-accent">
             <Binoculars size={14} weight="bold" aria-hidden />
-            상대 분석
+            상대 정보
           </p>
           <div className="mt-2 flex min-w-0 items-center gap-2">
             <FlagBadge
@@ -177,78 +163,9 @@ export function ScoutingReport({
         </div>
       </div>
 
-      {/* 성향 태그 */}
-      {scout.traits.length > 0 && (
-        <div className="flex flex-col gap-2.5">
-          {threats.length > 0 && (
-            <div>
-              <p className="mb-1.5 flex items-center gap-1.5 text-[12px] font-black uppercase tracking-wide text-dim">
-                <Warning size={12} weight="bold" aria-hidden />
-                경계할 점
-              </p>
-              <ul className="flex flex-col gap-1.5">
-                {threats.map((t) => (
-                  <li
-                    key={t.id}
-                    className={`rounded-panel border px-2.5 py-2 ${TONE_STYLE[t.tone].chip}`}
-                  >
-                    <p className="text-[13px] font-black leading-tight">{t.labelKo}</p>
-                    <p className="stat-num mt-0.5 text-[12px] leading-tight opacity-80">
-                      {t.evidenceKo}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {weaknesses.length > 0 && (
-            <div>
-              <p className="mb-1.5 flex items-center gap-1.5 text-[12px] font-black uppercase tracking-wide text-dim">
-                <Target size={12} weight="bold" aria-hidden />
-                파고들 지점
-              </p>
-              <ul className="flex flex-col gap-1.5">
-                {weaknesses.map((t) => (
-                  <li
-                    key={t.id}
-                    className={`rounded-panel border px-2.5 py-2 ${TONE_STYLE[t.tone].chip}`}
-                  >
-                    <p className="text-[13px] font-black leading-tight">{t.labelKo}</p>
-                    <p className="stat-num mt-0.5 text-[12px] leading-tight opacity-80">
-                      {t.evidenceKo}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 대응책: 무엇을 어떻게 — 각 줄이 위 수치를 근거로 인용한다. */}
-      {scout.counters.length > 0 && (
-        <div className="rounded-panel border border-accent/30 bg-accent/5 p-3">
-          <p className="eyebrow text-accent">이렇게 맞서세요</p>
-          <ul className="mt-2 flex flex-col gap-2.5">
-            {scout.counters.map((c) => (
-              <li key={c.id}>
-                <p className="flex items-center gap-1.5 text-[13px] font-black text-ink">
-                  <span className="text-accent">
-                    <DirectionIcon direction={c.direction} />
-                  </span>
-                  {c.headlineKo}
-                </p>
-                <p className="mt-0.5 pl-5 text-[12px] leading-relaxed text-dim">{c.reasonKo}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       <p className="text-[12px] leading-relaxed text-dim">
-        위 수치는 이 팀이 2026 월드컵에서 실제로 기록한 값입니다. 승부 예측이 아니라,
-        전술을 정할 근거예요.
+        위 수치는 이 팀이 2026 월드컵에서 실제로 기록한 값입니다. 승률 계산에는 반영되지
+        않는 참고 기록이에요.
       </p>
 
       <AnimatePresence>

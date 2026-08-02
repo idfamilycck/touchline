@@ -91,9 +91,21 @@ function lineOf(pos: Position): keyof LineStrengths {
   return "att"; // WG, ST
 }
 
+// 맨마킹 라인 기여도 배율: 마커(defending)와 타깃(dribbling+pace 평균)의 격차에
+// 따라 차등을 둔다. diff=0(대등한 매치업)이면 기존 고정값(0.69)을 유지하고, 마커가
+// 우세할수록 더 크게 깎이고(최대 0.45), 마커가 열세일수록 거의 안 깎인다(최대
+// 0.95) — 약한 수비수가 드리블·스피드 좋은 선수를 전담 마크해봐야 실제로는 못
+// 잡는다는 걸 반영한다. match.ts의 manMarkStaminaMult와 대칭되는 트레이드오프:
+// 이 경우 마커는 대신 체력을 훨씬 많이 쓴다.
+function manMarkTargetMult(markerDefense: number, targetSkill: number): number {
+  const diff = Math.max(-50, Math.min(50, markerDefense - targetSkill));
+  return Math.max(0.45, Math.min(0.95, 0.69 - (diff / 50) * 0.24));
+}
+
 export function lineStrengths(side: SideSetup, opp?: SideSetup): LineStrengths {
   const formation = FORMATIONS[side.instructions.formation];
   const squad = playersOf(side.teamId);
+  const oppSquad = opp ? playersOf(opp.teamId) : undefined;
   const sums: LineStrengths = { gk: 0, def: 0, mid: 0, att: 0 };
   // 분모는 "채워진 슬롯 수"가 아니라 "포메이션이 요구하는 슬롯 수"다.
   //
@@ -118,9 +130,14 @@ export function lineStrengths(side: SideSetup, opp?: SideSetup): LineStrengths {
     const role = ROLES[roleId];
     let contribution = playerContribution(player, slot.position, roleId, 1);
 
-    // 맨마킹: 상대(opp)가 이 선수를 타깃으로 지정한 경우 기여도 감소
-    if (opp?.special?.manMark && opp.special.manMark.targetId === player.id) {
-      contribution *= 0.69;
+    // 맨마킹: 상대(opp)가 이 선수를 타깃으로 지정한 경우 기여도 감소(마커 vs 타깃
+    // 능력치 차등 적용, 위 manMarkTargetMult 참고)
+    const oppMark = opp?.special?.manMark;
+    if (oppMark && oppMark.targetId === player.id) {
+      const markerPlayer = oppSquad?.find((p) => p.id === oppMark.markerId);
+      const targetSkill = (player.attrs.dribbling + player.attrs.pace) / 2;
+      const markerDefense = markerPlayer?.attrs.defending ?? 50;
+      contribution *= manMarkTargetMult(markerDefense, targetSkill);
     }
 
     const own: keyof LineStrengths = lineOf(slot.position);

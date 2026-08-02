@@ -49,7 +49,7 @@ async function enterTactics(page: Page) {
   // 첫 진입 온보딩 코치마크는 캡처를 가리므로 닫는다.
   await page.getByRole("button", { name: "건너뛰기" }).click();
   // 킥오프 전 승률(WinGauge)은 제거됐다. 분석 열의 1층은 이제 상대 스카우팅이다.
-  await expect(page.getByText("상대 분석").first()).toBeVisible();
+  await expect(page.getByText("상대 정보").first()).toBeVisible();
 }
 
 test("01 홈(자유 매치업)", async ({ page }) => {
