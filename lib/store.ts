@@ -214,6 +214,9 @@ export const useAppStore = create<AppState>()(
         registerWc2026();
         const match = wc2026MatchById(matchId);
         if (!match) return;
+        // 방어: side가 이 경기의 두 팀 중 하나가 아니면(조작된 딥링크 등) 조용히
+        // 무시한다. fromRealState는 유효 라인업이 없으면 던지므로 여기서 차단한다.
+        if (side !== match.home && side !== match.away) return;
         const seed = Date.now() % 1e9;
         const st = fromRealState(match, side, { takeoverMinute: entry.takeoverMinute }, seed);
         // 상대 시작 전술을 그 나라 프로파일로 고정 — 화면(store.opp)과 라이브 시뮬

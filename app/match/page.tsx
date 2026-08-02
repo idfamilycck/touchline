@@ -207,6 +207,17 @@ export default function MatchPage() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [halftime]);
 
+  // 종료 오버레이도 Escape로 닫을 수 있어야 한다(결과 화면으로). 배경 콘텐츠가
+  // 모달 뒤에서 계속 조작되지 않도록 명시적 닫기 경로를 준다.
+  useEffect(() => {
+    if (!finished) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") router.push("/result");
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [finished, router]);
+
   // 골 연출 동기화: 공이 골문에 닿는 시점을 페이지가 단일 소스로 계산해 피치(플래시·
   // 화면 흔들림)와 자막(골 문구)에 같은 값을 내려준다. 두 컴포넌트가 각자 타이머를
   // 돌리면 프레임이 어긋나 다시 따로 놀게 된다.
@@ -415,6 +426,9 @@ export default function MatchPage() {
               className="absolute inset-0 m-0 cursor-default appearance-none border-0 bg-black/60 p-0"
             />
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="하프타임 안내"
               initial={{ scale: 0.92, y: 12 }}
               animate={{ scale: 1, y: 0 }}
               className="panel relative w-full max-w-sm overscroll-contain rounded-panel p-6 text-center"
@@ -425,6 +439,7 @@ export default function MatchPage() {
               <div className="mt-6 flex gap-2">
                 <button
                   type="button"
+                  autoFocus
                   onClick={() => {
                     setHalftime(false);
                     setPlaying(true);
@@ -458,6 +473,9 @@ export default function MatchPage() {
                 공백이 아니라 "경기장" 위에 뜨게 한다. */}
             <div className="absolute inset-0 bg-black/55 backdrop-blur-md" />
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="경기 종료"
               initial={{ scale: 0.92, y: 14 }}
               animate={{ scale: 1, y: 0 }}
               className="panel relative isolate w-full max-w-sm overflow-hidden rounded-panel p-6 text-center"
@@ -484,6 +502,7 @@ export default function MatchPage() {
                   <div className="mt-6 flex flex-col gap-2">
                     <button
                       type="button"
+                      autoFocus
                       onClick={() => router.push("/shootout")}
                       className="w-full rounded-control bg-accent py-3 text-sm font-black text-accent-ink hover:-translate-y-0.5"
                     >
@@ -506,15 +525,21 @@ export default function MatchPage() {
                           "역사를 다시 썼습니다"로 카피를 승격한다(일반 승리는 "승리했습니다!"). */}
                       <div className="relative mx-auto mt-4 size-14">
                         {/* 색종이 버스트 — 트로피 중심에서 사방으로 터진다(고정 각도, 결정론적). */}
+                        {/* 트로피 뒤 정적 골드 광원 — 우승 시맨틱(골드)으로 정점을 데운다. */}
+                        <div
+                          aria-hidden
+                          className="pointer-events-none absolute -inset-5 rounded-full"
+                          style={{ background: "radial-gradient(circle, rgba(245,197,99,0.30), transparent 70%)" }}
+                        />
                         <div aria-hidden className="pointer-events-none absolute inset-0">
-                          {Array.from({ length: 12 }).map((_, i) => {
-                            const ang = (i / 12) * Math.PI * 2;
-                            const dist = 66;
+                          {Array.from({ length: 16 }).map((_, i) => {
+                            const ang = (i / 16) * Math.PI * 2;
+                            const dist = 58 + (i % 3) * 16;
                             const colors = [
-                              "var(--color-gain)",
-                              "var(--color-accent)",
                               "var(--color-gold)",
-                              "var(--color-ink)",
+                              "var(--color-gain)",
+                              "var(--color-gold)",
+                              "var(--color-accent)",
                             ];
                             return (
                               <motion.span
@@ -528,7 +553,7 @@ export default function MatchPage() {
                                   opacity: [0, 1, 0],
                                   scale: [1, 1, 0.4],
                                 }}
-                                transition={{ duration: 0.85, delay: 0.16, ease: "easeOut" }}
+                                transition={{ duration: 0.9, delay: 0.14 + (i % 4) * 0.04, ease: "easeOut" }}
                               />
                             );
                           })}
@@ -537,7 +562,7 @@ export default function MatchPage() {
                           initial={{ scale: 0, rotate: -20 }}
                           animate={{ scale: 1, rotate: 0 }}
                           transition={{ type: "spring", stiffness: 240, damping: 12, delay: 0.08 }}
-                          className="flex size-14 items-center justify-center rounded-full bg-gain/15 ring-1 ring-gain/40"
+                          className="relative flex size-14 items-center justify-center rounded-full bg-gain/15 ring-1 ring-gain/40"
                         >
                           <Trophy size={30} weight="fill" aria-hidden className="text-gain" />
                         </motion.div>
@@ -561,6 +586,7 @@ export default function MatchPage() {
                   )}
                   <button
                     type="button"
+                    autoFocus
                     onClick={() => router.push("/result")}
                     className="mt-6 w-full rounded-control bg-accent py-3 text-sm font-black text-accent-ink hover:-translate-y-0.5"
                   >

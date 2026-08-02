@@ -34,7 +34,9 @@ export function KnockoutBracket({ bracket }: KnockoutBracketProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="overflow-x-auto rounded-panel border border-line bg-surface/40 p-4">
-        <div className="flex min-w-max items-stretch gap-4">
+        {/* 대진표가 컨테이너보다 좁으면 가운데로 모아 우측 빈 여백을 없앤다. 컨테이너보다
+            넓어지면(좁은 화면) min-w-max로 내부 가로 스크롤이 되고 justify는 무력화된다. */}
+        <div className="flex min-w-max items-stretch justify-center gap-4">
           {MAIN_ROUNDS.map((round) => {
             const ties = bracket[round] ?? [];
             if (ties.length === 0 && round !== "final") return null;

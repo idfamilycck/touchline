@@ -31,14 +31,6 @@ export function stageOf(finishRound: string): StageStyle {
   return STAGE[finishRound] ?? { labelKo: finishRound, tone: "dim" };
 }
 
-/** 한글 라벨로부터 색 등급을 되찾는다(Team.styleTags에는 라벨 문자열만 실려 있다). */
-export function toneOfLabel(labelKo: string): StageTone {
-  for (const s of Object.values(STAGE)) {
-    if (s.labelKo === labelKo) return s.tone;
-  }
-  return "dim";
-}
-
 /** 태그 칩에 그대로 붙이는 Tailwind 클래스. */
 export const STAGE_CHIP: Record<StageTone, string> = {
   gold: "border border-gold/40 bg-gold/15 text-gold font-bold",

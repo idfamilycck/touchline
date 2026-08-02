@@ -44,8 +44,10 @@ export function HandoffOverlay({
         : "var(--color-ink)";
 
   return (
+    // 백드롭을 완전 블랙 대신 약간 투과(pitch/80)시켜 뒤 작전판이 저채도로 흐릿하게
+    // 비치게 한다 — "이 작전판이 곧 당신의 것"이라는 인계 순간의 시각적 예고.
     <motion.div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-pitch/95 px-6 backdrop-blur-md"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-pitch/80 px-6 backdrop-blur-xl"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

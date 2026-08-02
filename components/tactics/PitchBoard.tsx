@@ -21,6 +21,14 @@ import {
 } from "./tactics-labels";
 import { ManMarkLine } from "./ManMarkLine";
 
+// 시각적으로만 붙던 배지(주장·세트피스)를 접근명에도 실어, 스크린리더 사용자가
+// 세트피스 키커/주장 지정을 알 수 있게 한다.
+const BADGE_KO: Record<PlayerBadge, string> = {
+  C: "주장",
+  FK: "프리킥 키커",
+  CK: "코너킥 키커",
+};
+
 // 피치 슬롯 라벨용 짧은 이름: 서양식 이름은 성(마지막 토큰)만, 한글처럼 단일 토큰이면 그대로.
 // (라이브 피치의 shortName과 같은 규칙 — 두 피치가 같은 선수를 다르게 부르면 안 된다.)
 function lastNameOf(full: string): string {
@@ -112,7 +120,9 @@ function Slot({
           data-keep-selection
           aria-label={
             player
-              ? `${posShort} · ${player.name}${unfit ? " · 부적합 위치" : ""}`
+              ? `${posShort} · ${player.name}${
+                  badges.length ? " · " + badges.map((b) => BADGE_KO[b]).join(" · ") : ""
+                }${unfit ? " · 부적합 위치" : ""}`
               : `${posShort} 빈 슬롯`
           }
           aria-pressed={Boolean(isSelectedHere)}

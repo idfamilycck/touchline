@@ -41,11 +41,3 @@ const BY_CODE: Record<string, Confederation> = {
 export function confederationOf(code: string): Confederation {
   return BY_CODE[code.toUpperCase()] ?? "UEFA";
 }
-
-const LABEL: Record<Confederation, string> = Object.fromEntries(
-  CONFEDERATIONS.map((c) => [c.key, c.labelKo])
-) as Record<Confederation, string>;
-
-export function confederationLabel(key: Confederation): string {
-  return LABEL[key];
-}

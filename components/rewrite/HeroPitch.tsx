@@ -7,6 +7,7 @@
 // 오프닝의 분위기를 준다 — 가짜 스크린샷이 아니라 이 앱이 쓰는 바로 그 피치 그래픽.
 // 정적 SVG라 성능 부담이 없고, 결정적 순간(결승, 63′) 하나를 방송 화면처럼 담는다.
 
+import { motion, useReducedMotion } from "framer-motion";
 import { teamById } from "@/lib/data/teams";
 import { wc2026TeamId } from "@/lib/wc2026/data";
 import { FlagBadge } from "@/components/ui/FlagBadge";
@@ -26,6 +27,7 @@ const OPPS = [[376, 150], [320, 60], [320, 116], [320, 184], [320, 240]];
 export function HeroPitch() {
   const esp = teamOf("ESP");
   const arg = teamOf("ARG");
+  const reduce = useReducedMotion();
 
   return (
     <div
@@ -55,13 +57,28 @@ export function HeroPitch() {
           <rect x="8" y="95" width="52" height="110" />
           <rect x="340" y="95" width="52" height="110" />
         </g>
-        {OURS.map(([x, y], i) => (
-          <circle key={`o-${i}`} cx={x} cy={y} r="8" fill="var(--color-accent)" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" />
-        ))}
+        {/* 공세 라인이 상대 골문 쪽으로 은은히 밀고 들어가는 3초 루프(집단 전진).
+            prefers-reduced-motion이면 정지. */}
+        <motion.g
+          animate={reduce ? undefined : { x: [0, 6, 0] }}
+          transition={reduce ? undefined : { duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          {OURS.map(([x, y], i) => (
+            <circle key={`o-${i}`} cx={x} cy={y} r="8" fill="var(--color-accent)" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" />
+          ))}
+        </motion.g>
         {OPPS.map(([x, y], i) => (
           <circle key={`p-${i}`} cx={x} cy={y} r="8" fill="var(--color-danger)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
         ))}
-        <circle cx="246" cy="150" r="4" fill="#ffffff" />
+        {/* 공: 결정적 순간의 패스가 슛 지점으로 오가는 루프(cx만 애니메이트 — SVG r/scale은
+            framer 마운트 이슈가 있어 피한다). 정지 접근성 대응 포함. */}
+        <motion.circle
+          r="4"
+          fill="#ffffff"
+          initial={{ cx: 200, cy: 150 }}
+          animate={reduce ? { cx: 246 } : { cx: [200, 246, 200] }}
+          transition={reduce ? undefined : { duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+        />
       </svg>
 
       {/* 방송 태그(좌상단) */}

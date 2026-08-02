@@ -49,7 +49,15 @@ export function RewriteExperience({ showBackLink = false }: RewriteExperiencePro
 
   const matchId = searchParams.get("match") ?? undefined;
   const selectedMatch = matchId ? matches.find((m) => m.id === matchId) : undefined;
-  const selectedSide = selectedMatch ? (searchParams.get("side") ?? undefined) : undefined;
+  // side는 조작된 딥링크(?side=ZZZ)로 임의 값이 들어올 수 있다. 반드시 이 경기의
+  // 두 팀 코드 중 하나로만 인정한다 — 그러지 않으면 MomentCards → startRewrite →
+  // fromRealState가 "lineup not found"로 던져 (정적 export라 에러 바운더리가 잡을
+  // 뿐) 클릭이 조용히 죽는다.
+  const rawSide = selectedMatch ? searchParams.get("side") : null;
+  const selectedSide =
+    rawSide && (rawSide === selectedMatch!.home || rawSide === selectedMatch!.away)
+      ? rawSide
+      : undefined;
 
   function updateQuery(next: Record<string, string | undefined>) {
     const params = new URLSearchParams(searchParams.toString());

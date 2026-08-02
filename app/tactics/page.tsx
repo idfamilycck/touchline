@@ -178,6 +178,20 @@ export default function TacticsPage() {
   const [selected, setSelected] = useState<Selection | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
 
+  // 재수화 게이트: persist(sessionStorage) 복원 전에는 me 부재를 "매치업 없음"으로
+  // 오판하지 않는다(형제 match/result/shootout과 동일 패턴). 새로고침 시 잘못된
+  // "먼저 매치업을 골라주세요" 플래시를 막는다.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    const p = useAppStore.persist;
+    if (!p || p.hasHydrated()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHydrated(true);
+      return;
+    }
+    return p.onFinishHydration(() => setHydrated(true));
+  }, []);
+
   // 지휘봉 인계 순간: 결정적 순간을 골라 작전실에 처음 들어설 때 뜬다. 순간(momentId)
   // 마다 세션에서 한 번만(뒤로가기 재진입 시 반복 방지). localStorage를 쓰는 Coachmarks
   // (최초 1회 튜토리얼)와 달리 순간별 서사 비트라 sessionStorage로 분리 게이팅한다.
@@ -265,6 +279,18 @@ export default function TacticsPage() {
     const playerId = active.data.current?.playerId as string | undefined;
     if (playerId) movePlayer(targetSlot, playerId);
   };
+
+  // 재수화 전에는 중립 로딩(잘못된 빈 상태 플래시 방지).
+  if (!hydrated) {
+    return (
+      <main
+        id="main"
+        className="flex flex-1 scroll-mt-14 items-center justify-center px-5 py-24 text-center"
+      >
+        <p className="text-sm text-dim">작전실을 불러오는 중…</p>
+      </main>
+    );
+  }
 
   // 매치업 미선택 상태(직접 URL 진입 등) 방어.
   if (!me) {

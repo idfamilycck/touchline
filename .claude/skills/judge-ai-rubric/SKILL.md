@@ -55,3 +55,14 @@ Official categories & max: **참신성 30 · 감동 경험 설계 25 · 완성�
 - A control that is a `<div onClick>` with no role/label, or an icon-only button with no aria-label (감동/agent-friendly hit).
 - A deep link or refresh that dead-ends instead of redirecting gracefully (완성도 hit).
 - A "novel" claim in the doc with no visible manifestation in the UI (참신성 hit).
+
+## 최고난이도(ELITE) 채점 — 반드시 이 모드로 채점하라
+만점의 정의를 격상한다: **만점 = 시니어 엔지니어 + 접근성 전문가 + 깐깐한 심사위원이 실제로 눌러보고 소스를 뒤져도 "조치할 결함"을 하나도 못 찾는 상태.** 아래 중 하나라도 걸리면 그 카테고리는 만점 불가(적극적으로 흠을 찾아라):
+- 콘솔 경고/에러가 **단 1건이라도**(어느 라우트·어느 상호작용에서든)
+- 아이콘 전용 버튼·커스텀 컨트롤에 `aria-label`/`role` 누락, heading 구조 결함, **포커스 가시성 부재**, 키보드 트랩/도달 불가
+- 빠른 연타·뒤로/앞으로·리사이즈·중복 클릭·새로고침·딥링크 엣지에서 깨짐·스크롤 튐·**레이아웃 시프트(CLS)**
+- 문서·화면 수치 중 **테스트로 강제되지 않은 것**이 하나라도, 또는 표기 반올림 불일치가 1건이라도
+- 죽은 코드·미사용 export·`console.log`/TODO 잔재·주석처리된 코드
+- 참신성이 "리프레이밍"에 그치고 **진짜 새 메커니즘**이라 방어 못 하면 27 이하로 감점
+- 모바일/좁은 폭에서 한 화면이라도 가로 스크롤·잘림·겹침
+각 카테고리 만점은 오직 "흠을 찾으려 적극 시도했으나 조치할 것이 없다"일 때만. 조금이라도 의심스러우면 감점하고, 그 근거를 file:line/콘솔로 제시하라.
