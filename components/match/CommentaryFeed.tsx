@@ -65,7 +65,7 @@ export function CommentaryFeed({ events, extraTime = false }: CommentaryFeedProp
       <ul
         aria-live="polite"
         aria-label="경기 실시간 중계"
-        className="flex flex-col px-3 py-1 max-h-[clamp(240px,42vh,460px)] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
+        className="flex flex-col px-2 py-1 max-h-[clamp(240px,42vh,460px)] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
       >
         {rows.map((e, i) => {
           const isGoal = e.type === "goal";
@@ -77,7 +77,7 @@ export function CommentaryFeed({ events, extraTime = false }: CommentaryFeedProp
           return (
             <li
               key={`${e.minute}-${events.length - i}-${e.type}`}
-              className={`data-row flex items-start gap-2.5 px-2 py-2 ${
+              className={`data-row flex items-start gap-2 px-1.5 py-2 ${
                 isGoal
                   ? "border-l-2 border-accent bg-accent/10"
                   : isCrisis
@@ -86,7 +86,7 @@ export function CommentaryFeed({ events, extraTime = false }: CommentaryFeedProp
               }`}
             >
               <span
-                className="stat-num mt-0.5 w-9 shrink-0 text-right text-[13px] text-dim"
+                className="stat-num mt-0.5 w-7 shrink-0 text-right text-[13px] text-dim"
                 aria-hidden
               >
                 {minuteLabel(e.minute, extraTime)}

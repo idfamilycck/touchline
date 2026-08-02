@@ -353,7 +353,7 @@ export default function MatchPage() {
             (위 또는 아래). 그래서 행을 뷰포트로 늘리지 않고 피치 폭 기준 높이에 맞추고,
             좌우 패널은 그 높이에 절대배치로 겹쳐 채운다 — 피치 위아래 빈틈 없이 세 열의
             높이가 정확히 같아진다. 남는 세로 공간은 세 열 블록 아래로 간다(피치 주변 X). */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,224px)_minmax(0,1fr)_minmax(0,208px)] lg:items-stretch lg:gap-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,224px)_minmax(0,1fr)_minmax(0,250px)] lg:items-stretch lg:gap-4">
           {/* 경기 지표 — 피치 왼쪽. lg에서 절대배치로 행(=피치) 높이를 채우고 내부 스크롤. */}
           <div className="flex min-w-0 flex-col lg:relative">
             <div className="lg:absolute lg:inset-0 lg:overflow-y-auto lg:pr-1">
