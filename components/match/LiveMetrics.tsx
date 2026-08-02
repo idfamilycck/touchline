@@ -162,7 +162,7 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
       : possBase;
 
   return (
-    <section className="panel flex flex-col gap-4 rounded-panel p-4" aria-label="경기 지표">
+    <section className="panel flex flex-col gap-3 rounded-panel p-3.5" aria-label="경기 지표">
       <div className="flex items-center justify-between">
         <p className="eyebrow flex items-center gap-1.5 text-accent">
           <ChartBar size={14} weight="bold" aria-hidden />
@@ -207,7 +207,7 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
       </div>
 
       {/* 누적 지표 */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <VersusBar
           label="점유율"
           icon={<TrendUp size={13} weight="bold" aria-hidden />}
