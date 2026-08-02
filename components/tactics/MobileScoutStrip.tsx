@@ -5,7 +5,7 @@
 // 데스크톱 분석 열에서는 ScoutingReport가 항상 보이지만 모바일에선 "분석" 탭 뒤에
 // 숨는다. 스쿼드/피치 탭에서 라인업을 만지는 동안 상대가 누구인지 잊히면, 전술을
 // 상대에 맞춰 짠다는 이 앱의 전제가 화면에서 사라진다. 그래서 탭 스위처 바로 아래에
-// 상대의 핵심 한 줄(대회 득실 + 가장 중요한 성향 태그)을 얇게 고정한다.
+// 상대의 핵심 한 줄(대회 득실 + 포메이션)을 얇게 고정한다.
 //
 // 이 자리에는 원래 MobileWinStrip(라이브 승률)이 있었다. 킥오프 전 승률 표시를
 // 없애면서 같은 자리를 "판단 재료"로 바꿨다.
@@ -19,12 +19,6 @@ interface Props {
 
 export function MobileScoutStrip({ scout }: Props) {
   if (!scout) return null;
-
-  // 태그 우선순위: 경계(threat) > 기회(weakness). 좁은 폭이라 최대 2개만 싣는다.
-  const chips = [
-    ...scout.traits.filter((t) => t.tone === "threat"),
-    ...scout.traits.filter((t) => t.tone === "weakness"),
-  ].slice(0, 2);
 
   return (
     <div className="mt-2 rounded-control border border-line bg-surface/50 px-3 py-2">
@@ -45,23 +39,6 @@ export function MobileScoutStrip({ scout }: Props) {
           </span>
         )}
       </div>
-
-      {chips.length > 0 && (
-        <ul className="mt-1.5 flex flex-wrap gap-1.5">
-          {chips.map((t) => (
-            <li
-              key={t.id}
-              className={`rounded-full border px-2 py-0.5 text-[12px] font-bold ${
-                t.tone === "threat"
-                  ? "border-danger/40 bg-danger/10 text-danger"
-                  : "border-gain/40 bg-gain/10 text-gain"
-              }`}
-            >
-              {t.labelKo}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

@@ -7,7 +7,7 @@
 
 import type { Player } from "@/lib/types";
 import { attrColor, attrTierKo } from "./attr-color";
-import { POSITION_KO, jerseyOf } from "./tactics-labels";
+import { POSITION_KO, jerseyOf, displaySetPiece } from "./tactics-labels";
 
 interface AttributeGridProps {
   player: Player | null | undefined;
@@ -49,7 +49,7 @@ function clustersOf(player: Player): Cluster[] {
     {
       title: "특기",
       rows: [
-        { key: "setPiece", label: "세트피스", value: player.setPiece },
+        { key: "setPiece", label: "세트피스", value: displaySetPiece(player.setPiece) },
         { key: "aerial", label: "공중볼", value: player.aerial },
         { key: "penalty", label: "PK", value: player.penalty },
         { key: "mental", label: "멘탈", value: player.mental },

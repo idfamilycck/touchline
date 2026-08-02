@@ -108,4 +108,33 @@ describe("lineStrengths + 맨마킹", () => {
     const korMarking = { ...kor, special: { ...kor.special, manMark: { markerId, targetId } } };
     expect(lineStrengths(korMarking).att).toBeLessThan(lineStrengths(kor).att);
   });
+
+  it("약한 수비수가 드리블·스피드가 뛰어난 선수를 마크하면, 강한 수비수가 같은 선수를 마크할 때보다 타깃의 라인 기여가 덜 깎인다", () => {
+    const kor = makeSetup("kor", "4-3-3"), bra = makeSetup("bra", "4-3-3");
+    // lineStrengths는 lineup(선발) 슬롯만 순회하므로, 타깃은 반드시 bra 선발 11명 중에서
+    // 골라야 한다 — 벤치 선수를 타깃으로 잡으면 manMark 감소 분기 자체가 안 타서
+    // weak/strong 마커 결과가 (둘 다 무효과로) 우연히 같아져 버린다.
+    const braStarterIds = new Set(Object.values(bra.lineup));
+    const target = playersOf("bra")
+      .filter((p) => braStarterIds.has(p.id))
+      .sort((a, b) => b.attrs.dribbling + b.attrs.pace - (a.attrs.dribbling + a.attrs.pace))[0];
+    const korSquad = playersOf("kor");
+    const weakMarker = [...korSquad].sort((a, b) => a.attrs.defending - b.attrs.defending)[0];
+    const strongMarker = [...korSquad].sort((a, b) => b.attrs.defending - a.attrs.defending)[0];
+
+    const withWeakMarker = {
+      ...kor,
+      special: { ...kor.special, manMark: { markerId: weakMarker.id, targetId: target.id } },
+    };
+    const withStrongMarker = {
+      ...kor,
+      special: { ...kor.special, manMark: { markerId: strongMarker.id, targetId: target.id } },
+    };
+
+    // bra 쪽 라인 강도만 본다 — 마커 자신의 공격 기여 감소는 kor 쪽에만 적용되므로
+    // 여기선 타깃 감소 효과만 순수하게 비교된다.
+    const attWithWeakMarker = lineStrengths(bra, withWeakMarker).att;
+    const attWithStrongMarker = lineStrengths(bra, withStrongMarker).att;
+    expect(attWithWeakMarker).toBeGreaterThan(attWithStrongMarker);
+  });
 });

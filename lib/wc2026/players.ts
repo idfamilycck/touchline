@@ -110,7 +110,7 @@ export function makeVirtualPlayer(args: {
   // unpredictably with elo, and the "higher elo -> higher average" test
   // requires a monotonic relationship between elo and the resulting stats.
   const eloFactor = clamp01((args.teamElo - 1400) / 700);
-  // 폭은 ENGINE_CONSTANTS.WC_ELO_ATTR_SPAN(기본 20 -> -10..+10). eloMult와 중복되는
+  // 폭은 ENGINE_CONSTANTS.WC_ELO_ATTR_SPAN(32 -> -16..+16). eloMult와 중복되는
   // 두 번째 ELO 경로라 두 값은 함께 조정해야 한다(constants.ts 주석 참고).
   const span = ENGINE_CONSTANTS.WC_ELO_ATTR_SPAN;
   const eloBonus = eloFactor * span - span / 2;
