@@ -98,24 +98,6 @@ export default function MatchPage() {
   const endRef = useRef<HTMLDivElement>(null);
   useFocusTrap(halftimeRef, halftime && !finished);
   useFocusTrap(endRef, finished);
-
-  // 이 화면은 lg에서 한 화면(16:9) 고정 설계다. main은 overflow-hidden으로 754px에
-  // 클립되지만, 문서(html)가 body보다 커지는 원인 불명의 팬텀 스크롤이 남아(내용은
-  // 비어 있음) lg에서 스크롤바가 뜬다. lg에서 body 스크롤을 잠가 확실히 한 화면으로
-  // 고정한다. 모바일(<lg)은 자연 세로 스크롤을 유지한다.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const apply = () => {
-      document.documentElement.style.overflow = mq.matches ? "hidden" : "";
-    };
-    apply();
-    mq.addEventListener("change", apply);
-    return () => {
-      mq.removeEventListener("change", apply);
-      document.documentElement.style.overflow = "";
-    };
-  }, []);
   const halftimeHandledRef = useRef(false);
   const halftimeSeededRef = useRef(false);
   // 마지막으로 장면 판정을 마친 분. null이면 아직 시드 전(장면 감지 보류) —
@@ -362,49 +344,12 @@ export default function MatchPage() {
           </div>
         </div>
 
-        {/* 본문 2열(lg) — 경기를 한 화면에 담는다. 페이지는 고정되고 각 열의 하단만
-            내부 스크롤한다. 모바일(lg 미만)은 아래 순서대로 세로로 쌓인다.
-              · 왼쪽 열: 피치(위) → 경기 지표(아래)
-              · 오른쪽 열: 승률 타임라인(위, 축소) → 실시간 중계(아래)
-            이렇게 하면 승률 타임라인은 피치 우측에, 경기 지표는 실시간 중계 왼쪽에
-            놓여 요청한 배치가 그대로 성립한다. */}
-        {/* 라이브 피치 + 장면 자막 (위, 가운데 정렬·폭 제한). 피치와 아래 3열은
-            본문 flex-col의 직접 자식이라(별도 래퍼 없이) 홈과 같은 한 화면 높이 전파를 탄다. */}
-        <div className="relative lg:mx-auto lg:w-full lg:max-w-[470px] lg:shrink-0">
-          <LivePitch
-            meSetup={match.me}
-            oppSetup={match.opp}
-            scene={(() => {
-              const p = scene ? primaryEvent(scene) : undefined;
-              if (!p || !scene) return null;
-              return {
-                key: `${p.minute}-${p.type}`,
-                side: p.side,
-                type: p.type,
-                choreo: sceneChoreoType(scene),
-                playerId: p.playerId,
-              };
-            })()}
-            lean={attackLean(match.events)}
-            // 재생을 시작하기 전에는 포메이션 대형 그대로 정지시킨다.
-            // (다시 쓰기 모드는 minute이 이미 크므로 "minute>0"으로는 판정할 수 없다.)
-            live={hasStarted}
-            goalArrived={goalArrived}
-          />
-          <SceneOverlay
-            sceneEvents={scene ?? []}
-            attribution={(() => {
-              const p = scene ? primaryEvent(scene) : undefined;
-              if (!p || !isAttackScene(p)) return null;
-              return attackAttribution(sideRules[p.side]);
-            })()}
-            goalArrived={goalArrived}
-          />
-        </div>
-        {/* 아래 3열: 경기 지표(타임라인 왼쪽) · 승률 타임라인(가운데) · 실시간 중계(오른쪽).
-            한 화면 고정, 넘치는 칸만 내부 스크롤. 모바일은 세로로 쌓인다. */}
-        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:gap-5 lg:overflow-hidden">
-          {/* 경기 지표 — 타임라인 왼쪽 */}
+        {/* 본문 한 행(lg): 경기 지표 · 피치 · 승률 타임라인 · 실시간 중계.
+            피치를 경기 지표와 승률 타임라인 사이(가운데)에 둔다. 데이터 열은 내부
+            스크롤, 피치 열은 세로 가운데 정렬. 모바일은 피치를 맨 위로(order-first) 두고
+            경기지표 → 승률타임라인 → 실시간중계 순으로 세로로 쌓인다. */}
+        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-4 lg:overflow-hidden">
+          {/* 경기 지표 — 피치 왼쪽 */}
           <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <LiveMetrics
               match={match}
@@ -412,7 +357,43 @@ export default function MatchPage() {
               oppCode={teamById(match.opp.teamId)?.code ?? "OPP"}
             />
           </div>
-          {/* 승률 타임라인 — 가운데 */}
+
+          {/* 라이브 피치 + 장면 자막 — 경기 지표와 승률 타임라인 사이. 모바일은 맨 위. */}
+          <div className="order-first flex min-w-0 lg:order-none lg:min-h-0 lg:items-center lg:overflow-hidden">
+            <div className="relative w-full">
+              <LivePitch
+                meSetup={match.me}
+                oppSetup={match.opp}
+                scene={(() => {
+                  const p = scene ? primaryEvent(scene) : undefined;
+                  if (!p || !scene) return null;
+                  return {
+                    key: `${p.minute}-${p.type}`,
+                    side: p.side,
+                    type: p.type,
+                    choreo: sceneChoreoType(scene),
+                    playerId: p.playerId,
+                  };
+                })()}
+                lean={attackLean(match.events)}
+                // 재생을 시작하기 전에는 포메이션 대형 그대로 정지시킨다.
+                // (다시 쓰기 모드는 minute이 이미 크므로 "minute>0"으로는 판정할 수 없다.)
+                live={hasStarted}
+                goalArrived={goalArrived}
+              />
+              <SceneOverlay
+                sceneEvents={scene ?? []}
+                attribution={(() => {
+                  const p = scene ? primaryEvent(scene) : undefined;
+                  if (!p || !isAttackScene(p)) return null;
+                  return attackAttribution(sideRules[p.side]);
+                })()}
+                goalArrived={goalArrived}
+              />
+            </div>
+          </div>
+
+          {/* 승률 타임라인 — 피치 오른쪽 */}
           <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <ProbTimeline
               timeline={match.probTimeline}
@@ -422,6 +403,7 @@ export default function MatchPage() {
               takeoverMinute={mode === "rewrite" ? rewriteContext?.takeoverMinute : undefined}
             />
           </div>
+
           {/* 실시간 중계 — 타임라인 오른쪽 */}
           <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <CommentaryFeed events={match.events} extraTime={match.extraTime} />
