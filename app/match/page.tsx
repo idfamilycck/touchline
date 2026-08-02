@@ -282,7 +282,7 @@ export default function MatchPage() {
       <h1 className="sr-only">경기 중계: 실시간 지휘</h1>
       <CrisisBanner events={match.events} onIntervene={openSheet} />
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-3 px-4 pt-4 sm:px-5 lg:min-h-0 lg:overflow-hidden">
+      <div className="mx-auto flex w-full max-w-[88rem] flex-1 flex-col gap-3 px-4 pt-4 sm:px-5 lg:min-h-0 lg:overflow-hidden">
         {mode === "rewrite" && rewriteContext && (
           <RewriteContextBadge
             className="w-fit self-start"
@@ -348,7 +348,7 @@ export default function MatchPage() {
             피치를 경기 지표와 승률 타임라인 사이(가운데)에 둔다. 데이터 열은 내부
             스크롤, 피치 열은 세로 가운데 정렬. 모바일은 피치를 맨 위로(order-first) 두고
             경기지표 → 승률타임라인 → 실시간중계 순으로 세로로 쌓인다. */}
-        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,300px)] lg:gap-4 lg:overflow-hidden">
+        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,236px)_minmax(0,1fr)_minmax(0,272px)] lg:gap-4 lg:overflow-hidden">
           {/* 경기 지표 — 피치 왼쪽 */}
           <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <LiveMetrics
@@ -359,8 +359,11 @@ export default function MatchPage() {
           </div>
 
           {/* 라이브 피치 + 장면 자막 — 경기 지표와 승률 타임라인 사이. 모바일은 맨 위. */}
-          <div className="order-first flex min-w-0 lg:order-none lg:min-h-0 lg:items-center lg:overflow-hidden">
-            <div className="relative w-full">
+          <div className="order-first flex min-w-0 lg:order-none lg:h-full lg:min-h-0 lg:items-center lg:justify-center lg:overflow-hidden">
+            {/* lg에서는 피치를 세로(행 높이) 기준으로 키운다 — h-full로 행 높이를 꽉
+                채우고 폭은 5:3 비율로 따라오게(w-auto) 해, 위아래 빈 공간 없이 최대 크기로
+                채우되 잘리지 않는다. 폭이 열보다 넓어지면 max-w-full로 폭 기준 축소. */}
+            <div className="relative w-full aspect-[300/180] lg:h-full lg:w-auto lg:max-w-full">
               <LivePitch
                 meSetup={match.me}
                 oppSetup={match.opp}
@@ -405,7 +408,7 @@ export default function MatchPage() {
                 takeoverMinute={mode === "rewrite" ? rewriteContext?.takeoverMinute : undefined}
               />
             </div>
-            <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+            <div className="flex lg:min-h-0 lg:flex-1">
               <CommentaryFeed events={match.events} extraTime={match.extraTime} />
             </div>
           </div>

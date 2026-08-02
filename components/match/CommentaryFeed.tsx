@@ -54,17 +54,18 @@ export function CommentaryFeed({ events, extraTime = false }: CommentaryFeedProp
   const rows = events.slice(-MAX_ROWS).reverse();
 
   return (
-    <div className="panel flex flex-col rounded-panel">
-      <div className="panel-head">
+    <div className="panel flex w-full flex-col rounded-panel lg:h-full lg:min-h-0">
+      <div className="panel-head lg:shrink-0">
         <p className="eyebrow text-accent">실시간 중계</p>
         <span className="text-[13px] text-dim">최신순</span>
       </div>
-      {/* 모바일은 42vh 캡 + 자체 스크롤(중계가 화면을 잡아먹지 않게). lg에서는 캡을
-          풀고 자체 스크롤을 없애, 오른쪽 컬럼 하나만 스크롤하게 한다(중첩 스크롤 방지). */}
+      {/* 모바일은 42vh 캡 + 자체 스크롤(중계가 화면을 잡아먹지 않게). lg에서는 패널이
+          경기 지표 하단까지 세로로 꽉 차고, 넘치는 중계는 이 목록 안에서만 스크롤한다
+          (패널 높이는 고정, 하단 정렬 유지). */}
       <ul
         aria-live="polite"
         aria-label="경기 실시간 중계"
-        className="flex flex-col px-3 py-1 max-h-[clamp(240px,42vh,460px)] overflow-y-auto lg:max-h-none lg:overflow-visible"
+        className="flex flex-col px-3 py-1 max-h-[clamp(240px,42vh,460px)] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
       >
         {rows.map((e, i) => {
           const isGoal = e.type === "goal";
