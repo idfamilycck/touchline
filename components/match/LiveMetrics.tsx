@@ -162,7 +162,10 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
       : possBase;
 
   return (
-    <section className="panel flex flex-col gap-2.5 rounded-panel p-3" aria-label="경기 지표">
+    <section
+      className="panel flex flex-col gap-2.5 rounded-panel p-3 lg:min-h-full lg:justify-between"
+      aria-label="경기 지표"
+    >
       <div className="flex items-center justify-between">
         <p className="eyebrow flex items-center gap-1.5 text-accent">
           <ChartBar size={14} weight="bold" aria-hidden />
