@@ -162,7 +162,7 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
       : possBase;
 
   return (
-    <section className="panel flex flex-col gap-3 rounded-panel p-3.5" aria-label="경기 지표">
+    <section className="panel flex flex-col gap-2.5 rounded-panel p-3" aria-label="경기 지표">
       <div className="flex items-center justify-between">
         <p className="eyebrow flex items-center gap-1.5 text-accent">
           <ChartBar size={14} weight="bold" aria-hidden />
@@ -176,7 +176,7 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
       </div>
 
       {/* 최근 흐름 — 개입 판단의 1차 신호라 맨 위, 가장 크게. */}
-      <div className="rounded-panel border border-line bg-surface/40 px-3 py-2.5">
+      <div className="rounded-panel border border-line bg-surface/40 px-3 py-2">
         <div className="flex items-baseline justify-between gap-2">
           <span className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wide text-dim">
             <Fire size={13} weight="bold" aria-hidden />
@@ -187,7 +187,7 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
             <span className="ml-0.5 text-[12px] font-black text-dim">%</span>
           </span>
         </div>
-        <div className="mt-1.5 flex h-2 w-full gap-0.5">
+        <div className="mt-1 flex h-2 w-full gap-0.5">
           <div className="flex h-full flex-1 justify-end overflow-hidden rounded-l-full bg-surface-2">
             <div
               className="h-full rounded-l-full bg-accent"
@@ -201,7 +201,7 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
             />
           </div>
         </div>
-        <p className="mt-1.5 text-[13px] font-bold" style={{ color: MOMENTUM_COLOR[momentumTone] }}>
+        <p className="mt-1 text-[13px] font-bold" style={{ color: MOMENTUM_COLOR[momentumTone] }}>
           {MOMENTUM_TEXT[momentumTone]}
         </p>
       </div>
@@ -271,7 +271,7 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
             ["경고", stats.me.cards, stats.opp.cards],
           ] as const
         ).map(([label, m, o]) => (
-          <div key={label} className="rounded-panel border border-line bg-surface/40 px-2 py-1.5 text-center">
+          <div key={label} className="rounded-panel border border-line bg-surface/40 px-2 py-1 text-center">
             <p className="text-[12px] leading-tight text-dim">{label}</p>
             <p className="stat-num mt-0.5 text-[13px] leading-none text-ink">
               <span className="text-accent">{m}</span>
@@ -283,7 +283,7 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
       </div>
 
       {/* 결정력: 골이 안 나는 이유를 가른다 — 기회가 없나, 마무리가 안 되나. */}
-      <div className="rounded-panel border border-line bg-surface/40 px-3 py-2">
+      <div className="rounded-panel border border-line bg-surface/40 px-3 py-1.5">
         <div className="flex items-baseline justify-between text-[13px]">
           <span className="stat-num text-accent">{convPct(stats.me.conversion)}</span>
           <span className="text-[12px] font-bold uppercase tracking-wide text-dim">결정력</span>
