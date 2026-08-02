@@ -55,6 +55,16 @@ export function HandoffOverlay({
       aria-modal="true"
       aria-labelledby="handoff-title"
     >
+      {/* 하단에서 올라오는 그린 글로우 — 인계 카피가 검은 공백이 아니라 "경기장" 위에
+          선 감독처럼 읽히게 한다(콘텐츠 뒤 -z-10). */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(120% 85% at 50% 118%, rgba(52,224,138,0.20), transparent 58%)",
+        }}
+      />
       <div className="flex w-full max-w-md flex-col items-center text-center">
         <motion.p
           className="eyebrow text-accent"

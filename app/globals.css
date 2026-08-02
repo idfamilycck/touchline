@@ -92,6 +92,28 @@ body {
   overflow-wrap: break-word;
 }
 
+/* 앱 전역 슬림 스크롤바 — 윈도우 기본 청크바 대신 얇고 저채도로. 한 화면(16:9)
+   레이아웃은 내부 스크롤 컬럼이 여럿이라, 스크롤바가 두꺼우면 "프로토타입"으로
+   읽힌다. 얇게 깔아 두 개가 떠도 시각적으로 거슬리지 않게 한다. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-dim);
+}
+
 /* 월드컵 야간 경기장 플러드라이트 — 좌우 두 조명이 위에서 비춘다. fixed·pointer-events
    -none·z-index:-1이라 스크롤해도 같은 자리에서 은은히 유지되고(전 화면 공통 분위기)
    리페인트 부담이 없다. 본문 콘텐츠(z:auto)는 항상 이 위에 그려져 대비가 유지된다.

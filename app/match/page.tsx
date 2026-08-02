@@ -40,6 +40,7 @@ import { venueById } from "@/lib/data/venues";
 import { h2hOf } from "@/lib/data/h2h";
 import { wc2026MatchById } from "@/lib/wc2026/data";
 import { buildCompare, resultRank } from "@/components/rewrite/compare";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import type { Intervention, MatchEvent } from "@/lib/engine/match";
 
 // 하이라이트 점프 페이싱: 장면 없는 분은 SKIP_MS 간격으로 빠르게 흘려보내고,
@@ -90,6 +91,13 @@ export default function MatchPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [halftime, setHalftime] = useState(false);
   const [scene, setScene] = useState<MatchEvent[] | null>(null);
+
+  // 모달 포커스 트랩: aria-modal만으로는 Tab이 배경으로 새므로(WCAG 2.4.3) 두 오버레이
+  // (하프타임·종료)를 열릴 때 실제로 가둔다. finished/halftime은 위에서 파생됨.
+  const halftimeRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(halftimeRef, halftime && !finished);
+  useFocusTrap(endRef, finished);
   const halftimeHandledRef = useRef(false);
   const halftimeSeededRef = useRef(false);
   // 마지막으로 장면 판정을 마친 분. null이면 아직 시드 전(장면 감지 보류) —
@@ -426,6 +434,7 @@ export default function MatchPage() {
               className="absolute inset-0 m-0 cursor-default appearance-none border-0 bg-black/60 p-0"
             />
             <motion.div
+              ref={halftimeRef}
               role="dialog"
               aria-modal="true"
               aria-label="하프타임 안내"
@@ -473,6 +482,7 @@ export default function MatchPage() {
                 공백이 아니라 "경기장" 위에 뜨게 한다. */}
             <div className="absolute inset-0 bg-black/55 backdrop-blur-md" />
             <motion.div
+              ref={endRef}
               role="dialog"
               aria-modal="true"
               aria-label="경기 종료"
