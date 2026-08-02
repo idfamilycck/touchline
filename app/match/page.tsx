@@ -348,7 +348,7 @@ export default function MatchPage() {
             피치를 경기 지표와 승률 타임라인 사이(가운데)에 둔다. 데이터 열은 내부
             스크롤, 피치 열은 세로 가운데 정렬. 모바일은 피치를 맨 위로(order-first) 두고
             경기지표 → 승률타임라인 → 실시간중계 순으로 세로로 쌓인다. */}
-        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-4 lg:overflow-hidden">
+        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,300px)] lg:gap-4 lg:overflow-hidden">
           {/* 경기 지표 — 피치 왼쪽 */}
           <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <LiveMetrics
@@ -393,20 +393,21 @@ export default function MatchPage() {
             </div>
           </div>
 
-          {/* 승률 타임라인 — 피치 오른쪽 */}
-          <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-            <ProbTimeline
-              timeline={match.probTimeline}
-              events={match.events}
-              interventions={match.interventions}
-              shootoutWinProb={pkWinProb}
-              takeoverMinute={mode === "rewrite" ? rewriteContext?.takeoverMinute : undefined}
-            />
-          </div>
-
-          {/* 실시간 중계 — 타임라인 오른쪽 */}
-          <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-            <CommentaryFeed events={match.events} extraTime={match.extraTime} />
+          {/* 승률 타임라인(위) + 실시간 중계(아래) — 피치 오른쪽 한 열에 세로로 쌓는다.
+              타임라인은 고정, 중계는 넘치면 이 칸만 내부 스크롤. */}
+          <div className="flex min-w-0 flex-col gap-4 lg:min-h-0 lg:gap-4 lg:overflow-hidden">
+            <div className="lg:shrink-0">
+              <ProbTimeline
+                timeline={match.probTimeline}
+                events={match.events}
+                interventions={match.interventions}
+                shootoutWinProb={pkWinProb}
+                takeoverMinute={mode === "rewrite" ? rewriteContext?.takeoverMinute : undefined}
+              />
+            </div>
+            <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+              <CommentaryFeed events={match.events} extraTime={match.extraTime} />
+            </div>
           </div>
         </div>
       </div>
