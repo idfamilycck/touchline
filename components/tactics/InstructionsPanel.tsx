@@ -124,7 +124,8 @@ export function InstructionsPanel() {
       {/* 기본 전술 프리셋 */}
       <section>
         <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-accent">기본 전술</h2>
-        <div className="flex flex-col gap-1.5">
+        {/* 두 칸씩 배열 — 프리셋이 많아 한 열로 길게 흐르지 않게 한다. */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {TACTIC_PRESETS.map((preset) => {
             const active = (Object.keys(preset.values) as (keyof typeof preset.values)[]).every(
               (k) => instructions[k] === preset.values[k]

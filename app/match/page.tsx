@@ -98,6 +98,24 @@ export default function MatchPage() {
   const endRef = useRef<HTMLDivElement>(null);
   useFocusTrap(halftimeRef, halftime && !finished);
   useFocusTrap(endRef, finished);
+
+  // 이 화면은 lg에서 한 화면(16:9) 고정 설계다. main은 overflow-hidden으로 754px에
+  // 클립되지만, 문서(html)가 body보다 커지는 원인 불명의 팬텀 스크롤이 남아(내용은
+  // 비어 있음) lg에서 스크롤바가 뜬다. lg에서 body 스크롤을 잠가 확실히 한 화면으로
+  // 고정한다. 모바일(<lg)은 자연 세로 스크롤을 유지한다.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => {
+      document.documentElement.style.overflow = mq.matches ? "hidden" : "";
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
   const halftimeHandledRef = useRef(false);
   const halftimeSeededRef = useRef(false);
   // 마지막으로 장면 판정을 마친 분. null이면 아직 시드 전(장면 감지 보류) —
@@ -350,11 +368,9 @@ export default function MatchPage() {
               · 오른쪽 열: 승률 타임라인(위, 축소) → 실시간 중계(아래)
             이렇게 하면 승률 타임라인은 피치 우측에, 경기 지표는 실시간 중계 왼쪽에
             놓여 요청한 배치가 그대로 성립한다. */}
-        <div className="grid flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-2 lg:gap-5 lg:overflow-hidden">
-        {/* ── 왼쪽 열: 피치 + 경기 지표 ── */}
-        <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-hidden">
-        {/* 라이브 피치 + 장면 자막 */}
-        <div className="relative lg:shrink-0">
+        {/* 라이브 피치 + 장면 자막 (위, 가운데 정렬·폭 제한). 피치와 아래 3열은
+            본문 flex-col의 직접 자식이라(별도 래퍼 없이) 홈과 같은 한 화면 높이 전파를 탄다. */}
+        <div className="relative lg:mx-auto lg:w-full lg:max-w-[470px] lg:shrink-0">
           <LivePitch
             meSetup={match.me}
             oppSetup={match.opp}
@@ -385,36 +401,31 @@ export default function MatchPage() {
             goalArrived={goalArrived}
           />
         </div>
-        {/* 경기 지표 — 피치 아래(실시간 중계 왼쪽). 넘치면 이 칸만 스크롤한다. */}
-        <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
-          <LiveMetrics
-            match={match}
-            meCode={teamById(match.me.teamId)?.code ?? "ME"}
-            oppCode={teamById(match.opp.teamId)?.code ?? "OPP"}
-          />
-        </div>
-        </div>
-
-        {/* ── 오른쪽 열: 승률 타임라인(축소) + 실시간 중계 ── */}
-        <div className="flex flex-col gap-4 lg:min-h-0 lg:gap-5 lg:overflow-hidden">
-          {/* 승률 타임라인 — 피치 우측에 붙는 축소 패널. 넓은 열에서 차트가 커지지
-              않도록 카드 폭을 제한해 콤팩트하게 유지한다. */}
-          <div className="lg:shrink-0">
-            <div className="w-full lg:max-w-[380px]">
-              <ProbTimeline
-                timeline={match.probTimeline}
-                events={match.events}
-                interventions={match.interventions}
-                shootoutWinProb={pkWinProb}
-                takeoverMinute={mode === "rewrite" ? rewriteContext?.takeoverMinute : undefined}
-              />
-            </div>
+        {/* 아래 3열: 경기 지표(타임라인 왼쪽) · 승률 타임라인(가운데) · 실시간 중계(오른쪽).
+            한 화면 고정, 넘치는 칸만 내부 스크롤. 모바일은 세로로 쌓인다. */}
+        <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:gap-5 lg:overflow-hidden">
+          {/* 경기 지표 — 타임라인 왼쪽 */}
+          <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+            <LiveMetrics
+              match={match}
+              meCode={teamById(match.me.teamId)?.code ?? "ME"}
+              oppCode={teamById(match.opp.teamId)?.code ?? "OPP"}
+            />
           </div>
-          {/* 실시간 중계 — 넘치면 이 칸만 스크롤한다(중첩 스크롤 없음). */}
-          <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+          {/* 승률 타임라인 — 가운데 */}
+          <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+            <ProbTimeline
+              timeline={match.probTimeline}
+              events={match.events}
+              interventions={match.interventions}
+              shootoutWinProb={pkWinProb}
+              takeoverMinute={mode === "rewrite" ? rewriteContext?.takeoverMinute : undefined}
+            />
+          </div>
+          {/* 실시간 중계 — 타임라인 오른쪽 */}
+          <div className="flex min-w-0 flex-col lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <CommentaryFeed events={match.events} extraTime={match.extraTime} />
           </div>
-        </div>
         </div>
       </div>
 
