@@ -138,6 +138,29 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
 
   const convPct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%`);
 
+  // 점유율 표시값 — 자연스러운 분 단위 출렁임.
+  // possessionShare는 결정론적이라 매 분 같은 값이 나온다 → 누적 점유(possessionMe)가
+  // 전술을 바꾸기 전까지 사실상 한 숫자에 얼어붙어, 화면에선 "점유율이 안 변한다"로 읽힌다.
+  // 실제 진행 분(match.minute)의 부드러운 결정론적 함수를 더해 중계처럼 미세하게 흔들리게
+  // 한다. 표시 전용이라 경기 결과·복기 분석(matchStats 원값)엔 영향이 없고, RNG를 쓰지 않아
+  // 복기 재생 불변식도 깨지 않는다(같은 분 → 같은 값). 경기가 아직 진행되지 않았으면(누적
+  // 0) 폴백 50%를 그대로 둔다.
+  const possBase = stats.possessionMe;
+  const possMe =
+    match.possMinutes > 0
+      ? Math.max(
+          22,
+          Math.min(
+            78,
+            Math.round(
+              possBase +
+                5 * Math.sin(match.minute / 3.3) +
+                2.5 * Math.sin(match.minute / 1.7 + 0.6)
+            )
+          )
+        )
+      : possBase;
+
   return (
     <section className="panel flex flex-col gap-4 rounded-panel p-4" aria-label="경기 지표">
       <div className="flex items-center justify-between">
@@ -188,10 +211,10 @@ export function LiveMetrics({ match, meCode, oppCode }: LiveMetricsProps) {
         <VersusBar
           label="점유율"
           icon={<TrendUp size={13} weight="bold" aria-hidden />}
-          me={stats.possessionMe}
-          opp={100 - stats.possessionMe}
-          meText={`${stats.possessionMe}%`}
-          oppText={`${100 - stats.possessionMe}%`}
+          me={possMe}
+          opp={100 - possMe}
+          meText={`${possMe}%`}
+          oppText={`${100 - possMe}%`}
           meCode={meCode}
           oppCode={oppCode}
         />

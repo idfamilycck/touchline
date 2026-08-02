@@ -362,8 +362,10 @@ export default function MatchPage() {
           <div className="order-first flex min-w-0 lg:order-none lg:h-full lg:min-h-0 lg:items-center lg:justify-center lg:overflow-hidden">
             {/* lg에서는 피치를 세로(행 높이) 기준으로 키운다 — h-full로 행 높이를 꽉
                 채우고 폭은 5:3 비율로 따라오게(w-auto) 해, 위아래 빈 공간 없이 최대 크기로
-                채우되 잘리지 않는다. 폭이 열보다 넓어지면 max-w-full로 폭 기준 축소. */}
-            <div className="relative w-full aspect-[300/180] lg:h-full lg:w-auto lg:max-w-full">
+                채우되 잘리지 않는다. 폭이 열보다 넓어지면(세로가 긴 화면) max-w-full이 폭을
+                제한해 피치가 행보다 짧아지는데, 이때 flex-col·justify-end로 피치를 아래에
+                붙여 하단을 좌우 패널(경기 지표·중계) 하단과 정확히 맞춘다(남는 여백은 위로). */}
+            <div className="relative w-full aspect-[300/180] lg:flex lg:h-full lg:w-auto lg:max-w-full lg:flex-col lg:justify-end">
               <LivePitch
                 meSetup={match.me}
                 oppSetup={match.opp}
